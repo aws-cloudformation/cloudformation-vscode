@@ -4,6 +4,7 @@ import {
     ListResourcesRequest,
     RefreshResourceListRequest,
     ResourceList,
+    ResourceSelection,
     ResourceStateImportParams,
     ResourceStateImportRequest,
     ResourceStateImportResult,
@@ -46,9 +47,7 @@ export class ResourcesManager {
             console.error('Failed to load resources:', error);
             this.resources.clear();
         } finally {
-            this.listeners.forEach((listener: ResourcesChangeListener) => {
-                listener(this.getResourcesArray());
-            });
+            this.notifyAllListeners();
         }
     }
 
@@ -74,9 +73,7 @@ export class ResourcesManager {
                 } catch (error) {
                     console.error('Failed to refresh all resources:', error);
                 } finally {
-                    this.listeners.forEach((listener: ResourcesChangeListener) => {
-                        listener(this.getResourcesArray());
-                    });
+                    this.notifyAllListeners();
                 }
             },
         );
@@ -101,9 +98,7 @@ export class ResourcesManager {
                 } catch (error) {
                     console.error('Failed to refresh resource:', error);
                 } finally {
-                    this.listeners.forEach((listener: ResourcesChangeListener) => {
-                        listener(this.getResourcesArray());
-                    });
+                    this.notifyAllListeners();
                 }
             },
         );
@@ -118,13 +113,13 @@ export class ResourcesManager {
     }
 
     async importResourceStates(resourceNode?: ResourceNode): Promise<void> {
-        try {
-            const editor = window.activeTextEditor;
-            if (!editor) {
-                showErrorMessage('No active editor');
-                return;
-            }
+        const editor = window.activeTextEditor;
+        if (!editor) {
+            showErrorMessage('No active editor');
+            return;
+        }
 
+        try {
             let selections: ResourceSelectionResult[];
 
             if (resourceNode?.resourceList && resourceNode.resourceType) {
@@ -143,21 +138,7 @@ export class ResourcesManager {
                 return;
             }
 
-            // Group selections by resource type
-            const resourceSelections = new Map<string, string[]>();
-            for (const selection of selections) {
-                const identifiers = resourceSelections.get(selection.resourceType) ?? [];
-                identifiers.push(selection.resourceIdentifier);
-                resourceSelections.set(selection.resourceType, identifiers);
-            }
-
-            // Convert to ResourceSelection[] format expected by server
-            const resourceSelectionsArray = Array.from(resourceSelections.entries()).map(
-                ([resourceType, resourceIdentifiers]) => ({
-                    resourceType,
-                    resourceIdentifiers,
-                }),
-            );
+            const resourceSelectionsArray = this.getResourcesToImportInput(selections);
 
             const params: ResourceStateImportParams = {
                 textDocument: { uri: editor.document.uri.toString() },
@@ -166,46 +147,21 @@ export class ResourcesManager {
                 resourceSelections: resourceSelectionsArray,
             };
 
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            const result = (await this.client.sendRequest(
-                ResourceStateImportRequest.method,
-                params,
-            )) as ResourceStateImportResult;
-
-            if (result.edit?.changes) {
-                const workspaceEdit = new WorkspaceEdit();
-                for (const [uri, textEdits] of Object.entries(result.edit.changes)) {
-                    const vsCodeUri = Uri.parse(uri);
-                    const vsCodeEdits = (textEdits as TextEdit[]).map(
-                        (edit: TextEdit) =>
-                            new TextEdit(
-                                new Range(
-                                    new Position(edit.range.start.line, edit.range.start.character),
-                                    new Position(edit.range.end.line, edit.range.end.character),
-                                ),
-                                edit.newText,
-                            ),
+            window.withProgress(
+                {
+                    location: ProgressLocation.Notification,
+                    title: 'Importing Resource State',
+                    cancellable: false,
+                },
+                async () => {
+                    const result = await this.client.sendRequest(ResourceStateImportRequest.method, params);
+                    await this.applyCodeActionEdits(result as ResourceStateImportResult);
+                    const [successCount, failureCount] = this.getSuccessAndFailureCount(
+                        result as ResourceStateImportResult,
                     );
-                    workspaceEdit.set(vsCodeUri, vsCodeEdits);
-                }
-                await workspace.applyEdit(workspaceEdit);
-            }
-
-            // Calculate success and failure counts (Maps are serialized as objects over JSON-RPC)
-            const successfulImports = result.successfulImports as unknown as Record<string, string[]>;
-            const failedImports = result.failedImports as unknown as Record<string, string[]>;
-
-            const successCount = Object.values(successfulImports).reduce((sum, ids) => sum + ids.length, 0);
-            const failureCount = Object.values(failedImports).reduce((sum, ids) => sum + ids.length, 0);
-
-            // Show appropriate message based on results
-            if (successCount > 0 && failureCount === 0) {
-                window.showInformationMessage(`Successfully imported ${successCount} resource(s)`);
-            } else if (successCount > 0 && failureCount > 0) {
-                window.showWarningMessage(`Imported ${successCount} resource(s), ${failureCount} failed`);
-            } else if (failureCount > 0) {
-                showErrorMessage(`Failed to import ${failureCount} resource(s)`);
-            }
+                    this.renderImportResultMessage(successCount, failureCount);
+                },
+            );
         } catch (error) {
             showErrorMessage(
                 `Error importing resource state: ${error instanceof Error ? error.message : String(error)}`,
@@ -213,8 +169,75 @@ export class ResourcesManager {
         }
     }
 
+    private getResourcesToImportInput(selections: ResourceSelectionResult[]): ResourceSelection[] {
+        // Group selections by resource type
+        const resourceSelections = new Map<string, string[]>();
+        for (const selection of selections) {
+            const identifiers = resourceSelections.get(selection.resourceType) ?? [];
+            identifiers.push(selection.resourceIdentifier);
+            resourceSelections.set(selection.resourceType, identifiers);
+        }
+
+        // Convert to ResourceSelection[] format expected by server
+        return Array.from(resourceSelections.entries()).map(([resourceType, resourceIdentifiers]) => ({
+            resourceType,
+            resourceIdentifiers,
+        }));
+    }
+
+    private async applyCodeActionEdits(result: ResourceStateImportResult) {
+        if (result.edit?.changes) {
+            const workspaceEdit = new WorkspaceEdit();
+            for (const [uri, textEdits] of Object.entries(result.edit.changes)) {
+                const vsCodeUri = Uri.parse(uri);
+                const vsCodeEdits = (textEdits as TextEdit[]).map(
+                    (edit: TextEdit) =>
+                        new TextEdit(
+                            new Range(
+                                new Position(edit.range.start.line, edit.range.start.character),
+                                new Position(edit.range.end.line, edit.range.end.character),
+                            ),
+                            edit.newText,
+                        ),
+                );
+                workspaceEdit.set(vsCodeUri, vsCodeEdits);
+            }
+            await workspace.applyEdit(workspaceEdit);
+        }
+    }
+
+    private getSuccessAndFailureCount(result: ResourceStateImportResult): [number, number] {
+        const successCount = Object.values(result.successfulImports ?? {}).reduce(
+            (sum: number, ids: string[]) => sum + ids.length,
+            0,
+        ) as number;
+        const failureCount = Object.values(result.failedImports ?? {}).reduce(
+            (sum: number, ids: string[]) => sum + ids.length,
+            0,
+        ) as number;
+        return [successCount, failureCount];
+    }
+
+    private renderImportResultMessage(successCount: number, failureCount: number) {
+        if (successCount > 0 && failureCount === 0) {
+            window.showInformationMessage(`Successfully imported ${successCount} resource(s)`);
+        } else if (successCount > 0 && failureCount > 0) {
+            window.showWarningMessage(`Imported ${successCount} resource(s), ${failureCount} failed`);
+        } else if (failureCount > 0) {
+            showErrorMessage(`Failed to import ${failureCount} resource(s)`);
+        } else {
+            window.showInformationMessage('No resources were imported');
+        }
+    }
+
     private getResourcesArray(): ResourceList[] {
         return Array.from(this.resources.values());
+    }
+
+    private notifyAllListeners(): void {
+        this.listeners.forEach((listener: ResourcesChangeListener) => {
+            listener(this.getResourcesArray());
+        });
     }
 
     reload() {
