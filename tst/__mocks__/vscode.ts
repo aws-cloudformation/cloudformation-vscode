@@ -28,6 +28,7 @@ const vscode = {
     },
     commands: {
         registerCommand: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+        executeCommand: jest.fn(),
     },
     ExtensionContext: jest.fn(),
     Memento: jest.fn(),

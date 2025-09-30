@@ -73,6 +73,15 @@ export class Validation {
         };
     }
 
+    private cleanup() {
+        this.statusBarItem?.dispose();
+        this.statusBarItem = undefined;
+
+        if (lastValidation === this) {
+            setLastValidation(null);
+        }
+    }
+
     private pollForProgress() {
         const interval = setInterval(() => {
             getTemplateValidationStatus(this.client, { id: this.id })
@@ -101,10 +110,12 @@ export class Validation {
                                 showValidationFailure(this.stackName);
                             }
                             clearInterval(interval);
+                            this.cleanup();
                             break;
                         case TemplateStatus.VALIDATION_FAILED:
                             showValidationFailure(this.stackName);
                             clearInterval(interval);
+                            this.cleanup();
                             break;
                     }
                 })
@@ -113,6 +124,7 @@ export class Validation {
                         `Error polling for validation status: ${error instanceof Error ? error.message : String(error)}`,
                     );
                     clearInterval(interval);
+                    this.cleanup();
                 });
         }, 1000);
     }

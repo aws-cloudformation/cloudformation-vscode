@@ -1,4 +1,4 @@
-import { Deployment } from '../../src/cfn/Deployment';
+import { Deployment, setLastDeployment, getLastDeployment } from '../../src/cfn/Deployment';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { TemplateStatus, WorkflowResult } from '../../src/cfn/TemplateRequestType';
 import * as Message from '../../src/ui/Message';
@@ -60,12 +60,15 @@ describe('Deployment', () => {
                 result: WorkflowResult.SUCCESSFUL,
             };
             jest.spyOn(TemplateAPIs, 'getTemplateDeploymentStatus').mockResolvedValue(mockResult);
+            setLastDeployment(deployment);
 
             await deployment.deploy();
             jest.advanceTimersByTime(1000);
             await Promise.resolve();
 
             expect(Message.showDeploymentSuccess).toHaveBeenCalledWith('test-stack');
+            expect(mockStatusBar.dispose).toHaveBeenCalled();
+            expect(getLastDeployment()).toBeNull();
         });
 
         it('should handle failed deployment', async () => {
@@ -75,12 +78,33 @@ describe('Deployment', () => {
                 result: WorkflowResult.FAILED,
             };
             jest.spyOn(TemplateAPIs, 'getTemplateDeploymentStatus').mockResolvedValue(mockResult);
+            setLastDeployment(deployment);
 
             await deployment.deploy();
             jest.advanceTimersByTime(1000);
             await Promise.resolve();
 
             expect(Message.showDeploymentFailure).toHaveBeenCalledWith('test-stack');
+            expect(mockStatusBar.dispose).toHaveBeenCalled();
+            expect(getLastDeployment()).toBeNull();
+        });
+
+        it('should cleanup resources on validation failed', async () => {
+            const mockResult = {
+                id: 'test-id',
+                status: TemplateStatus.VALIDATION_FAILED,
+                result: WorkflowResult.FAILED,
+            };
+            jest.spyOn(TemplateAPIs, 'getTemplateDeploymentStatus').mockResolvedValue(mockResult);
+            setLastDeployment(deployment);
+
+            await deployment.deploy();
+            jest.advanceTimersByTime(1000);
+            await Promise.resolve();
+
+            expect(Message.showDeploymentFailure).toHaveBeenCalledWith('test-stack');
+            expect(mockStatusBar.dispose).toHaveBeenCalled();
+            expect(getLastDeployment()).toBeNull();
         });
     });
 });

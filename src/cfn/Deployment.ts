@@ -64,6 +64,15 @@ export class Deployment {
         };
     }
 
+    private cleanup() {
+        this.statusBarItem?.dispose();
+        this.statusBarItem = undefined;
+
+        if (lastDeployment === this) {
+            setLastDeployment(null);
+        }
+    }
+
     private pollForProgress() {
         const interval = setInterval(() => {
             getTemplateDeploymentStatus(this.client, { id: this.id })
@@ -91,11 +100,13 @@ export class Deployment {
                                 showDeploymentFailure(this.stackName);
                             }
                             clearInterval(interval);
+                            this.cleanup();
                             break;
                         case TemplateStatus.DEPLOYMENT_FAILED:
                         case TemplateStatus.VALIDATION_FAILED:
                             showDeploymentFailure(this.stackName);
                             clearInterval(interval);
+                            this.cleanup();
                             break;
                     }
                 })
@@ -103,6 +114,7 @@ export class Deployment {
                     console.error('Error polling for deployment status:', error);
                     showDeploymentFailure(this.stackName);
                     clearInterval(interval);
+                    this.cleanup();
                 });
         }, 1000);
     }
