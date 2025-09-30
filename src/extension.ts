@@ -1,4 +1,4 @@
-import { workspace, ExtensionContext, window } from 'vscode';
+import { workspace, ExtensionContext, window, languages } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
 import { CloseAction, ErrorAction } from 'vscode-languageclient/lib/common/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -39,6 +39,7 @@ import { DocumentPreview } from './documents/DocumentPreview';
 import { ResourcesManager } from './resources/ResourcesManager';
 import { ResourceSelector } from './ui/ResourceSelector';
 import { ResourcesSectionUI } from './resources/ResourcesSectionUI';
+import { CfnInlineCompletionProvider } from './inlineCompletion/InlineCompletionProvider';
 
 let client: LanguageClient;
 
@@ -133,8 +134,18 @@ export function activate(context: ExtensionContext) {
     client
         .start()
         .then(() => {
+            const inlineCompletionProvider = languages.registerInlineCompletionItemProvider(
+                [
+                    { scheme: 'file', language: 'cloudformation' },
+                    { scheme: 'file', language: 'yaml' },
+                    { scheme: 'file', language: 'json' },
+                ],
+                new CfnInlineCompletionProvider(client),
+            );
+
             context.subscriptions.push(
                 client,
+                inlineCompletionProvider,
                 stacksManager,
                 window.createTreeView('aws.cloudformation', {
                     treeDataProvider: cfnPanel,
