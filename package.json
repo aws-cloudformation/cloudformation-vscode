@@ -1,0 +1,468 @@
+{
+  "name": "cloudformation-vscode",
+  "displayName": "AWS CloudFormation",
+  "version": "0.0.5",
+  "description": "VS Code extension providing CloudFormation language support",
+  "publisher": "aws",
+  "author": "Amazon Web Services (AWS)",
+  "license": "Apache-2.0",
+  "main": "./out/src/extension.js",
+  "engines": {
+    "vscode": "^1.75.0",
+    "node": ">=22.15.0 <22.17.0",
+    "npm": ">=10.5.0"
+  },
+  "keywords": [
+    "Amazon Web Services (AWS)",
+    "Amazon",
+    "CloudFormation",
+    "Infrastructure as Code (IaC)",
+    "Language Server"
+  ],
+  "categories": [
+    "Amazon Web Services (AWS)",
+    "Amazon",
+    "CloudFormation",
+    "Infrastructure as Code (IaC)",
+    "Language Server"
+  ],
+  "scripts": {
+    "vscode:prepublish": "echo 'Package already build'",
+    "clean": "rm -rf build && rm -rf bundle && rm -rf coverage && rm -rf node_modules && rm -rf out",
+    "build": "rm -rf out && tsc -b",
+    "clean:output": "rm -rf out",
+    "build:dev": "npm run clean:output && webpack --env env=alpha",
+    "build:beta": "npm run clean:output && webpack --env env=beta",
+    "build:prod": "npm run clean:output && webpack --env env=prod",
+    "bundle:dev": "npm run build:dev && BUILD_ENV=alpha npm run vsce",
+    "bundle:beta": "npm run build:beta && BUILD_ENV=beta npm run vsce",
+    "bundle:prod": "npm run build:prod && BUILD_ENV=prod npm run vsce",
+    "vsce": "node build-vsce.js",
+    "watch": "tsc -b -w",
+    "test": "jest",
+    "lint": "eslint src tst",
+    "lint:fix": "npm run lint -- --fix",
+    "prepare": "husky",
+    "explore:vsix": "npx vsce ls --tree $(ls -t *.vsix | head -n1)"
+  },
+  "dependencies": {
+    "@aws-sdk/credential-providers": "3.828.0",
+    "axios": "1.11.0",
+    "ini": "5.0.0",
+    "uuid": "11.1.0",
+    "vscode-languageclient": "9.0.1",
+    "yauzl": "3.2.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cloudformation": "3.872.0",
+    "@aws-sdk/types": "3.821.0",
+    "@eslint/js": "9.28.0",
+    "@types/ini": "4.1.1",
+    "@types/jest": "29.5.14",
+    "@types/node": "24.0.1",
+    "@types/sinon": "17.0.4",
+    "@types/vscode": "1.75.0",
+    "eslint": "9.28.0",
+    "eslint-config-prettier": "10.1.5",
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-prettier": "5.4.1",
+    "eslint-plugin-promise": "7.2.1",
+    "husky": "9.1.7",
+    "jest": "30.0.0",
+    "prettier": "3.5.3",
+    "sinon": "20.0.0",
+    "ts-jest": "29.4.0",
+    "ts-loader": "9.5.2",
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.34.0",
+    "webpack": "5.99.9",
+    "webpack-bundle-analyzer": "4.10.2",
+    "webpack-cli": "6.0.1"
+  },
+  "activationEvents": [
+    "onLanguage:plaintext",
+    "onLanguage:cloudformation",
+    "onLanguage:json",
+    "onLanguage:yaml"
+  ],
+  "contributes": {
+    "views": {
+      "aws": [
+        {
+          "id": "aws.cloudformation",
+          "name": "CloudFormation",
+          "when": "true",
+          "icon": "resources/cfn.svg"
+        }
+      ],
+      "cfn-diff": [
+        {
+          "id": "aws.cloudformation.diff",
+          "name": "Stack Changes",
+          "type": "webview",
+          "when": "cloudformationDiffVisible"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aws",
+          "title": "AWS",
+          "icon": "resources/cfn.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "cfn-diff",
+          "title": "CloudFormation Diff",
+          "icon": "$(diff)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "aws.cloudformation.server.attachDebugger",
+        "title": "AWS CloudFormation: Attach Debugger to Server"
+      },
+      {
+        "command": "aws.cloudformation.server.restartServer",
+        "title": "AWS CloudFormation: Restart Server"
+      },
+      {
+        "command": "aws.cloudformation.auth.selectAwsProfile",
+        "title": "AWS CloudFormation: Select AWS Profile"
+      },
+      {
+        "command": "aws.cloudformation.api.validateTemplate",
+        "title": "AWS CloudFormation: Validate Template"
+      },
+      {
+        "command": "aws.cloudformation.api.deployTemplate",
+        "title": "AWS CloudFormation: Deploy Template"
+      },
+      {
+        "command": "aws.cloudformation.llm.template.describe",
+        "title": "AWS CloudFormation (AI): Describe a template"
+      },
+      {
+        "command": "aws.cloudformation.llm.template.optimize",
+        "title": "AWS CloudFormation (AI): Optimize template"
+      },
+      {
+        "command": "aws.cloudformation.llm.template.generate",
+        "title": "AWS CloudFormation (AI): Generate template"
+      },
+      {
+        "command": "aws.cloudformation.llm.template.recommendRelatedResources",
+        "title": "AWS CloudFormation (AI): Recommend related resources"
+      },
+      {
+        "command": "aws.cloudformation.api.rerunLastValidation",
+        "title": "AWS CloudFormation: Rerun Last Validation"
+      },
+      {
+        "command": "aws.cloudformation.ai.showMenu",
+        "title": "AWS CloudFormation AI",
+        "icon": "$(sparkle)",
+        "tooltip": "AWS CloudFormation AI Actions"
+      },
+      {
+        "command": "aws.cloudformation.stacks.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aws.cloudformation.api.importResourceState",
+        "title": "AWS CloudFormation: Import Resource State",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "aws.cloudformation.api.selectResourceTypes",
+        "title": "Select Resource Types",
+        "icon": "$(add)"
+      },
+      {
+        "command": "aws.cloudformation.api.addResourceTypes",
+        "title": "Add Resource Type to List",
+        "icon": "$(add)"
+      },
+      {
+        "command": "aws.cloudformation.api.refreshAllResources",
+        "title": "Refresh All Resources",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aws.cloudformation.api.refreshResourceList",
+        "title": "Refresh Resource List",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aws.cloudformation.api.copyResourceIdentifier",
+        "title": "Copy Resource Identifier",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "aws.cloudformation.stacks.viewDiff",
+        "title": "View Stack Diff",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "aws.cloudformation.diff.focus",
+        "title": "Focus CloudFormation Diff View"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "aws.cloudformation.ai.showMenu",
+          "when": "resourceExtname == .yaml || resourceExtname == .json || resourceExtname == .yml || resourceExtname == .txt || resourceExtname == .cfn || resourceExtname == .template",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "aws.cloudformation.api.rerunLastValidation",
+          "when": "resourceExtname == .yaml || resourceExtname == .json || resourceExtname == .yml || resourceExtname == .txt || resourceExtname == .cfn || resourceExtname == .template",
+          "group": "1_cloudformation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "aws.cloudformation.stacks.refresh",
+          "when": "view == aws.cloudformation && viewItem == stackSection",
+          "group": "inline"
+        },
+        {
+          "command": "aws.cloudformation.stacks.viewDiff",
+          "when": "view == aws.cloudformation && viewItem == stack",
+          "group": "navigation"
+        },
+        {
+          "command": "aws.cloudformation.api.addResourceTypes",
+          "when": "view == aws.cloudformation && viewItem == resourceSection",
+          "group": "1@1"
+        },
+        {
+          "command": "aws.cloudformation.api.refreshAllResources",
+          "when": "view == aws.cloudformation && viewItem == resourceSection",
+          "group": "1@2"
+        },
+        {
+          "command": "aws.cloudformation.api.addResourceTypes",
+          "when": "view == aws.cloudformation && viewItem == resourceSection",
+          "group": "inline@1"
+        },
+        {
+          "command": "aws.cloudformation.api.refreshAllResources",
+          "when": "view == aws.cloudformation && viewItem == resourceSection",
+          "group": "inline@2"
+        },
+        {
+          "command": "aws.cloudformation.api.refreshResourceList",
+          "when": "view == aws.cloudformation && viewItem == resourceType",
+          "group": "1@1"
+        },
+        {
+          "command": "aws.cloudformation.api.importResourceState",
+          "when": "view == aws.cloudformation && viewItem == resource",
+          "group": "1@1"
+        },
+        {
+          "command": "aws.cloudformation.api.copyResourceIdentifier",
+          "when": "view == aws.cloudformation && viewItem == resource",
+          "group": "1@2"
+        },
+        {
+          "command": "aws.cloudformation.api.importResourceState",
+          "when": "view == aws.cloudformation && viewItem == resource",
+          "group": "inline@1"
+        },
+        {
+          "command": "aws.cloudformation.api.refreshResourceList",
+          "when": "view == aws.cloudformation && viewItem == resourceType",
+          "group": "inline@1"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "CloudFormation Language Server",
+        "properties": {
+          "aws.cloudformation.server.debugPort": {
+            "type": "number",
+            "default": 6001,
+            "description": "Debug port for the LSP server"
+          },
+          "aws.cloudformation.server.trace": {
+            "type": "string",
+            "enum": [
+              "off",
+              "messages",
+              "verbose"
+            ],
+            "default": "off",
+            "description": "Traces the communication between VS Code and the language server"
+          },
+          "aws.cloudformation.telemetry.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Configure anonymous telemetry collection (cannot disable unless it is a production release)"
+          },
+          "aws.cloudformation.telemetry.logLevel": {
+            "type": "string",
+            "enum": [
+              "debug",
+              "info",
+              "warn",
+              "error"
+            ],
+            "default": "info",
+            "description": "Configure the client messaging level"
+          }
+        }
+      },
+      {
+        "title": "CloudFormation Features",
+        "properties": {
+          "aws.cloudformation.hover.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable hover information for CloudFormation resources"
+          },
+          "aws.cloudformation.completion.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable auto-completion for CloudFormation templates"
+          }
+        }
+      },
+      {
+        "title": "CloudFormation Linter",
+        "properties": {
+          "aws.cloudformation.diagnostics.cfnLint.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable CloudFormation linting"
+          },
+          "aws.cloudformation.diagnostics.cfnLint.lintOnChange": {
+            "type": "boolean",
+            "default": true,
+            "description": "Run cfn-lint when document content changes"
+          },
+          "aws.cloudformation.diagnostics.cfnLint.delayMs": {
+            "type": "number",
+            "default": 3000,
+            "minimum": 0,
+            "description": "Delay in milliseconds before running cfn-lint after changes"
+          }
+        }
+      },
+      {
+        "title": "CloudFormation Guard",
+        "properties": {
+          "aws.cloudformation.diagnostics.cfnGuard.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable CloudFormation Guard validation"
+          },
+          "aws.cloudformation.diagnostics.cfnGuard.validateOnChange": {
+            "type": "boolean",
+            "default": true,
+            "description": "Run cfn-guard when document content changes"
+          },
+          "aws.cloudformation.diagnostics.cfnGuard.delayMs": {
+            "type": "number",
+            "default": 1000,
+            "minimum": 0,
+            "description": "Delay in milliseconds before running cfn-guard after changes"
+          },
+          "aws.cloudformation.diagnostics.cfnGuard.enabledRulePacks": {
+            "type": "array",
+            "default": [
+              "cis-aws-benchmark-level-1",
+              "cis-top-20",
+              "wa-Reliability-Pillar",
+              "wa-Security-Pillar"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "ABS-CCIGv2-Material",
+                "ABS-CCIGv2-Standard",
+                "acsc-essential-8",
+                "acsc-ism",
+                "apra-cpg-234",
+                "bnm-rmit",
+                "cis-aws-benchmark-level-1",
+                "cis-aws-benchmark-level-2",
+                "cis-critical-security-controls-v8-ig1",
+                "cis-critical-security-controls-v8-ig2",
+                "cis-critical-security-controls-v8-ig3",
+                "cis-top-20",
+                "cisa-ce",
+                "cmmc-level-1",
+                "cmmc-level-2",
+                "cmmc-level-3",
+                "cmmc-level-4",
+                "cmmc-level-5",
+                "enisa-cybersecurity-guide-for-smes",
+                "ens-high",
+                "ens-low",
+                "ens-medium",
+                "FDA-21CFR-Part-11",
+                "FedRAMP-Low",
+                "FedRAMP-Moderate",
+                "ffiec",
+                "hipaa-security",
+                "K-ISMS",
+                "mas-notice-655",
+                "mas-trmg",
+                "nbc-trmg",
+                "ncsc-cafv3",
+                "ncsc",
+                "nerc",
+                "nist-1800-25",
+                "nist-800-171",
+                "nist-800-172",
+                "nist-800-181",
+                "nist-csf",
+                "nist-privacy-framework",
+                "NIST800-53Rev4",
+                "NIST800-53Rev5",
+                "nzism",
+                "PCI-DSS-3-2-1",
+                "rbi-bcsf-ucb",
+                "rbi-md-itf",
+                "us-nydfs",
+                "wa-Reliability-Pillar",
+                "wa-Security-Pillar"
+              ]
+            },
+            "description": "Cfn-guard enabled rule packs"
+          }
+        }
+      }
+    ],
+    "languages": [
+      {
+        "id": "cloudformation",
+        "extensions": [
+          ".template",
+          ".cfn"
+        ],
+        "aliases": [
+          "CloudFormation"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cloudformation",
+        "scopeName": "source.cloudformation",
+        "path": "./syntaxes/cloudformation.tmLanguage.json"
+      }
+    ]
+  }
+}

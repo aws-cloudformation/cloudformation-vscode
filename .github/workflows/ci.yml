@@ -1,0 +1,12 @@
+name: Main branch CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build and Test Application
+    uses: ./.github/workflows/build-and-test.yml

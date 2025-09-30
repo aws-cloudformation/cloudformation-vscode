@@ -1,0 +1,15 @@
+# Exclude everything by default
+**
+
+# Only include what's required
+
+!bundle/**/*
+!language-configuration.json
+!syntaxes/**
+!resources/**
+
+!package.json
+!LICENSE
+!NOTICE
+!THIRD-PARTY-LICENSES.txt
+!README.md

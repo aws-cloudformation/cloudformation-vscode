@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2022",
+    "moduleResolution": "node",
+    "outDir": "out",
+    "lib": [
+      "ES2022"
+    ],
+    "declaration": true,
+    "sourceMap": true,
+    "rootDir": ".",
+    "declarationMap": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "allowJs": false,
+    "forceConsistentCasingInFileNames": true,
+    "composite": true,
+    "noImplicitOverride": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src",
+    "tst",
+    "syntaxes",
+    "package.json",
+    "language-configuration.json"
+  ],
+  "exclude": [
+    "build",
+    "bundle",
+    "coverage",
+    "out",
+    "node_modules"
+  ]
+}

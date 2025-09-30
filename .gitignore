@@ -1,0 +1,12 @@
+/node_modules
+/build
+/out
+/coverage
+/bundle
+*.tsbuildinfo
+*.node
+.DS_Store
+*.vsix
+*.backup
+/extension
+/oss-attribution
