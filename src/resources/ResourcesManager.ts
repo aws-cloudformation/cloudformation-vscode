@@ -2,12 +2,12 @@ import { ResourceSelectionResult, ResourceSelector } from '../ui/ResourceSelecto
 import { LanguageClient } from 'vscode-languageclient/node';
 import {
     ListResourcesRequest,
-    RefreshResourceListRequest,
+    RefreshResourcesRequest,
     ResourceList,
     ResourceSelection,
-    ResourceStateImportParams,
-    ResourceStateImportRequest,
-    ResourceStateImportResult,
+    ResourceStateParams,
+    ResourceStateRequest,
+    ResourceStateResult,
 } from '../cfn/ResourceRequestTypes';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
 import { showErrorMessage } from '../ui/Message';
@@ -63,7 +63,7 @@ export class ResourcesManager {
                         return;
                     }
 
-                    const response = await this.client.sendRequest(RefreshResourceListRequest, {
+                    const response = await this.client.sendRequest(RefreshResourcesRequest, {
                         resourceTypes: this.selectedResourceTypes,
                     });
                     this.resources.clear();
@@ -87,7 +87,7 @@ export class ResourcesManager {
             },
             async () => {
                 try {
-                    const response = await this.client.sendRequest(RefreshResourceListRequest, {
+                    const response = await this.client.sendRequest(RefreshResourcesRequest, {
                         resourceTypes: [resourceType],
                     });
 
@@ -140,7 +140,7 @@ export class ResourcesManager {
 
             const resourceSelectionsArray = this.getResourcesToImportInput(selections);
 
-            const params: ResourceStateImportParams = {
+            const params: ResourceStateParams = {
                 textDocument: { uri: editor.document.uri.toString() },
                 range: { start: editor.selection.start, end: editor.selection.end },
                 context: { diagnostics: [] },
@@ -154,11 +154,9 @@ export class ResourcesManager {
                     cancellable: false,
                 },
                 async () => {
-                    const result = await this.client.sendRequest(ResourceStateImportRequest.method, params);
-                    await this.applyCodeActionEdits(result as ResourceStateImportResult);
-                    const [successCount, failureCount] = this.getSuccessAndFailureCount(
-                        result as ResourceStateImportResult,
-                    );
+                    const result = await this.client.sendRequest(ResourceStateRequest.method, params);
+                    await this.applyCodeActionEdits(result as ResourceStateResult);
+                    const [successCount, failureCount] = this.getSuccessAndFailureCount(result as ResourceStateResult);
                     this.renderImportResultMessage(successCount, failureCount);
                 },
             );
@@ -185,7 +183,7 @@ export class ResourcesManager {
         }));
     }
 
-    private async applyCodeActionEdits(result: ResourceStateImportResult) {
+    private async applyCodeActionEdits(result: ResourceStateResult) {
         if (result.edit?.changes) {
             const workspaceEdit = new WorkspaceEdit();
             for (const [uri, textEdits] of Object.entries(result.edit.changes)) {
@@ -206,7 +204,7 @@ export class ResourcesManager {
         }
     }
 
-    private getSuccessAndFailureCount(result: ResourceStateImportResult): [number, number] {
+    private getSuccessAndFailureCount(result: ResourceStateResult): [number, number] {
         const successCount = Object.values(result.successfulImports ?? {}).reduce(
             (sum: number, ids: string[]) => sum + ids.length,
             0,
