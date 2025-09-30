@@ -1,61 +1,32 @@
-import { window, workspace, TabInputText } from 'vscode';
-import { validateTemplatePath, validateStackName, validateParameterValue } from '../cfn/InputValidationUtil';
+import { window, workspace, Uri } from 'vscode';
+import { validateStackName, validateParameterValue } from '../cfn/InputValidationUtil';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { TemplateParameter } from '../cfn/TemplateRequestType';
+import { DocumentManager } from '../documents/DocumentManager';
 
-export async function getTemplatePath(prefill?: string): Promise<string | undefined> {
-    const openFiles = window.tabGroups.all
-        .flatMap((group) => group.tabs)
-        .filter((tab) => tab.input instanceof TabInputText && tab.input.uri.scheme === 'file')
-        .map((tab) => {
-            const input = tab.input as TabInputText;
+export async function getTemplatePath(documentManager: DocumentManager): Promise<string | undefined> {
+    const validTemplates = documentManager
+        .get()
+        .filter((doc) => doc.cfnType === 'template')
+        .map((doc) => {
+            const uri = doc.uri;
+
             return {
-                label: workspace.asRelativePath(input.uri),
-                description: input.uri.fsPath,
-                uri: input.uri.toString(),
+                label: doc.fileName,
+                description: workspace.asRelativePath(Uri.parse(uri)),
+                uri: uri,
             };
         })
-        .filter((item) => item.uri.startsWith('file://'));
+        .sort((a, b) => a.label.localeCompare(b.label));
 
-    if (openFiles.length > 0) {
-        const items = [
-            ...openFiles,
-            { label: '$(file) Select file...', description: 'Browse for file', uri: 'SELECT_FILE' },
-        ];
-
-        const selected = await window.showQuickPick(items, {
-            placeHolder: 'Select CloudFormation template',
-            ignoreFocusOut: true,
-        });
-
-        if (!selected) return undefined;
-
-        if (selected.uri === 'SELECT_FILE') {
-            const fileUri = await window.showOpenDialog({
-                canSelectFiles: true,
-                canSelectFolders: false,
-                canSelectMany: false,
-                filters: {
-                    CloudFormation: ['json', 'yaml', 'yml', 'template', 'cfn', 'txt'],
-                },
-            });
-            return fileUri?.[0]?.toString();
-        }
-
-        return selected.uri;
-    }
-
-    const templatePath = await window.showInputBox({
-        prompt: 'Enter the CloudFormation template path',
-        value: prefill,
-        validateInput: validateTemplatePath,
+    const selected = await window.showQuickPick(validTemplates, {
+        placeHolder: 'Select CloudFormation template',
         ignoreFocusOut: true,
     });
 
-    if (templatePath) {
-        return templatePath.startsWith('file://') ? templatePath : `file://${templatePath}`;
-    }
-    return undefined;
+    if (!selected) return undefined;
+
+    return selected.uri;
 }
 
 export async function getStackName(prefill?: string): Promise<string | undefined> {

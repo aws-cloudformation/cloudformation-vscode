@@ -162,8 +162,8 @@ export function activate(context: ExtensionContext) {
                 focusDiffCommand(),
                 restartCommand(client),
                 selectProfileCommand(credentialsService),
-                validateTemplateCommand(client, stacksManager, diffProvider),
-                deployTemplateCommand(client, stacksManager),
+                validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
+                deployTemplateCommand(client, stacksManager, documentManager),
                 refreshCommand(stacksManager),
                 describeTemplate(client, () => {
                     return documentManager.get();

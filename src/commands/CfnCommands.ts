@@ -12,6 +12,7 @@ import { TemplateParameter } from '../cfn/TemplateRequestType';
 import { StacksManager } from '../stacks/StacksManager';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
 import { ResourcesManager } from '../resources/ResourcesManager';
+import { DocumentManager } from '../documents/DocumentManager';
 
 import { DiffWebviewProvider } from '../ui/DiffWebviewProvider';
 
@@ -19,10 +20,11 @@ export function validateTemplateCommand(
     client: LanguageClient,
     stacks: StacksManager,
     diffProvider: DiffWebviewProvider,
+    documentManager: DocumentManager,
 ) {
     return commands.registerCommand(commandKey('api.validateTemplate'), async () => {
         try {
-            const templateUri = await getTemplatePath(getLastValidation()?.uri);
+            const templateUri = await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
@@ -52,10 +54,10 @@ export function validateTemplateCommand(
     });
 }
 
-export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager) {
+export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async () => {
         try {
-            const templateUri = await getTemplatePath();
+            const templateUri = await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
