@@ -14,6 +14,13 @@ const vscode = {
         showErrorMessage: jest.fn(),
         showWarningMessage: jest.fn(),
         setStatusBarMessage: jest.fn(),
+        showOpenDialog: jest.fn(),
+        tabGroups: {
+            all: [],
+        },
+    },
+    workspace: {
+        asRelativePath: jest.fn(),
     },
     StatusBarAlignment: {
         Left: 1,
@@ -25,6 +32,8 @@ const vscode = {
     ExtensionContext: jest.fn(),
     Memento: jest.fn(),
     Disposable: jest.fn(),
+    TabInputText: jest.fn(),
+    Uri: jest.fn(),
 };
 
 module.exports = vscode;
