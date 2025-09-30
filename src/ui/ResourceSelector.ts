@@ -1,6 +1,6 @@
 import { window } from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { GetResourceTypesRequest, ListResourcesRequest, ResourceList } from '../cfn/ResourceRequestTypes';
+import { ResourceTypesRequest, ListResourcesRequest, ResourceList } from '../cfn/ResourceRequestTypes';
 
 export interface ResourceSelectionResult {
     resourceType: string;
@@ -12,7 +12,7 @@ export class ResourceSelector {
 
     async selectResourceTypes(selectedTypes: string[] = []): Promise<string[] | undefined> {
         try {
-            const response = await this.client.sendRequest(GetResourceTypesRequest, {});
+            const response = await this.client.sendRequest(ResourceTypesRequest, {});
             const availableTypes = response.resourceTypes;
 
             if (availableTypes.length === 0) {

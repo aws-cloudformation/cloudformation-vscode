@@ -5,9 +5,9 @@ export interface ListResourcesParams {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface GetResourceTypesParams {}
+export interface ResourceTypesParams {}
 
-export interface GetResourceTypesResult {
+export interface ResourceTypesResult {
     resourceTypes: string[];
 }
 
@@ -21,15 +21,15 @@ export interface ListResourcesResult {
 }
 
 export const ListResourcesRequest = new RequestType<ListResourcesParams, ListResourcesResult, void>(
-    'aws/cfn/resources',
+    'aws/cfn/resources/list',
 );
 
-export const RefreshResourceListRequest = new RequestType<ListResourcesParams, ListResourcesResult, void>(
-    'aws/cfn/refreshResourceList',
+export const RefreshResourcesRequest = new RequestType<ListResourcesParams, ListResourcesResult, void>(
+    'aws/cfn/resources/refresh',
 );
 
-export const GetResourceTypesRequest = new RequestType<GetResourceTypesParams, GetResourceTypesResult, void>(
-    'aws/cfn/resourceTypes',
+export const ResourceTypesRequest = new RequestType<ResourceTypesParams, ResourceTypesResult, void>(
+    'aws/cfn/resources/types',
 );
 
 export type ResourceSelection = {
@@ -37,18 +37,18 @@ export type ResourceSelection = {
     resourceIdentifiers: string[];
 };
 
-export interface ResourceStateImportParams extends CodeActionParams {
+export interface ResourceStateParams extends CodeActionParams {
     resourceSelections?: ResourceSelection[];
 }
 
 export type ResourceType = string;
 export type ResourceIdentifier = string;
 
-export interface ResourceStateImportResult extends CodeAction {
+export interface ResourceStateResult extends CodeAction {
     successfulImports: Map<ResourceType, ResourceIdentifier[]>;
     failedImports: Map<ResourceType, ResourceIdentifier[]>;
 }
 
-export const ResourceStateImportRequest = new RequestType<ResourceStateImportParams, ResourceStateImportResult, void>(
-    'aws/cfn/resourceStateImport',
+export const ResourceStateRequest = new RequestType<ResourceStateParams, ResourceStateResult, void>(
+    'aws/cfn/resources/state',
 );
