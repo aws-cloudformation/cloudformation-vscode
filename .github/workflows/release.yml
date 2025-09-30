@@ -21,18 +21,15 @@ on:
 
 jobs:
   get-configs:
-    name: Get Configs
     uses: ./.github/workflows/configs.yml
 
   build-and-test:
-    name: Build and Test
     needs: [get-configs]
     uses: ./.github/workflows/build-and-test.yml
     with:
       ref: ${{ inputs.branch }}
 
   version-and-tag:
-    name: Release Tag
     runs-on: ubuntu-latest
     needs: [get-configs, build-and-test]
     permissions:
@@ -68,7 +65,6 @@ jobs:
           echo "tag=$FULL_TAG" >> $GITHUB_OUTPUT
 
   release:
-    name: Release
     needs: [get-configs, version-and-tag]
     permissions:
       contents: write
