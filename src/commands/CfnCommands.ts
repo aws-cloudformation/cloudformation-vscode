@@ -4,10 +4,10 @@ import { LanguageClient } from 'vscode-languageclient/node';
 import { Command } from 'vscode-languageclient';
 import { Deployment, setLastDeployment } from '../cfn/Deployment';
 import { Parameter } from '@aws-sdk/client-cloudformation';
-import { getParameterValues, getStackName, getTemplatePath } from '../ui/InputBox';
+import { getParameterValues, getStackName, getTemplatePath, confirmCapabilities } from '../ui/InputBox';
 import { showErrorMessage } from '../ui/Message';
 import { getLastValidation, setLastValidation, Validation } from '../cfn/Validation';
-import { getParameters } from '../cfn/TemplateAPIs';
+import { getParameters, getCapabilities } from '../cfn/TemplateAPIs';
 import { TemplateParameter } from '../cfn/TemplateRequestType';
 import { StacksManager } from '../stacks/StacksManager';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
@@ -40,7 +40,11 @@ export function validateTemplateCommand(
             }
             if (paramDefinition.length > 0 && !parameters) return;
 
-            const validation = new Validation(templateUri, stackName, client, diffProvider, parameters);
+            const capabilitiesResult = await getCapabilities(client, { uri: templateUri });
+            const capabilities = await confirmCapabilities(capabilitiesResult.capabilities);
+            if (capabilities === undefined) return; // User cancelled
+
+            const validation = new Validation(templateUri, stackName, client, diffProvider, parameters, capabilities);
 
             setLastValidation(validation);
 
@@ -73,7 +77,11 @@ export function deployTemplateCommand(client: LanguageClient, stacks: StacksMana
             }
             if (paramDefinition.length > 0 && !parameters) return;
 
-            const deployment = new Deployment(templateUri, stackName, client, parameters);
+            const capabilitiesResult = await getCapabilities(client, { uri: templateUri });
+            const capabilities = await confirmCapabilities(capabilitiesResult.capabilities);
+            if (capabilities === undefined) return; // User cancelled
+
+            const deployment = new Deployment(templateUri, stackName, client, parameters, capabilities);
             setLastDeployment(deployment);
             await deployment.deploy();
             stacks.startPolling();

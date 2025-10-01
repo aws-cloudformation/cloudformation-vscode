@@ -1,6 +1,6 @@
 import { window, workspace, Uri } from 'vscode';
 import { validateStackName, validateParameterValue } from '../cfn/InputValidationUtil';
-import { Parameter } from '@aws-sdk/client-cloudformation';
+import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
 import { TemplateParameter } from '../cfn/TemplateRequestType';
 import { DocumentManager } from '../documents/DocumentManager';
 
@@ -73,4 +73,37 @@ async function getParameterValue(parameter: TemplateParameter, prefill?: string)
     }
 
     return { ParameterKey: parameter.name, ParameterValue: value };
+}
+
+export async function confirmCapabilities(capabilities: Capability[]): Promise<Capability[] | undefined> {
+    // Confirm if user wants to use detected capabilities
+    const useDetected = await window.showQuickPick(['Yes', 'No, modify capabilities'], {
+        placeHolder: `Use capabilities: ${capabilities.join(', ') || '(none)'}?`,
+        canPickMany: false,
+    });
+
+    if (!useDetected) {
+        return undefined; // User cancelled
+    }
+
+    if (useDetected === 'Yes') {
+        return capabilities;
+    }
+
+    // Allow user to modify capabilities
+    const allCapabilities: Capability[] = [
+        Capability.CAPABILITY_IAM,
+        Capability.CAPABILITY_NAMED_IAM,
+        Capability.CAPABILITY_AUTO_EXPAND,
+    ];
+
+    const selected = await window.showQuickPick(
+        allCapabilities.map((cap) => ({ label: cap, picked: capabilities.includes(cap) })),
+        {
+            placeHolder: 'Select capabilities to use',
+            canPickMany: true,
+        },
+    );
+
+    return selected ? selected.map((item) => item.label) : undefined;
 }
