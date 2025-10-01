@@ -27,7 +27,7 @@ export class ResourceSelector {
 
             const selectedItems = await window.showQuickPick(quickPickItems, {
                 canPickMany: true,
-                placeHolder: 'Select AWS resource types to import',
+                placeHolder: 'Select resource types',
                 title: 'Select Resource Types',
             });
 
@@ -60,7 +60,7 @@ export class ResourceSelector {
                 // Step 3: Select multiple resources for this type
                 const selectedIdentifiers = await window.showQuickPick(resourceIdentifiers, {
                     canPickMany: true,
-                    placeHolder: `Select ${resourceType} resources to import`,
+                    placeHolder: `Select ${resourceType} identifiers`,
                     title: `Select ${resourceType} Resources`,
                 });
 

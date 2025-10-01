@@ -6,6 +6,7 @@ import {
     ResourceList,
     ResourceSelection,
     ResourceStateParams,
+    ResourceStatePurpose,
     ResourceStateRequest,
     ResourceStateResult,
 } from '../cfn/ResourceRequestTypes';
@@ -120,31 +121,17 @@ export class ResourcesManager {
         }
 
         try {
-            let selections: ResourceSelectionResult[];
-
-            if (resourceNode?.resourceList && resourceNode.resourceType) {
-                // Called from tree view with specific resource
-                selections = [
-                    {
-                        resourceType: resourceNode.resourceType,
-                        resourceIdentifier: resourceNode.label,
-                    },
-                ];
-            } else {
-                selections = await this.resourceSelector.selectResourcesForImport();
-            }
-
-            if (selections.length === 0) {
+            const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNode);
+            if (resourceSelectionsArray.length === 0) {
                 return;
             }
-
-            const resourceSelectionsArray = this.getResourcesToImportInput(selections);
 
             const params: ResourceStateParams = {
                 textDocument: { uri: editor.document.uri.toString() },
                 range: { start: editor.selection.start, end: editor.selection.end },
                 context: { diagnostics: [] },
                 resourceSelections: resourceSelectionsArray,
+                purpose: ResourceStatePurpose.Import,
             };
 
             window.withProgress(
@@ -157,7 +144,7 @@ export class ResourcesManager {
                     const result = await this.client.sendRequest(ResourceStateRequest.method, params);
                     await this.applyCodeActionEdits(result as ResourceStateResult);
                     const [successCount, failureCount] = this.getSuccessAndFailureCount(result as ResourceStateResult);
-                    this.renderImportResultMessage(successCount, failureCount);
+                    this.renderResultMessage(successCount, failureCount, ResourceStatePurpose.Import);
                 },
             );
         } catch (error) {
@@ -216,15 +203,80 @@ export class ResourcesManager {
         return [successCount, failureCount];
     }
 
-    private renderImportResultMessage(successCount: number, failureCount: number) {
-        if (successCount > 0 && failureCount === 0) {
-            window.showInformationMessage(`Successfully imported ${successCount} resource(s)`);
-        } else if (successCount > 0 && failureCount > 0) {
-            window.showWarningMessage(`Imported ${successCount} resource(s), ${failureCount} failed`);
-        } else if (failureCount > 0) {
-            showErrorMessage(`Failed to import ${failureCount} resource(s)`);
+    async cloneResourceStates(resourceNode?: ResourceNode): Promise<void> {
+        const editor = window.activeTextEditor;
+        if (!editor) {
+            showErrorMessage('No active editor');
+            return;
+        }
+
+        try {
+            const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNode);
+            if (resourceSelectionsArray.length === 0) {
+                return;
+            }
+
+            const params: ResourceStateParams = {
+                textDocument: { uri: editor.document.uri.toString() },
+                range: { start: editor.selection.start, end: editor.selection.end },
+                context: { diagnostics: [] },
+                resourceSelections: resourceSelectionsArray,
+                purpose: ResourceStatePurpose.Clone,
+            };
+
+            window.withProgress(
+                {
+                    location: ProgressLocation.Notification,
+                    title: 'Cloning Resource State',
+                    cancellable: false,
+                },
+                async () => {
+                    const result = await this.client.sendRequest(ResourceStateRequest.method, params);
+                    await this.applyCodeActionEdits(result as ResourceStateResult);
+                    const [successCount, failureCount] = this.getSuccessAndFailureCount(result as ResourceStateResult);
+                    this.renderResultMessage(successCount, failureCount, ResourceStatePurpose.Clone);
+                },
+            );
+        } catch (error) {
+            showErrorMessage(`Error cloning resource state: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    private async getResourceSelectionArray(resourceNode?: ResourceNode): Promise<ResourceSelection[]> {
+        let selections: ResourceSelectionResult[];
+
+        if (resourceNode?.resourceList && resourceNode.resourceType) {
+            // Called from tree view with specific resource
+            selections = [
+                {
+                    resourceType: resourceNode.resourceType,
+                    resourceIdentifier: resourceNode.label,
+                },
+            ];
         } else {
-            window.showInformationMessage('No resources were imported');
+            selections = await this.resourceSelector.selectResourcesForImport();
+        }
+
+        if (selections.length === 0) {
+            return [];
+        }
+
+        return this.getResourcesToImportInput(selections);
+    }
+
+    private renderResultMessage(successCount: number, failureCount: number, purpose: ResourceStatePurpose) {
+        const action = purpose === ResourceStatePurpose.Import ? 'imported' : 'cloned';
+
+        if (successCount > 0 && failureCount === 0) {
+            window.showInformationMessage(`Successfully ${action} ${successCount} resource(s)`);
+        } else if (successCount > 0 && failureCount > 0) {
+            window.showWarningMessage(
+                `${action.charAt(0).toUpperCase() + action.slice(1)} ${successCount} resource(s), ${failureCount} failed`,
+            );
+        } else if (failureCount > 0) {
+            showErrorMessage(`Failed to ${action.replace('ed', '')} ${failureCount} resource(s)`);
+        } else {
+            window.showInformationMessage(`No resources were ${action}`);
         }
     }
 
