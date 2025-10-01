@@ -1,8 +1,10 @@
 import { LanguageClient } from 'vscode-languageclient/node';
 import {
-    GetParametersParams,
+    TemplateMetadataParams,
     GetParametersResult,
     GetParametersRequest,
+    GetCapabilitiesResult,
+    GetCapabilitiesRequest,
     TemplateValidationCreateRequest,
     TemplateDeploymentCreateRequest,
     TemplateValidationStatusRequest,
@@ -41,6 +43,16 @@ export async function getTemplateDeploymentStatus(
     return await client.sendRequest(TemplateDeploymentStatusRequest, params);
 }
 
-export async function getParameters(client: LanguageClient, params: GetParametersParams): Promise<GetParametersResult> {
+export async function getParameters(
+    client: LanguageClient,
+    params: TemplateMetadataParams,
+): Promise<GetParametersResult> {
     return await client.sendRequest(GetParametersRequest, params);
+}
+
+export async function getCapabilities(
+    client: LanguageClient,
+    params: TemplateMetadataParams,
+): Promise<GetCapabilitiesResult> {
+    return await client.sendRequest(GetCapabilitiesRequest, params);
 }

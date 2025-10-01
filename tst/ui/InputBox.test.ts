@@ -1,6 +1,7 @@
-import { getTemplatePath } from '../../src/ui/InputBox';
+import { getTemplatePath, confirmCapabilities } from '../../src/ui/InputBox';
 import { window, workspace, Uri } from 'vscode';
 import { DocumentManager } from '../../src/documents/DocumentManager';
+import { Capability } from '@aws-sdk/client-cloudformation';
 
 jest.mock('vscode');
 
@@ -93,6 +94,101 @@ describe('InputBox', () => {
             const result = await getTemplatePath(mockDocumentManager);
 
             expect(result).toBe('file:///test.yaml');
+        });
+    });
+
+    describe('confirmCapabilities', () => {
+        it('should return detected capabilities when user selects Yes', async () => {
+            const capabilities: Capability[] = ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'];
+            mockWindow.showQuickPick.mockResolvedValue('Yes' as any);
+
+            const result = await confirmCapabilities(capabilities);
+
+            expect(result).toEqual(capabilities);
+            expect(mockWindow.showQuickPick).toHaveBeenCalledWith(['Yes', 'No, modify capabilities'], {
+                placeHolder: 'Use capabilities: CAPABILITY_IAM, CAPABILITY_NAMED_IAM?',
+                canPickMany: false,
+            });
+        });
+
+        it('should return empty array when no capabilities detected and user selects Yes', async () => {
+            const capabilities: Capability[] = [];
+            mockWindow.showQuickPick.mockResolvedValue('Yes' as any);
+
+            const result = await confirmCapabilities(capabilities);
+
+            expect(result).toEqual([]);
+            expect(mockWindow.showQuickPick).toHaveBeenCalledWith(['Yes', 'No, modify capabilities'], {
+                placeHolder: 'Use capabilities: (none)?',
+                canPickMany: false,
+            });
+        });
+
+        it('should return undefined when user cancels first prompt', async () => {
+            const capabilities: Capability[] = ['CAPABILITY_IAM'];
+            mockWindow.showQuickPick.mockResolvedValue(undefined);
+
+            const result = await confirmCapabilities(capabilities);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should show multiselect when user selects No, modify capabilities', async () => {
+            const capabilities: Capability[] = ['CAPABILITY_IAM'];
+            mockWindow.showQuickPick.mockResolvedValueOnce('No, modify capabilities' as any).mockResolvedValueOnce([
+                { label: 'CAPABILITY_IAM', picked: true },
+                { label: 'CAPABILITY_NAMED_IAM', picked: false },
+            ] as any);
+
+            const result = await confirmCapabilities(capabilities);
+
+            expect(result).toEqual(['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM']);
+            expect(mockWindow.showQuickPick).toHaveBeenCalledTimes(2);
+            expect(mockWindow.showQuickPick).toHaveBeenNthCalledWith(
+                2,
+                [
+                    { label: 'CAPABILITY_IAM', picked: true },
+                    { label: 'CAPABILITY_NAMED_IAM', picked: false },
+                    { label: 'CAPABILITY_AUTO_EXPAND', picked: false },
+                ],
+                {
+                    placeHolder: 'Select capabilities to use',
+                    canPickMany: true,
+                },
+            );
+        });
+
+        it('should return undefined when user cancels multiselect', async () => {
+            const capabilities: Capability[] = ['CAPABILITY_IAM'];
+            mockWindow.showQuickPick
+                .mockResolvedValueOnce('No, modify capabilities' as any)
+                .mockResolvedValueOnce(undefined);
+
+            const result = await confirmCapabilities(capabilities);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should preselect detected capabilities in multiselect', async () => {
+            const capabilities: Capability[] = ['CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND'];
+            mockWindow.showQuickPick
+                .mockResolvedValueOnce('No, modify capabilities' as any)
+                .mockResolvedValueOnce([] as any);
+
+            await confirmCapabilities(capabilities);
+
+            expect(mockWindow.showQuickPick).toHaveBeenNthCalledWith(
+                2,
+                [
+                    { label: 'CAPABILITY_IAM', picked: true },
+                    { label: 'CAPABILITY_NAMED_IAM', picked: false },
+                    { label: 'CAPABILITY_AUTO_EXPAND', picked: true },
+                ],
+                {
+                    placeHolder: 'Select capabilities to use',
+                    canPickMany: true,
+                },
+            );
         });
     });
 });
