@@ -1,4 +1,5 @@
 name: Release
+run-name: Release ${{ inputs.tag }}
 
 on:
   workflow_call:
@@ -74,7 +75,6 @@ jobs:
         with:
           node-version: ${{ needs.get-configs.outputs.node-version }}
           cache: 'npm'
-          architecture: ${{ needs.get-configs.outputs.arch }}
 
       - name: Install Dependencies
         run: npm ci
@@ -101,13 +101,14 @@ jobs:
 
           ASSET_NAME="${APP_NAME}-${VERSION}${TAG_SUFFIX}.vsix"
           echo "ASSET_NAME=${ASSET_NAME}" >> $GITHUB_OUTPUT
-          echo "ASSET_PATH=./${ASSET_NAME}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        env:
+          ASSET_NAME: ${{ steps.set-asset-name.outputs.ASSET_NAME }}
         with:
           tag_name: ${{ needs.version-and-tag.outputs.tag }}
           prerelease: ${{ needs.version-and-tag.outputs.is-prerelease }}
-          files: ${{ steps.set-asset-name.outputs.ASSET_PATH }}
+          files: ${{ env.ASSET_NAME }}
           generate_release_notes: true
           fail_on_unmatched_files: true
