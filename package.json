@@ -177,6 +177,11 @@
         "icon": "$(cloud-download)"
       },
       {
+        "command": "aws.cloudformation.api.cloneResourceState",
+        "title": "AWS CloudFormation: Clone Resource State",
+        "icon": "$(copy)"
+      },
+      {
         "command": "aws.cloudformation.api.selectResourceTypes",
         "title": "Select Resource Types",
         "icon": "$(add)"
@@ -268,6 +273,11 @@
           "group": "1@1"
         },
         {
+          "command": "aws.cloudformation.api.cloneResourceState",
+          "when": "view == aws.cloudformation && viewItem == resource",
+          "group": "1@2"
+        },
+        {
           "command": "aws.cloudformation.api.copyResourceIdentifier",
           "when": "view == aws.cloudformation && viewItem == resource",
           "group": "1@2"
@@ -276,6 +286,11 @@
           "command": "aws.cloudformation.api.importResourceState",
           "when": "view == aws.cloudformation && viewItem == resource",
           "group": "inline@1"
+        },
+        {
+          "command": "aws.cloudformation.api.cloneResourceState",
+          "when": "view == aws.cloudformation && viewItem == resource",
+          "group": "inline@2"
         },
         {
           "command": "aws.cloudformation.api.refreshResourceList",

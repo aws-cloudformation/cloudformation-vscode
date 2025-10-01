@@ -37,8 +37,14 @@ export type ResourceSelection = {
     resourceIdentifiers: string[];
 };
 
+export enum ResourceStatePurpose {
+    Import = 'Import',
+    Clone = 'Clone',
+}
+
 export interface ResourceStateParams extends CodeActionParams {
     resourceSelections?: ResourceSelection[];
+    purpose: ResourceStatePurpose;
 }
 
 export type ResourceType = string;

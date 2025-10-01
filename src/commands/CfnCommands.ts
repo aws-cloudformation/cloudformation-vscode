@@ -160,6 +160,12 @@ export function importResourceStateCommand(resourcesManager: ResourcesManager) {
     });
 }
 
+export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
+    return commands.registerCommand(commandKey('api.cloneResourceState'), async (resourceNode?: ResourceNode) => {
+        await resourcesManager.cloneResourceStates(resourceNode);
+    });
+}
+
 export const RefreshResourceListCommand: Command = {
     title: 'Refresh Resource List',
     command: commandKey('api.refreshResourceList'),
