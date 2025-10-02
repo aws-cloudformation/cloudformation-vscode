@@ -1,5 +1,5 @@
 name: Release
-run-name: Release ${{ inputs.tag }}
+run-name: Release ${{ inputs.tag }} ${{ github.actor }} ${{ github.event_name }}
 
 on:
   workflow_call:
@@ -27,9 +27,10 @@ jobs:
       tag: ${{ steps.validate-tag.outputs.tag }}
       is-prerelease: ${{ steps.validate-tag.outputs.is-prerelease }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.tag }}
+          fetch-tags: true
       
       - name: Get version from package.json
         id: get-version
@@ -46,7 +47,7 @@ jobs:
           if [[ "$TAG" == "v$VERSION" ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=false" >> $GITHUB_OUTPUT
-          elif [[ "$TAG" =~ ^v$VERSION-[a-zA-Z0-9]+$ ]]; then
+          elif [[ "$TAG" =~ ^v$VERSION-(alpha|beta)$ ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=true" >> $GITHUB_OUTPUT
           else
@@ -60,15 +61,20 @@ jobs:
     with:
       ref: ${{ needs.version-and-tag.outputs.tag }}
 
-  release:
+  bundle-and-release:
     needs: [get-configs, version-and-tag, build-and-test]
     permissions:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.version-and-tag.outputs.tag }}
+          fetch-tags: true
+
+      - name: Git Status
+        shell: bash
+        run: echo "Bundling from branch=$(git rev-parse --abbrev-ref HEAD), commit=$(git rev-parse HEAD), tag=$(git describe --tags --exact-match)"
 
       - name: Setup Node.js ${{ needs.get-configs.outputs.node-version }}
         uses: actions/setup-node@v4
@@ -82,7 +88,10 @@ jobs:
       - name: Bundle
         shell: bash
         run: |
-          if [[ "${{ needs.version-and-tag.outputs.is-prerelease }}" == "true" ]]; then
+          TAG=${{ needs.version-and-tag.outputs.tag }}
+          if [[ "$TAG" =~ -alpha$ ]]; then
+            npm run bundle:alpha
+          elif [[ "$TAG" =~ -beta$ ]]; then
             npm run bundle:beta
           else
             npm run bundle:prod
@@ -93,13 +102,7 @@ jobs:
         shell: bash
         run: |
           APP_NAME=${{ needs.get-configs.outputs.app-name }}
-          VERSION=${{ needs.version-and-tag.outputs.version }}
-          TAG_SUFFIX=""
-          if [[ "${{ needs.version-and-tag.outputs.is-prerelease }}" == "true" ]]; then
-            TAG_SUFFIX="-beta"
-          fi
-
-          ASSET_NAME="${APP_NAME}-${VERSION}${TAG_SUFFIX}.vsix"
+          ASSET_NAME="${APP_NAME}*.vsix"
           echo "ASSET_NAME=${ASSET_NAME}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
