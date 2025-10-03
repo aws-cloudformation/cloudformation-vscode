@@ -4,7 +4,7 @@ import { TemplateStatus, TemplateChange, TemplateActionParams, WorkflowResult } 
 import { LanguageClient } from 'vscode-languageclient/node';
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../ui/Message';
 import { getTemplateValidationStatus, validateTemplate } from './TemplateAPIs';
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
+import { createStackActionStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
 import { StatusBarItem, commands } from 'vscode';
 import { DiffWebviewProvider } from '../ui/DiffWebviewProvider';
 
@@ -51,7 +51,7 @@ export class Validation {
     async validate() {
         try {
             showValidationStarted(this.stackName);
-            this.statusBarItem = createDeploymentStatusBar();
+            this.statusBarItem = createStackActionStatusBar();
             await validateTemplate(this.client, this.getTemplateWorkflowParams());
             this.pollForProgress();
         } catch (error) {

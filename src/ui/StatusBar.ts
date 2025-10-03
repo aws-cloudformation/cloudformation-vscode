@@ -38,10 +38,11 @@ function getStatusProperties(status: TemplateStatus): { text: string; color: The
     return { text, color };
 }
 
-export function createDeploymentStatusBar(): StatusBarItem {
+export function createStackActionStatusBar(): StatusBarItem {
     globalStatusBarItem ??= window.createStatusBarItem(StatusBarAlignment.Left, 100);
 
     globalStatusBarItem.text = '$(sync~spin) Validation Starting...';
+    globalStatusBarItem.backgroundColor = undefined; // clear background color
     globalStatusBarItem.show();
 
     return globalStatusBarItem;

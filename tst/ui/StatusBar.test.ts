@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../../src/ui/StatusBar';
+import { createStackActionStatusBar, updateDeploymentStatus } from '../../src/ui/StatusBar';
 import { TemplateStatus } from '../../src/cfn/TemplateRequestType';
 
 jest.mock('vscode', () => ({
@@ -29,12 +29,13 @@ describe('StatusBar', () => {
         jest.clearAllMocks();
     });
 
-    describe('createDeploymentStatusBar', () => {
+    describe('createStackActionStatusBar', () => {
         it('should create status bar with initial text', () => {
-            const result = createDeploymentStatusBar();
+            const result = createStackActionStatusBar();
 
             expect(vscode.window.createStatusBarItem).toHaveBeenCalledWith(vscode.StatusBarAlignment.Left, 100);
             expect(mockStatusBarItem.text).toBe('$(sync~spin) Validation Starting...');
+            expect(mockStatusBarItem.backgroundColor).toBeUndefined();
             expect(mockStatusBarItem.show).toHaveBeenCalled();
             expect(result).toBe(mockStatusBarItem);
         });

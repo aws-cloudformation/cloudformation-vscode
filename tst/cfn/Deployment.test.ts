@@ -31,13 +31,13 @@ describe('Deployment', () => {
                 changeSetName: 'test-changeset',
                 stackName: 'test-stack',
             });
-            jest.spyOn(StatusBar, 'createDeploymentStatusBar').mockReturnValue(mockStatusBar);
+            jest.spyOn(StatusBar, 'createStackActionStatusBar').mockReturnValue(mockStatusBar);
             jest.spyOn(deployment as any, 'pollForProgress').mockImplementation();
 
             await deployment.deploy();
 
             expect(Message.showDeploymentStarted).toHaveBeenCalledWith('test-stack');
-            expect(StatusBar.createDeploymentStatusBar).toHaveBeenCalledWith();
+            expect(StatusBar.createStackActionStatusBar).toHaveBeenCalledWith();
             expect(TemplateAPIs.deployTemplate).toHaveBeenCalled();
         });
     });
@@ -45,7 +45,7 @@ describe('Deployment', () => {
     describe('polling', () => {
         beforeEach(() => {
             jest.useFakeTimers();
-            jest.spyOn(StatusBar, 'createDeploymentStatusBar').mockReturnValue(mockStatusBar);
+            jest.spyOn(StatusBar, 'createStackActionStatusBar').mockReturnValue(mockStatusBar);
         });
 
         afterEach(() => {

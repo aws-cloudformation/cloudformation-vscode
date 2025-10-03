@@ -132,10 +132,10 @@ export class StacksSectionUI implements SectionUI<StackTreeItem> {
     private getStackIcon(status?: string): ThemeIcon {
         if (!status) return new ThemeIcon('layers');
 
-        if (status.includes('COMPLETE')) {
-            return new ThemeIcon('check', new ThemeColor('charts.green'));
-        } else if (status.includes('FAILED') || status.includes('ROLLBACK')) {
+        if (status.includes('FAILED') || status.includes('ROLLBACK')) {
             return new ThemeIcon('error', new ThemeColor('charts.red'));
+        } else if (status.includes('COMPLETE')) {
+            return new ThemeIcon('check', new ThemeColor('charts.green'));
         } else if (status.includes('PROGRESS')) {
             return new ThemeIcon('sync~spin', new ThemeColor('charts.yellow'));
         } else {

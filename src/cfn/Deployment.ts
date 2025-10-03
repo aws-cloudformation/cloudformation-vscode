@@ -8,7 +8,7 @@ import {
     showDeploymentFailure,
     showValidationComplete,
 } from '../ui/Message';
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
+import { createStackActionStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
 import { StatusBarItem } from 'vscode';
 import { deployTemplate, getTemplateDeploymentStatus } from './TemplateAPIs';
 
@@ -50,7 +50,7 @@ export class Deployment {
     async deploy() {
         await deployTemplate(this.client, this.getTemplateWorkflowParams());
         showDeploymentStarted(this.stackName);
-        this.statusBarItem = createDeploymentStatusBar();
+        this.statusBarItem = createStackActionStatusBar();
         this.pollForProgress();
     }
 

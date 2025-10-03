@@ -33,13 +33,13 @@ describe('Validation', () => {
                 changeSetName: 'test-changeset',
                 stackName: 'test-stack',
             });
-            jest.spyOn(StatusBar, 'createDeploymentStatusBar').mockReturnValue(mockStatusBar);
+            jest.spyOn(StatusBar, 'createStackActionStatusBar').mockReturnValue(mockStatusBar);
             jest.spyOn(validation as any, 'pollForProgress').mockImplementation();
 
             await validation.validate();
 
             expect(Message.showValidationStarted).toHaveBeenCalledWith('test-stack');
-            expect(StatusBar.createDeploymentStatusBar).toHaveBeenCalledWith();
+            expect(StatusBar.createStackActionStatusBar).toHaveBeenCalledWith();
             expect(TemplateAPIs.validateTemplate).toHaveBeenCalled();
         });
 
