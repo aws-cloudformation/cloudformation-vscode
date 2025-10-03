@@ -23,7 +23,7 @@ export class CfnInlineCompletionProvider implements InlineCompletionItemProvider
         }
 
         try {
-            const result = await this.client.sendRequest<InlineCompletionList>(
+            const result = await this.client.sendRequest<InlineCompletionList | null>(
                 'textDocument/inlineCompletion',
                 {
                     textDocument: { uri: document.uri.toString() },
@@ -36,7 +36,10 @@ export class CfnInlineCompletionProvider implements InlineCompletionItemProvider
                 token,
             );
 
-            return result.items;
+            if (result) {
+                return result.items;
+            }
+            return null;
         } catch (error) {
             if (token.isCancellationRequested) {
                 return null;
