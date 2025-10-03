@@ -1,7 +1,7 @@
 import { window, workspace, Uri } from 'vscode';
 import { validateStackName, validateParameterValue } from '../cfn/InputValidationUtil';
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
-import { TemplateParameter } from '../cfn/TemplateRequestType';
+import { StackActionParameter } from '../cfn/StackActionRequestType';
 import { DocumentManager } from '../documents/DocumentManager';
 
 export async function getTemplatePath(documentManager: DocumentManager): Promise<string | undefined> {
@@ -39,7 +39,7 @@ export async function getStackName(prefill?: string): Promise<string | undefined
 }
 
 export async function getParameterValues(
-    templateParameters: TemplateParameter[],
+    templateParameters: StackActionParameter[],
     prefillParameters?: Parameter[],
 ): Promise<Parameter[] | undefined> {
     const parameters: Parameter[] = [];
@@ -55,7 +55,7 @@ export async function getParameterValues(
     return parameters;
 }
 
-async function getParameterValue(parameter: TemplateParameter, prefill?: string): Promise<Parameter | undefined> {
+async function getParameterValue(parameter: StackActionParameter, prefill?: string): Promise<Parameter | undefined> {
     const prompt = `Enter value for parameter "${parameter.name}"${parameter.Description ? ` - ${parameter.Description}` : ''}`;
     const placeHolder = parameter.Default ? `Default: ${parameter.Default}` : (parameter.Type ?? 'String');
     const allowedInfo = parameter.AllowedValues ? ` (Allowed: ${parameter.AllowedValues.join(', ')})` : '';

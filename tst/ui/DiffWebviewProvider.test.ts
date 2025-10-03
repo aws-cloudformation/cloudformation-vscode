@@ -1,5 +1,5 @@
 import { DiffWebviewProvider } from '../../src/ui/DiffWebviewProvider';
-import { TemplateChange } from '../../src/cfn/TemplateRequestType';
+import { StackChange } from '../../src/cfn/StackActionRequestType';
 
 describe('DiffWebviewProvider', () => {
     let provider: DiffWebviewProvider;
@@ -17,7 +17,7 @@ describe('DiffWebviewProvider', () => {
     });
 
     test('should update data with stack name and changes', () => {
-        const changes: TemplateChange[] = [
+        const changes: StackChange[] = [
             {
                 type: 'Resource',
                 resourceChange: {
@@ -50,7 +50,7 @@ describe('DiffWebviewProvider', () => {
     });
 
     test('should generate HTML with changes', () => {
-        const changes: TemplateChange[] = [
+        const changes: StackChange[] = [
             {
                 resourceChange: {
                     action: 'Add',

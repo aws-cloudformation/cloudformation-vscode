@@ -1,7 +1,7 @@
 import { window } from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { getTemplateDeploymentStatus } from '../cfn/TemplateAPIs';
-import { TemplateStatus, WorkflowResult } from '../cfn/TemplateRequestType';
+import { getTemplateDeploymentStatus } from '../cfn/StackActionAPIs';
+import { StackActionPhase, StackActionStatus } from '../cfn/StackActionRequestType';
 
 export async function showDeploymentCompletion(
     client: LanguageClient,
@@ -12,14 +12,14 @@ export async function showDeploymentCompletion(
         const pollResult = await getTemplateDeploymentStatus(client, { id: deploymentId });
 
         if (
-            pollResult.status === TemplateStatus.DEPLOYMENT_COMPLETE &&
-            pollResult.result === WorkflowResult.SUCCESSFUL
+            pollResult.phase === StackActionPhase.DEPLOYMENT_COMPLETE &&
+            pollResult.status === StackActionStatus.SUCCESSFUL
         ) {
             window.showInformationMessage(`Deployment completed successfully for stack: ${stackName}`);
         } else if (
-            pollResult.status === TemplateStatus.DEPLOYMENT_FAILED ||
-            pollResult.status === TemplateStatus.VALIDATION_FAILED ||
-            pollResult.result === WorkflowResult.FAILED
+            pollResult.phase === StackActionPhase.DEPLOYMENT_FAILED ||
+            pollResult.phase === StackActionPhase.VALIDATION_FAILED ||
+            pollResult.status === StackActionStatus.FAILED
         ) {
             window.showErrorMessage(`Deployment failed for stack: ${stackName}`);
         } else {

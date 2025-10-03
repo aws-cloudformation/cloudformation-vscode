@@ -1,7 +1,7 @@
 import { Validation } from '../../src/cfn/Validation';
 import { commands } from 'vscode';
 import { DiffWebviewProvider } from '../../src/ui/DiffWebviewProvider';
-import { TemplateChange } from '../../src/cfn/TemplateRequestType';
+import { StackChange } from '../../src/cfn/StackActionRequestType';
 
 jest.mock('vscode', () => ({
     commands: {
@@ -20,7 +20,7 @@ class TestableValidation extends Validation {
         return this.getDiffProvider();
     }
 
-    public testSetChanges(changes: TemplateChange[]): void {
+    public testSetChanges(changes: StackChange[]): void {
         this.setChanges(changes);
     }
 

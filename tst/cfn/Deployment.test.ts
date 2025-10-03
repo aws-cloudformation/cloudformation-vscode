@@ -1,13 +1,13 @@
 import { Deployment } from '../../src/cfn/Deployment';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { TemplateStatus, WorkflowResult } from '../../src/cfn/TemplateRequestType';
+import { StackActionPhase, StackActionStatus } from '../../src/cfn/StackActionRequestType';
 import * as Message from '../../src/ui/Message';
 import * as StatusBar from '../../src/ui/StatusBar';
-import * as TemplateAPIs from '../../src/cfn/TemplateAPIs';
+import * as StackActionAPIs from '../../src/cfn/StackActionAPIs';
 
 jest.mock('../../src/ui/Message');
 jest.mock('../../src/ui/StatusBar');
-jest.mock('../../src/cfn/TemplateAPIs');
+jest.mock('../../src/cfn/StackActionAPIs');
 
 describe('Deployment', () => {
     let mockClient: jest.Mocked<LanguageClient>;
@@ -26,7 +26,7 @@ describe('Deployment', () => {
 
     describe('deploy', () => {
         it('should show deployment started and create status bar', async () => {
-            jest.spyOn(TemplateAPIs, 'deployTemplate').mockResolvedValue({
+            jest.spyOn(StackActionAPIs, 'deployTemplate').mockResolvedValue({
                 id: 'test-id',
                 changeSetName: 'test-changeset',
                 stackName: 'test-stack',
@@ -38,7 +38,7 @@ describe('Deployment', () => {
 
             expect(Message.showDeploymentStarted).toHaveBeenCalledWith('test-stack');
             expect(StatusBar.createDeploymentStatusBar).toHaveBeenCalledWith();
-            expect(TemplateAPIs.deployTemplate).toHaveBeenCalled();
+            expect(StackActionAPIs.deployTemplate).toHaveBeenCalled();
         });
     });
 
@@ -56,10 +56,10 @@ describe('Deployment', () => {
         it('should handle successful deployment completion', async () => {
             const mockResult = {
                 id: 'test-id',
-                status: TemplateStatus.DEPLOYMENT_COMPLETE,
-                result: WorkflowResult.SUCCESSFUL,
+                phase: StackActionPhase.DEPLOYMENT_COMPLETE,
+                status: StackActionStatus.SUCCESSFUL,
             };
-            jest.spyOn(TemplateAPIs, 'getTemplateDeploymentStatus').mockResolvedValue(mockResult);
+            jest.spyOn(StackActionAPIs, 'getTemplateDeploymentStatus').mockResolvedValue(mockResult);
 
             await deployment.deploy();
             jest.advanceTimersByTime(1000);
@@ -71,10 +71,10 @@ describe('Deployment', () => {
         it('should handle failed deployment', async () => {
             const mockResult = {
                 id: 'test-id',
-                status: TemplateStatus.DEPLOYMENT_FAILED,
-                result: WorkflowResult.FAILED,
+                phase: StackActionPhase.DEPLOYMENT_FAILED,
+                status: StackActionStatus.FAILED,
             };
-            jest.spyOn(TemplateAPIs, 'getTemplateDeploymentStatus').mockResolvedValue(mockResult);
+            jest.spyOn(StackActionAPIs, 'getTemplateDeploymentStatus').mockResolvedValue(mockResult);
 
             await deployment.deploy();
             jest.advanceTimersByTime(1000);
