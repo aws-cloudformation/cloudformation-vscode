@@ -1,4 +1,4 @@
-import { commands, debug, window, Uri } from 'vscode';
+import { commands, window, Uri } from 'vscode';
 import { commandKey, formatMessage, toString } from '../utils';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { AwsCredentialsService } from '../auth/awsCredentials';
@@ -26,24 +26,6 @@ export function generateTemplate(client: LanguageClient) {
 export function recommendRelatedResources(client: LanguageClient, documents: () => DocumentMetadata[]) {
     return commands.registerCommand(commandKey('llm.template.recommendRelatedResources'), async () => {
         await recommendRelatedResourcesCommand(client, documents);
-    });
-}
-
-export function debuggerCommand(debugPort: number, serverRootDir: string) {
-    return commands.registerCommand(commandKey('server.attachDebugger'), async () => {
-        try {
-            await debug.startDebugging(undefined, {
-                type: 'node',
-                request: 'attach',
-                name: 'Attach to LSP Server',
-                port: debugPort,
-                restart: true,
-                sourceMaps: true,
-                outFiles: [`${serverRootDir}/out/**/*`, `${serverRootDir}/bundle/*.js`],
-            });
-        } catch (error) {
-            window.showErrorMessage(formatMessage(`Failed to attach debugger: ${toString(error)}`));
-        }
     });
 }
 

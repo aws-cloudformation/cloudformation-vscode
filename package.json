@@ -62,6 +62,7 @@
     "@types/node": "24.0.1",
     "@types/sinon": "17.0.4",
     "@types/vscode": "1.75.0",
+    "@types/yauzl": "2.10.3",
     "eslint": "9.28.0",
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-import": "2.31.0",
@@ -303,11 +304,6 @@
       {
         "title": "CloudFormation Language Server",
         "properties": {
-          "aws.cloudformation.server.debugPort": {
-            "type": "number",
-            "default": 6001,
-            "description": "Debug port for the LSP server"
-          },
           "aws.cloudformation.server.trace": {
             "type": "string",
             "enum": [
