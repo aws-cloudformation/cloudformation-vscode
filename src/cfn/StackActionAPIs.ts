@@ -2,44 +2,40 @@ import { LanguageClient } from 'vscode-languageclient/node';
 import {
     TemplateMetadataParams,
     GetParametersResult,
-    GetParametersRequest,
     GetCapabilitiesResult,
+    StackActionParams,
+    StackActionResult,
+    StackActionStatusResult,
+} from './StackActionRequestType';
+import {
+    GetParametersRequest,
     GetCapabilitiesRequest,
     TemplateValidationCreateRequest,
     TemplateDeploymentCreateRequest,
     TemplateValidationStatusRequest,
     TemplateDeploymentStatusRequest,
-    TemplateActionParams,
-    TemplateActionResult,
-    TemplateStatusResult,
-} from './TemplateRequestType';
+} from './StackActionProtocol';
 import { Identifiable } from '../LspTypes';
 
-export async function validateTemplate(
-    client: LanguageClient,
-    params: TemplateActionParams,
-): Promise<TemplateActionResult> {
+export async function validateTemplate(client: LanguageClient, params: StackActionParams): Promise<StackActionResult> {
     return await client.sendRequest(TemplateValidationCreateRequest, params);
 }
 
-export async function deployTemplate(
-    client: LanguageClient,
-    params: TemplateActionParams,
-): Promise<TemplateActionResult> {
+export async function deployTemplate(client: LanguageClient, params: StackActionParams): Promise<StackActionResult> {
     return await client.sendRequest(TemplateDeploymentCreateRequest, params);
 }
 
 export async function getTemplateValidationStatus(
     client: LanguageClient,
     params: Identifiable,
-): Promise<TemplateStatusResult> {
+): Promise<StackActionStatusResult> {
     return await client.sendRequest(TemplateValidationStatusRequest, params);
 }
 
 export async function getTemplateDeploymentStatus(
     client: LanguageClient,
     params: Identifiable,
-): Promise<TemplateStatusResult> {
+): Promise<StackActionStatusResult> {
     return await client.sendRequest(TemplateDeploymentStatusRequest, params);
 }
 

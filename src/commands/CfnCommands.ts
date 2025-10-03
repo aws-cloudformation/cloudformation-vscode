@@ -7,8 +7,8 @@ import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getParameterValues, getStackName, getTemplatePath, confirmCapabilities } from '../ui/InputBox';
 import { showErrorMessage } from '../ui/Message';
 import { getLastValidation, setLastValidation, Validation } from '../cfn/Validation';
-import { getParameters, getCapabilities } from '../cfn/TemplateAPIs';
-import { TemplateParameter } from '../cfn/TemplateRequestType';
+import { getParameters, getCapabilities } from '../cfn/StackActionAPIs';
+import { StackActionParameter } from '../cfn/StackActionRequestType';
 import { StacksManager } from '../stacks/StacksManager';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
 import { ResourcesManager } from '../resources/ResourcesManager';
@@ -123,7 +123,7 @@ async function ensureFileIsOpen(templateUri: string): Promise<void> {
     }
 }
 
-async function getTemplateParameters(client: LanguageClient, templateUri: string): Promise<TemplateParameter[]> {
+async function getTemplateParameters(client: LanguageClient, templateUri: string): Promise<StackActionParameter[]> {
     try {
         const result = await getParameters(client, { uri: templateUri });
         return result.parameters;
