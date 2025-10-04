@@ -1,7 +1,21 @@
 name: Build and Test
+run-name: Build and Test ${{ github.actor }} ${{ github.event_name }}
 
 on:
   workflow_call:
+    inputs:
+      runs-on:
+        description: 'The runner environment for the job (e.g., ubuntu-latest, windows-latest).'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+
+      ref:
+        description: 'The Git ref to checkout.'
+        required: true
+        type: string
+
+  workflow_dispatch:
     inputs:
       runs-on:
         description: 'The runner environment for the job (e.g., ubuntu-latest, windows-latest).'
@@ -31,7 +45,7 @@ jobs:
         shell: bash
         run: echo "Building from branch=$(git rev-parse --abbrev-ref HEAD), commit=$(git rev-parse HEAD), tag=$(git describe --tags --exact-match)"
 
-      - name: Setup Node.js ${{ needs.get-configs.outputs.node-version }}
+      - name: Setup Node.js ${{ needs.get-configs.outputs.node-version }} (${{ runner.os }})
         uses: actions/setup-node@v4
         with:
           node-version: ${{ needs.get-configs.outputs.node-version }}
