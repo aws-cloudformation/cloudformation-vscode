@@ -47,11 +47,14 @@ jobs:
           if [[ "$TAG" == "v$VERSION" ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=false" >> $GITHUB_OUTPUT
-          elif [[ "$TAG" =~ ^v$VERSION-(alpha|beta)$ ]]; then
+          elif [[ "$TAG" =~ ^v$VERSION-[0-9]{12}-alpha$ ]]; then
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "is-prerelease=true" >> $GITHUB_OUTPUT
+          elif [[ "$TAG" =~ ^v$VERSION-beta$ ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=true" >> $GITHUB_OUTPUT
           else
-            echo "Error: Tag ($TAG) must be v$VERSION or v$VERSION-<suffix>"
+            echo "Error: Tag ($TAG) must be v$VERSION, v$VERSION-yyyymmddhhmm-alpha, or v$VERSION-beta"
             exit 1
           fi
 
