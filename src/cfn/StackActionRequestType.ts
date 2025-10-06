@@ -62,7 +62,7 @@ export type StackActionStatusResult = Identifiable & {
     changes?: StackChange[];
 };
 
-export type TemplateMetadataParams = {
+export type StackActionMetadataParams = {
     uri: string;
 };
 
