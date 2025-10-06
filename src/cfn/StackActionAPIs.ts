@@ -1,6 +1,6 @@
 import { LanguageClient } from 'vscode-languageclient/node';
 import {
-    TemplateMetadataParams,
+    StackActionMetadataParams,
     GetParametersResult,
     GetCapabilitiesResult,
     StackActionParams,
@@ -8,47 +8,47 @@ import {
     StackActionStatusResult,
 } from './StackActionRequestType';
 import {
-    GetParametersRequest,
-    GetCapabilitiesRequest,
-    TemplateValidationCreateRequest,
-    TemplateDeploymentCreateRequest,
-    TemplateValidationStatusRequest,
-    TemplateDeploymentStatusRequest,
+    StackActionParametersRequest,
+    StackActionCapabilitiesRequest,
+    StackActionValidationCreateRequest,
+    StackActionDeploymentCreateRequest,
+    StackActionValidationStatusRequest,
+    StackActionDeploymentStatusRequest,
 } from './StackActionProtocol';
 import { Identifiable } from '../LspTypes';
 
 export async function validateTemplate(client: LanguageClient, params: StackActionParams): Promise<StackActionResult> {
-    return await client.sendRequest(TemplateValidationCreateRequest, params);
+    return await client.sendRequest(StackActionValidationCreateRequest, params);
 }
 
 export async function deployTemplate(client: LanguageClient, params: StackActionParams): Promise<StackActionResult> {
-    return await client.sendRequest(TemplateDeploymentCreateRequest, params);
+    return await client.sendRequest(StackActionDeploymentCreateRequest, params);
 }
 
 export async function getTemplateValidationStatus(
     client: LanguageClient,
     params: Identifiable,
 ): Promise<StackActionStatusResult> {
-    return await client.sendRequest(TemplateValidationStatusRequest, params);
+    return await client.sendRequest(StackActionValidationStatusRequest, params);
 }
 
 export async function getTemplateDeploymentStatus(
     client: LanguageClient,
     params: Identifiable,
 ): Promise<StackActionStatusResult> {
-    return await client.sendRequest(TemplateDeploymentStatusRequest, params);
+    return await client.sendRequest(StackActionDeploymentStatusRequest, params);
 }
 
 export async function getParameters(
     client: LanguageClient,
-    params: TemplateMetadataParams,
+    params: StackActionMetadataParams,
 ): Promise<GetParametersResult> {
-    return await client.sendRequest(GetParametersRequest, params);
+    return await client.sendRequest(StackActionParametersRequest, params);
 }
 
 export async function getCapabilities(
     client: LanguageClient,
-    params: TemplateMetadataParams,
+    params: StackActionMetadataParams,
 ): Promise<GetCapabilitiesResult> {
-    return await client.sendRequest(GetCapabilitiesRequest, params);
+    return await client.sendRequest(StackActionCapabilitiesRequest, params);
 }

@@ -1,7 +1,7 @@
 import { RequestType } from 'vscode-languageserver-protocol';
 import { Identifiable } from '../LspTypes';
 import {
-    TemplateMetadataParams,
+    StackActionMetadataParams,
     GetParametersResult,
     StackActionParams,
     StackActionResult,
@@ -9,26 +9,26 @@ import {
     GetCapabilitiesResult,
 } from './StackActionRequestType';
 
-export const TemplateValidationCreateRequest = new RequestType<StackActionParams, StackActionResult, void>(
-    'aws/cfn/template/validation/create',
+export const StackActionValidationCreateRequest = new RequestType<StackActionParams, StackActionResult, void>(
+    'aws/cfn/stacks/actions/validation/create',
 );
 
-export const TemplateDeploymentCreateRequest = new RequestType<StackActionParams, StackActionResult, void>(
-    'aws/cfn/template/deployment/create',
+export const StackActionDeploymentCreateRequest = new RequestType<StackActionParams, StackActionResult, void>(
+    'aws/cfn/stacks/actions/deployment/create',
 );
 
-export const TemplateValidationStatusRequest = new RequestType<Identifiable, StackActionStatusResult, void>(
-    'aws/cfn/template/validation/status',
+export const StackActionValidationStatusRequest = new RequestType<Identifiable, StackActionStatusResult, void>(
+    'aws/cfn/stacks/actions/validation/status',
 );
 
-export const TemplateDeploymentStatusRequest = new RequestType<Identifiable, StackActionStatusResult, void>(
-    'aws/cfn/template/deployment/status',
+export const StackActionDeploymentStatusRequest = new RequestType<Identifiable, StackActionStatusResult, void>(
+    'aws/cfn/stacks/actions/deployment/status',
 );
 
-export const GetParametersRequest = new RequestType<TemplateMetadataParams, GetParametersResult, void>(
-    'aws/cfn/template/parameters',
+export const StackActionParametersRequest = new RequestType<StackActionMetadataParams, GetParametersResult, void>(
+    'aws/cfn/stacks/actions/parameters',
 );
 
-export const GetCapabilitiesRequest = new RequestType<TemplateMetadataParams, GetCapabilitiesResult, void>(
-    'aws/cfn/template/capabilities',
+export const StackActionCapabilitiesRequest = new RequestType<StackActionMetadataParams, GetCapabilitiesResult, void>(
+    'aws/cfn/stacks/actions/capabilities',
 );
