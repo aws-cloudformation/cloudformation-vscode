@@ -5,6 +5,43 @@ import { SectionUI } from '../ui/SectionUI';
 const StackSectionContext = 'stackSection';
 const StackContext = 'stack';
 
+const STACK_STATUS_ICONS: Record<string, { icon: string; color: string }> = {
+    // Create operations
+    CREATE_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    CREATE_FAILED: { icon: 'error', color: 'charts.red' },
+    CREATE_COMPLETE: { icon: 'check', color: 'charts.green' },
+
+    // Rollback operations
+    ROLLBACK_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    ROLLBACK_FAILED: { icon: 'error', color: 'charts.red' },
+    ROLLBACK_COMPLETE: { icon: 'error', color: 'charts.red' },
+
+    // Delete operations
+    DELETE_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    DELETE_FAILED: { icon: 'error', color: 'charts.red' },
+    DELETE_COMPLETE: { icon: 'check', color: 'charts.green' },
+
+    // Update operations
+    UPDATE_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    UPDATE_COMPLETE_CLEANUP_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    UPDATE_COMPLETE: { icon: 'check', color: 'charts.green' },
+    UPDATE_FAILED: { icon: 'error', color: 'charts.red' },
+
+    // Update rollback operations
+    UPDATE_ROLLBACK_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    UPDATE_ROLLBACK_FAILED: { icon: 'error', color: 'charts.red' },
+    UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    UPDATE_ROLLBACK_COMPLETE: { icon: 'error', color: 'charts.red' },
+
+    // Review and import operations
+    REVIEW_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    IMPORT_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    IMPORT_COMPLETE: { icon: 'check', color: 'charts.green' },
+    IMPORT_ROLLBACK_IN_PROGRESS: { icon: 'sync~spin', color: 'charts.yellow' },
+    IMPORT_ROLLBACK_FAILED: { icon: 'error', color: 'charts.red' },
+    IMPORT_ROLLBACK_COMPLETE: { icon: 'error', color: 'charts.red' },
+};
+
 export class StacksSectionUI implements SectionUI<StackTreeItem> {
     private stacks: StackSummary[] = [];
     private treeDataChanged?: EventEmitter<TreeItem | TreeItem[] | undefined | null | void>;
@@ -132,15 +169,12 @@ export class StacksSectionUI implements SectionUI<StackTreeItem> {
     private getStackIcon(status?: string): ThemeIcon {
         if (!status) return new ThemeIcon('layers');
 
-        if (status.includes('FAILED') || status.includes('ROLLBACK')) {
-            return new ThemeIcon('error', new ThemeColor('charts.red'));
-        } else if (status.includes('COMPLETE')) {
-            return new ThemeIcon('check', new ThemeColor('charts.green'));
-        } else if (status.includes('PROGRESS')) {
-            return new ThemeIcon('sync~spin', new ThemeColor('charts.yellow'));
-        } else {
-            return new ThemeIcon('layers');
+        const statusConfig = STACK_STATUS_ICONS[status];
+        if (statusConfig) {
+            return new ThemeIcon(statusConfig.icon, new ThemeColor(statusConfig.color));
         }
+
+        return new ThemeIcon('layers');
     }
 }
 
