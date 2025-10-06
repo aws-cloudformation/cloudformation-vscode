@@ -29,7 +29,7 @@ export async function downloadAndUnzip(url: string, outputDir: string) {
                         return reject(new Error('Failed to open ZIP file'));
                     }
 
-                    console.debug(`Downloading AWS CloudFormation LSP to ${outputDir}`);
+                    console.info(`Downloading AWS CloudFormation LSP to ${outputDir}`);
                     makeDir(outputDir);
 
                     zipFile.on('entry', (entry: Entry) => {

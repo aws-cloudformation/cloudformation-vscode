@@ -97,6 +97,12 @@ export class LocalServerManager implements LspServerResolverI {
         const newLocation = join(this.serversRoot, server.version);
         try {
             await downloadAndUnzip(server.url, newLocation);
+            const missingFiles = RequiredFiles.filter((file) => !existsSync(join(newLocation, file)));
+
+            if (missingFiles.length > 0) {
+                throw new Error(`Downloaded server is missing required files: ${missingFiles.join(', ')}`);
+            }
+
             return server.version;
         } catch (err) {
             throw new Error(
@@ -119,12 +125,17 @@ export class LocalServerManager implements LspServerResolverI {
         const currentVersion = this.cachedVersion();
 
         const invalidServers = servers.filter((server) => {
-            return server !== latestVersion && server !== currentVersion;
+            if (server !== latestVersion && server !== currentVersion) {
+                return true;
+            }
+
+            const serverPath = join(this.serversRoot, server);
+            return RequiredFiles.some((file) => !existsSync(join(serverPath, file)));
         });
 
         for (const invalidServer of invalidServers) {
             const invalidPath = join(this.serversRoot, invalidServer);
-            console.warn(`Deleting stale CloudFormation LSP ${invalidPath}`);
+            console.warn(`Deleting stale or invalid CloudFormation LSP ${invalidPath}`);
             await rm(invalidPath, { recursive: true });
         }
     }
@@ -135,3 +146,4 @@ export class LocalServerManager implements LspServerResolverI {
 }
 
 export const ServerVersionKey = 'aws.cloudformation.lsp.server.version';
+const RequiredFiles = ['node_modules', 'cfn-lsp-server-standalone.js', 'package.json', 'pyodide-worker.js', 'assets'];
