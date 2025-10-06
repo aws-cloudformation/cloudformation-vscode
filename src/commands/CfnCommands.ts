@@ -208,3 +208,9 @@ export function focusDiffCommand() {
         commands.executeCommand('workbench.view.extension.cfn-diff');
     });
 }
+
+export function getStackManagementInfoCommand(resourcesManager: ResourcesManager) {
+    return commands.registerCommand(commandKey('api.getStackManagementInfo'), async (resourceNode?: ResourceNode) => {
+        await resourcesManager.getStackManagementInfo(resourceNode);
+    });
+}

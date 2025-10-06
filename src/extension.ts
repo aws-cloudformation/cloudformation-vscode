@@ -27,6 +27,7 @@ import {
     copyResourceIdentifierCommand,
     viewStackDiffCommand,
     focusDiffCommand,
+    getStackManagementInfoCommand,
 } from './commands/CfnCommands';
 import { AwsCredentialsService } from './auth/awsCredentials';
 import { ExtensionConfigKey, ExtensionId, ExtensionName, Version } from './ExtensionConfig';
@@ -159,6 +160,7 @@ export function activate(context: ExtensionContext) {
                 selectResourceTypesCommand(resourcesManager),
                 importResourceStateCommand(resourcesManager),
                 cloneResourceStateCommand(resourcesManager),
+                getStackManagementInfoCommand(resourcesManager),
                 window.registerWebviewViewProvider('aws.cloudformation.diff', diffProvider),
                 viewStackDiffCommand(),
                 focusDiffCommand(),
