@@ -9,10 +9,12 @@ import {
     ResourceStatePurpose,
     ResourceStateRequest,
     ResourceStateResult,
+    StackMgmtInfoRequest,
+    ResourceStackManagementResult,
 } from '../cfn/ResourceRequestTypes';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
 import { showErrorMessage } from '../ui/Message';
-import { Position, ProgressLocation, Range, TextEdit, Uri, window, workspace, WorkspaceEdit } from 'vscode';
+import { Position, ProgressLocation, Range, TextEdit, Uri, window, workspace, WorkspaceEdit, env } from 'vscode';
 
 type ResourcesChangeListener = (resources: ResourceList[]) => void;
 
@@ -292,5 +294,65 @@ export class ResourcesManager {
 
     reload() {
         void this.refreshAllResources();
+    }
+
+    async getStackManagementInfo(resourceNode?: ResourceNode): Promise<void> {
+        if (!resourceNode?.resourceIdentifier) {
+            showErrorMessage('No resource selected');
+            return;
+        }
+
+        try {
+            await window
+                .withProgress(
+                    {
+                        location: ProgressLocation.Notification,
+                        title: 'Getting Stack Management Info',
+                        cancellable: false,
+                    },
+                    async () => {
+                        const result: ResourceStackManagementResult = await this.client.sendRequest(
+                            StackMgmtInfoRequest.method,
+                            resourceNode.resourceIdentifier,
+                        );
+                        return result;
+                    },
+                )
+                .then(async (result) => {
+                    if (result.error) {
+                        window.showInformationMessage(`${result.error}`);
+                        return;
+                    }
+
+                    const managementStatus = result.managedByStack
+                        ? `Managed by stack: ${result.stackName ?? 'Unknown'}`
+                        : 'Not managed by any stack';
+
+                    const message = `Resource: ${result.physicalResourceId}\n${managementStatus}`;
+
+                    if (result.managedByStack && result.stackName && result.stackId) {
+                        const action = await window.showInformationMessage(
+                            message,
+                            'Copy Stack Name',
+                            'Copy Stack Arn',
+                        );
+
+                        if (action === 'Copy Stack Name') {
+                            await env.clipboard.writeText(result.stackName);
+                            window.setStatusBarMessage('Stack name copied to clipboard', 3000);
+                        }
+                        if (action === 'Copy Stack Arn') {
+                            await env.clipboard.writeText(result.stackId);
+                            window.setStatusBarMessage('Stack arn copied to clipboard', 3000);
+                        }
+                    } else {
+                        window.showInformationMessage(message);
+                    }
+                });
+        } catch (error) {
+            showErrorMessage(
+                `Error getting stack management info: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
     }
 }

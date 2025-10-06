@@ -58,3 +58,15 @@ export interface ResourceStateResult extends CodeAction {
 export const ResourceStateRequest = new RequestType<ResourceStateParams, ResourceStateResult, void>(
     'aws/cfn/resources/state',
 );
+
+export type ResourceStackManagementResult = {
+    physicalResourceId: string;
+    managedByStack: boolean | undefined;
+    stackName?: string;
+    stackId?: string;
+    error?: string;
+};
+
+export const StackMgmtInfoRequest = new RequestType<ResourceIdentifier, ResourceStackManagementResult, void>(
+    'aws/cfn/resources/stackMgmtInfo',
+);

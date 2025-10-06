@@ -183,6 +183,11 @@
         "icon": "$(copy)"
       },
       {
+        "command": "aws.cloudformation.api.getStackManagementInfo",
+        "title": "AWS CloudFormation: Get Stack Management Info",
+        "icon": "$(info)"
+      },
+      {
         "command": "aws.cloudformation.api.selectResourceTypes",
         "title": "Select Resource Types",
         "icon": "$(add)"
@@ -279,9 +284,14 @@
           "group": "1@2"
         },
         {
+          "command": "aws.cloudformation.api.getStackManagementInfo",
+          "when": "view == aws.cloudformation && viewItem == resource",
+          "group": "1@3"
+        },
+        {
           "command": "aws.cloudformation.api.copyResourceIdentifier",
           "when": "view == aws.cloudformation && viewItem == resource",
-          "group": "1@2"
+          "group": "1@4"
         },
         {
           "command": "aws.cloudformation.api.importResourceState",
@@ -292,6 +302,11 @@
           "command": "aws.cloudformation.api.cloneResourceState",
           "when": "view == aws.cloudformation && viewItem == resource",
           "group": "inline@2"
+        },
+        {
+          "command": "aws.cloudformation.api.getStackManagementInfo",
+          "when": "view == aws.cloudformation && viewItem == resource",
+          "group": "inline@3"
         },
         {
           "command": "aws.cloudformation.api.refreshResourceList",
