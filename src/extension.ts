@@ -1,11 +1,9 @@
-import { workspace, ExtensionContext, window, languages } from 'vscode';
+import { ExtensionContext, window, languages } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
 import { CloseAction, ErrorAction } from 'vscode-languageclient/lib/common/client';
 import { v4 as uuidv4 } from 'uuid';
-import { formatMessage, isDevelopment, toString } from './utils';
-import { locateServer, serverRoot } from './lspServerUtils';
+import { formatMessage, toString } from './utils';
 import {
-    debuggerCommand,
     describeTemplate,
     optimizeTemplate,
     recommendRelatedResources,
@@ -30,7 +28,7 @@ import {
     getStackManagementInfoCommand,
 } from './commands/CfnCommands';
 import { AwsCredentialsService } from './auth/awsCredentials';
-import { ExtensionConfigKey, ExtensionId, ExtensionName, Version } from './ExtensionConfig';
+import { ExtensionId, ExtensionName, Version } from './ExtensionConfig';
 import { CfnPanel } from './cfn/CfnPanel';
 import { StacksSectionUI } from './stacks/StacksSectionUI';
 import { refreshCommand, StacksManager } from './stacks/StacksManager';
@@ -42,16 +40,19 @@ import { ResourcesManager } from './resources/ResourcesManager';
 import { ResourceSelector } from './ui/ResourceSelector';
 import { ResourcesSectionUI } from './resources/ResourcesSectionUI';
 import { CfnInlineCompletionProvider } from './inlineCompletion/InlineCompletionProvider';
+import { LspServerResolver } from './lsp-server/LspServerProvider';
+import { CfnDevLspServerProvider } from './lsp-server/CfnDevLspServerProvider';
+import { CfnRemoteLspServerProvider } from './lsp-server/CfnRemoteLspServerProvider';
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
-    const isDev = isDevelopment();
+export async function activate(context: ExtensionContext) {
+    const serverProvider = new LspServerResolver([
+        new CfnDevLspServerProvider(context),
+        new CfnRemoteLspServerProvider(context),
+    ]);
+    const serverFile = await serverProvider.serverExecutable();
 
-    const config = workspace.getConfiguration(ExtensionConfigKey);
-    const serverFile = locateServer(context);
-    const serverRootDir = serverRoot(context);
-    const debugPort = config.get<number>('server.debugPort', 6001);
     const envOptions = {
         NODE_OPTIONS: '--enable-source-maps',
     };
@@ -68,7 +69,7 @@ export function activate(context: ExtensionContext) {
             module: serverFile,
             transport: TransportKind.ipc,
             options: {
-                execArgv: isDev ? ['--nolazy', `--inspect=${debugPort}`] : ['--nolazy'],
+                execArgv: ['--no-lazy'],
                 env: envOptions,
             },
         },
@@ -182,12 +183,8 @@ export function activate(context: ExtensionContext) {
                 }),
                 rerunLastValidationCommand(),
                 credentialsService,
+                serverProvider,
             );
-
-            if (isDev) {
-                window.setStatusBarMessage(formatMessage('Running in dev mode'));
-                context.subscriptions.push(debuggerCommand(debugPort, serverRootDir));
-            }
 
             return credentialsService.initialize(client);
         })
