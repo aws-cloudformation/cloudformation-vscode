@@ -23,6 +23,9 @@ export class ResourcesManager {
     private selectedResourceTypes: string[] = [];
     private readonly listeners: ResourcesChangeListener[] = [];
 
+    private readonly CopyStackName = 'Copy Stack Name';
+    private readonly CopyStackArn = 'Copy Stack Arn';
+
     constructor(
         private readonly client: LanguageClient,
         private readonly resourceSelector: ResourceSelector,
@@ -333,15 +336,14 @@ export class ResourcesManager {
                     if (result.managedByStack && result.stackName && result.stackId) {
                         const action = await window.showInformationMessage(
                             message,
-                            'Copy Stack Name',
-                            'Copy Stack Arn',
+                            this.CopyStackName,
+                            this.CopyStackArn,
                         );
 
-                        if (action === 'Copy Stack Name') {
+                        if (action === this.CopyStackName) {
                             await env.clipboard.writeText(result.stackName);
                             window.setStatusBarMessage('Stack name copied to clipboard', 3000);
-                        }
-                        if (action === 'Copy Stack Arn') {
+                        } else if (action === this.CopyStackArn) {
                             await env.clipboard.writeText(result.stackId);
                             window.setStatusBarMessage('Stack arn copied to clipboard', 3000);
                         }
