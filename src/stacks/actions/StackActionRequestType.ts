@@ -1,5 +1,5 @@
 import { Parameter, Capability, ResourceChangeDetail } from '@aws-sdk/client-cloudformation';
-import { Identifiable } from '../LspTypes';
+import { Identifiable } from '../../LspTypes';
 
 export type StackActionParams = Identifiable & {
     uri: string;

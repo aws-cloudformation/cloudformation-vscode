@@ -1,5 +1,5 @@
 import { window, StatusBarAlignment, StatusBarItem, ThemeColor } from 'vscode';
-import { StackActionPhase } from '../cfn/StackActionRequestType';
+import { StackActionPhase } from '../stacks/actions/StackActionRequestType';
 
 let globalStatusBarItem: StatusBarItem | undefined;
 
