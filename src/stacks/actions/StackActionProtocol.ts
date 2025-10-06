@@ -1,5 +1,5 @@
 import { RequestType } from 'vscode-languageserver-protocol';
-import { Identifiable } from '../LspTypes';
+import { Identifiable } from '../../LspTypes';
 import {
     StackActionMetadataParams,
     GetParametersResult,

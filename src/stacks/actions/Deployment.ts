@@ -7,8 +7,8 @@ import {
     showDeploymentSuccess,
     showDeploymentFailure,
     showValidationComplete,
-} from '../ui/Message';
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
+} from '../../ui/Message';
+import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/StatusBar';
 import { StatusBarItem } from 'vscode';
 import { deployTemplate, getTemplateDeploymentStatus } from './StackActionAPIs';
 

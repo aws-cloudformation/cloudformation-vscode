@@ -2,11 +2,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
 import { StackActionPhase, StackChange, StackActionParams, StackActionStatus } from './StackActionRequestType';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../ui/Message';
+import {
+    showErrorMessage,
+    showValidationStarted,
+    showValidationSuccess,
+    showValidationFailure,
+} from '../../ui/Message';
 import { getTemplateValidationStatus, validateTemplate } from './StackActionAPIs';
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
+import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/StatusBar';
 import { StatusBarItem, commands } from 'vscode';
-import { DiffWebviewProvider } from '../ui/DiffWebviewProvider';
+import { DiffWebviewProvider } from '../../ui/DiffWebviewProvider';
 
 // TODO move this to server side, we should let server handle last validation
 let lastValidation: Validation | null = null;

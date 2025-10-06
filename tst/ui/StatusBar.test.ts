@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../src/ui/StatusBar';
-import { StackActionPhase } from '../../src/cfn/StackActionRequestType';
+import { StackActionPhase } from '../../src/stacks/actions/StackActionRequestType';
 
 jest.mock('vscode', () => ({
     window: {

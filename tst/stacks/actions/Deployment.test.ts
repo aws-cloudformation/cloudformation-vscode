@@ -1,13 +1,13 @@
-import { Deployment } from '../../src/cfn/Deployment';
+import { Deployment } from '../../../src/stacks/actions/Deployment';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { StackActionPhase, StackActionStatus } from '../../src/cfn/StackActionRequestType';
-import * as Message from '../../src/ui/Message';
-import * as StatusBar from '../../src/ui/StatusBar';
-import * as StackActionAPIs from '../../src/cfn/StackActionAPIs';
+import { StackActionPhase, StackActionStatus } from '../../../src/stacks/actions/StackActionRequestType';
+import * as Message from '../../../src/ui/Message';
+import * as StatusBar from '../../../src/ui/StatusBar';
+import * as StackActionAPIs from '../../../src/stacks/actions/StackActionAPIs';
 
-jest.mock('../../src/ui/Message');
-jest.mock('../../src/ui/StatusBar');
-jest.mock('../../src/cfn/StackActionAPIs');
+jest.mock('../../../src/ui/Message');
+jest.mock('../../../src/ui/StatusBar');
+jest.mock('../../../src/stacks/actions/StackActionAPIs');
 
 describe('Deployment', () => {
     let mockClient: jest.Mocked<LanguageClient>;

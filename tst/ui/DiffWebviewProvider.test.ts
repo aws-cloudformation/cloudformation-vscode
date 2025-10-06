@@ -1,5 +1,5 @@
 import { DiffWebviewProvider } from '../../src/ui/DiffWebviewProvider';
-import { StackChange } from '../../src/cfn/StackActionRequestType';
+import { StackChange } from '../../src/stacks/actions/StackActionRequestType';
 
 describe('DiffWebviewProvider', () => {
     let provider: DiffWebviewProvider;

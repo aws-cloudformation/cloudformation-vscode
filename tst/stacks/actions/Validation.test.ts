@@ -1,12 +1,12 @@
-import { Validation, getLastValidation, setLastValidation } from '../../src/cfn/Validation';
+import { Validation, getLastValidation, setLastValidation } from '../../../src/stacks/actions/Validation';
 import { LanguageClient } from 'vscode-languageclient/node';
-import * as Message from '../../src/ui/Message';
-import * as StatusBar from '../../src/ui/StatusBar';
-import * as StackActionAPIs from '../../src/cfn/StackActionAPIs';
+import * as Message from '../../../src/ui/Message';
+import * as StatusBar from '../../../src/ui/StatusBar';
+import * as StackActionAPIs from '../../../src/stacks/actions/StackActionAPIs';
 
-jest.mock('../../src/ui/Message');
-jest.mock('../../src/ui/StatusBar');
-jest.mock('../../src/cfn/StackActionAPIs');
+jest.mock('../../../src/ui/Message');
+jest.mock('../../../src/ui/StatusBar');
+jest.mock('../../../src/stacks/actions/StackActionAPIs');
 
 describe('Validation', () => {
     let mockClient: jest.Mocked<LanguageClient>;

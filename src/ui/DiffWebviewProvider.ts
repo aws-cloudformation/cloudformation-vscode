@@ -1,6 +1,6 @@
 import { WebviewView, WebviewViewProvider } from 'vscode';
 import { ResourceChangeDetail } from '@aws-sdk/client-cloudformation';
-import { StackChange } from '../cfn/StackActionRequestType';
+import { StackChange } from '../stacks/actions/StackActionRequestType';
 
 export class DiffWebviewProvider implements WebviewViewProvider {
     private _view?: WebviewView;

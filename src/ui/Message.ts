@@ -1,7 +1,7 @@
 import { window } from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { getTemplateDeploymentStatus } from '../cfn/StackActionAPIs';
-import { StackActionPhase, StackActionStatus } from '../cfn/StackActionRequestType';
+import { getTemplateDeploymentStatus } from '../stacks/actions/StackActionAPIs';
+import { StackActionPhase, StackActionStatus } from '../stacks/actions/StackActionRequestType';
 
 export async function showDeploymentCompletion(
     client: LanguageClient,

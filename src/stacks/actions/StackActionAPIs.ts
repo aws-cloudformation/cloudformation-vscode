@@ -15,7 +15,7 @@ import {
     StackActionValidationStatusRequest,
     StackActionDeploymentStatusRequest,
 } from './StackActionProtocol';
-import { Identifiable } from '../LspTypes';
+import { Identifiable } from '../../LspTypes';
 
 export async function validateTemplate(client: LanguageClient, params: StackActionParams): Promise<StackActionResult> {
     return await client.sendRequest(StackActionValidationCreateRequest, params);
