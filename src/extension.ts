@@ -26,6 +26,7 @@ import {
     viewStackDiffCommand,
     focusDiffCommand,
     getStackManagementInfoCommand,
+    extractToParameterPositionCursorCommand,
 } from './commands/CfnCommands';
 import { AwsCredentialsService } from './auth/awsCredentials';
 import { ExtensionId, ExtensionName, Version } from './ExtensionConfig';
@@ -182,6 +183,7 @@ export async function activate(context: ExtensionContext) {
                     return documentManager.get();
                 }),
                 rerunLastValidationCommand(),
+                extractToParameterPositionCursorCommand(),
                 credentialsService,
                 serverProvider,
             );
