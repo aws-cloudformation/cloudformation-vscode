@@ -1,4 +1,3 @@
-import { Position } from 'vscode';
 import { findParameterDescriptionPosition } from '../../src/utils';
 
 // Mock Position class for testing
