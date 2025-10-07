@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
-import { StackActionPhase, StackChange, StackActionParams, StackActionStatus } from './StackActionRequestType';
+import { StackActionPhase, StackChange, StackActionState } from './StackActionRequestType';
 import { LanguageClient } from 'vscode-languageclient/node';
 import {
     showErrorMessage,
@@ -8,10 +8,11 @@ import {
     showValidationSuccess,
     showValidationFailure,
 } from '../../ui/Message';
-import { getTemplateValidationStatus, validateTemplate } from './StackActionAPIs';
+import { getValidationStatus, validate } from './StackActionApi';
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/StatusBar';
 import { StatusBarItem, commands } from 'vscode';
 import { DiffWebviewProvider } from '../../ui/DiffWebviewProvider';
+import { createStackActionParams } from './StackActionUtil';
 
 // TODO move this to server side, we should let server handle last validation
 let lastValidation: Validation | null = null;
@@ -57,7 +58,10 @@ export class Validation {
         try {
             showValidationStarted(this.stackName);
             this.statusBarItem = createDeploymentStatusBar();
-            await validateTemplate(this.client, this.getTemplateWorkflowParams());
+            await validate(
+                this.client,
+                createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities),
+            );
             this.pollForProgress();
         } catch (error) {
             showErrorMessage(`Error validating template: ${error instanceof Error ? error.message : String(error)}`);
@@ -68,19 +72,9 @@ export class Validation {
         return this.changes;
     }
 
-    private getTemplateWorkflowParams(): StackActionParams {
-        return {
-            id: this.id,
-            uri: this.uri,
-            stackName: this.stackName,
-            parameters: this.parameters,
-            capabilities: this.capabilities,
-        };
-    }
-
     private pollForProgress() {
         const interval = setInterval(() => {
-            getTemplateValidationStatus(this.client, { id: this.id })
+            getValidationStatus(this.client, { id: this.id })
                 .then((validationResult) => {
                     if (validationResult.phase === this.status) {
                         return;
@@ -98,7 +92,7 @@ export class Validation {
                             // Status bar updated above
                             break;
                         case StackActionPhase.VALIDATION_COMPLETE:
-                            if (validationResult.status === StackActionStatus.SUCCESSFUL) {
+                            if (validationResult.state === StackActionState.SUCCESSFUL) {
                                 showValidationSuccess(this.stackName);
 
                                 this.showDiffView();

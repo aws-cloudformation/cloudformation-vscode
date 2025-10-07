@@ -1,9 +1,9 @@
 import { rerunLastValidationCommand } from '../../src/commands/CfnCommands';
-import { getLastValidation } from '../../src/stacks/actions/Validation';
+import { getLastValidation } from '../../src/stacks/actions/ValidationWorkflow';
 import * as vscode from 'vscode';
 import { showErrorMessage } from '../../src/ui/Message';
 
-jest.mock('../../src/stacks/actions/Validation');
+jest.mock('../../src/stacks/actions/ValidationWorkflow');
 jest.mock('../../src/ui/Message');
 jest.mock('vscode');
 
