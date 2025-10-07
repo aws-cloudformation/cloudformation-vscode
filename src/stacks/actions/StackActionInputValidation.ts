@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { StackActionParameter } from './StackActionRequestType';
+import { TemplateParameter } from './StackActionRequestType';
 
 export function validateTemplatePath(value: string): string | null {
     if (!value) {
@@ -35,7 +35,7 @@ export function validateStackName(value: string): string | null {
     return null;
 }
 
-export function validateParameterValue(input: string, param: StackActionParameter): string | null {
+export function validateParameterValue(input: string, param: TemplateParameter): string | null {
     if (!input && !param.Default) {
         return `Parameter ${param.name} is required`;
     }

@@ -1,14 +1,14 @@
 import { Parameter, Capability, ResourceChangeDetail } from '@aws-sdk/client-cloudformation';
 import { Identifiable } from '../../LspTypes';
 
-export type StackActionParams = Identifiable & {
+export type CreateStackActionParams = Identifiable & {
     uri: string;
     stackName: string;
     parameters?: Parameter[];
     capabilities?: Capability[];
 };
 
-export type StackActionResult = Identifiable & {
+export type CreateStackActionResult = Identifiable & {
     id: string;
     changeSetName: string;
     stackName: string;
@@ -50,31 +50,27 @@ export enum StackActionPhase {
     DEPLOYMENT_FAILED = 'DEPLOYMENT_FAILED',
 }
 
-export enum StackActionStatus {
+export enum StackActionState {
     IN_PROGRESS = 'IN_PROGRESS',
     SUCCESSFUL = 'SUCCESSFUL',
     FAILED = 'FAILED',
 }
 
-export type StackActionStatusResult = Identifiable & {
+export type GetStackActionStatusResult = Identifiable & {
     phase: StackActionPhase;
-    status: StackActionStatus;
+    state: StackActionState;
     changes?: StackChange[];
 };
 
-export type StackActionMetadataParams = {
-    uri: string;
-};
-
 export type GetParametersResult = {
-    parameters: StackActionParameter[];
+    parameters: TemplateParameter[];
 };
 
 export type GetCapabilitiesResult = {
     capabilities: Capability[];
 };
 
-export type StackActionParameter = {
+export type TemplateParameter = {
     name: string;
     Type?: string;
     Default?: string | number | boolean;
@@ -86,3 +82,5 @@ export type StackActionParameter = {
     MinValue?: number;
     MaxValue?: number;
 };
+
+export type TemplateUri = string;

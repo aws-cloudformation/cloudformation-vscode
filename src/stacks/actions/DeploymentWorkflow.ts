@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
-import { StackActionParams, StackActionPhase, StackActionStatus } from './StackActionRequestType';
+import { StackActionPhase, StackActionState } from './StackActionRequestType';
 import { LanguageClient } from 'vscode-languageclient/node';
 import {
     showDeploymentStarted,
@@ -10,7 +10,8 @@ import {
 } from '../../ui/Message';
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/StatusBar';
 import { StatusBarItem } from 'vscode';
-import { deployTemplate, getTemplateDeploymentStatus } from './StackActionAPIs';
+import { deploy, getDeploymentStatus } from './StackActionApi';
+import { createStackActionParams } from './StackActionUtil';
 
 let lastDeployment: Deployment | null = null;
 
@@ -48,25 +49,18 @@ export class Deployment {
     }
 
     async deploy() {
-        await deployTemplate(this.client, this.getTemplateWorkflowParams());
+        await deploy(
+            this.client,
+            createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities),
+        );
         showDeploymentStarted(this.stackName);
         this.statusBarItem = createDeploymentStatusBar();
         this.pollForProgress();
     }
 
-    private getTemplateWorkflowParams(): StackActionParams {
-        return {
-            id: this.id,
-            uri: this.uri,
-            stackName: this.stackName,
-            parameters: this.parameters,
-            capabilities: this.capabilities,
-        };
-    }
-
     private pollForProgress() {
         const interval = setInterval(() => {
-            getTemplateDeploymentStatus(this.client, { id: this.id })
+            getDeploymentStatus(this.client, { id: this.id })
                 .then((deploymentResult) => {
                     if (deploymentResult.phase === this.status) {
                         return;
@@ -85,7 +79,7 @@ export class Deployment {
                             // Status bar updated above, continue polling
                             break;
                         case StackActionPhase.DEPLOYMENT_COMPLETE:
-                            if (deploymentResult.status === StackActionStatus.SUCCESSFUL) {
+                            if (deploymentResult.state === StackActionState.SUCCESSFUL) {
                                 showDeploymentSuccess(this.stackName);
                             } else {
                                 showDeploymentFailure(this.stackName);

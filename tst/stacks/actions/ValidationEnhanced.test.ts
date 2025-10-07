@@ -1,4 +1,4 @@
-import { Validation } from '../../../src/stacks/actions/Validation';
+import { Validation } from '../../../src/stacks/actions/ValidationWorkflow';
 import { commands } from 'vscode';
 import { DiffWebviewProvider } from '../../../src/ui/DiffWebviewProvider';
 import { StackChange } from '../../../src/stacks/actions/StackActionRequestType';

@@ -1,12 +1,12 @@
-import { Validation, getLastValidation, setLastValidation } from '../../../src/stacks/actions/Validation';
+import { Validation, getLastValidation, setLastValidation } from '../../../src/stacks/actions/ValidationWorkflow';
 import { LanguageClient } from 'vscode-languageclient/node';
 import * as Message from '../../../src/ui/Message';
 import * as StatusBar from '../../../src/ui/StatusBar';
-import * as StackActionAPIs from '../../../src/stacks/actions/StackActionAPIs';
+import * as StackActionApi from '../../../src/stacks/actions/StackActionApi';
 
 jest.mock('../../../src/ui/Message');
 jest.mock('../../../src/ui/StatusBar');
-jest.mock('../../../src/stacks/actions/StackActionAPIs');
+jest.mock('../../../src/stacks/actions/StackActionApi');
 
 describe('Validation', () => {
     let mockClient: jest.Mocked<LanguageClient>;
@@ -28,7 +28,7 @@ describe('Validation', () => {
     describe('validate', () => {
         it('should show validation started and create status bar', async () => {
             const mockStatusBar = { show: jest.fn() } as any;
-            jest.spyOn(StackActionAPIs, 'validateTemplate').mockResolvedValue({
+            jest.spyOn(StackActionApi, 'validate').mockResolvedValue({
                 id: 'test-id',
                 changeSetName: 'test-changeset',
                 stackName: 'test-stack',
@@ -40,12 +40,12 @@ describe('Validation', () => {
 
             expect(Message.showValidationStarted).toHaveBeenCalledWith('test-stack');
             expect(StatusBar.createDeploymentStatusBar).toHaveBeenCalledWith();
-            expect(StackActionAPIs.validateTemplate).toHaveBeenCalled();
+            expect(StackActionApi.validate).toHaveBeenCalled();
         });
 
         it('should handle validation errors', async () => {
             const error = new Error('Validation failed');
-            jest.spyOn(StackActionAPIs, 'validateTemplate').mockRejectedValue(error);
+            jest.spyOn(StackActionApi, 'validate').mockRejectedValue(error);
 
             await validation.validate();
 
