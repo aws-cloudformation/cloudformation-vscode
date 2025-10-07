@@ -14,7 +14,18 @@ import {
 } from '../cfn/ResourceRequestTypes';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
 import { showErrorMessage } from '../ui/Message';
-import { Position, ProgressLocation, Range, TextEdit, Uri, window, workspace, WorkspaceEdit, env } from 'vscode';
+import {
+    Position,
+    ProgressLocation,
+    Range,
+    Selection,
+    TextEdit,
+    Uri,
+    window,
+    workspace,
+    WorkspaceEdit,
+    env,
+} from 'vscode';
 
 type ResourcesChangeListener = (resources: ResourceList[]) => void;
 
@@ -178,21 +189,56 @@ export class ResourcesManager {
     private async applyCodeActionEdits(result: ResourceStateResult) {
         if (result.edit?.changes) {
             const workspaceEdit = new WorkspaceEdit();
+            let firstEditUri: Uri | undefined;
+            let firstEditRange: Range | undefined;
+            let hasPlaceholder = false;
+
             for (const [uri, textEdits] of Object.entries(result.edit.changes)) {
                 const vsCodeUri = Uri.parse(uri);
-                const vsCodeEdits = (textEdits as TextEdit[]).map(
-                    (edit: TextEdit) =>
-                        new TextEdit(
-                            new Range(
-                                new Position(edit.range.start.line, edit.range.start.character),
-                                new Position(edit.range.end.line, edit.range.end.character),
-                            ),
-                            edit.newText,
-                        ),
-                );
+                firstEditUri ??= vsCodeUri;
+
+                const vsCodeEdits = (textEdits as TextEdit[]).map((edit: TextEdit) => {
+                    const range = new Range(
+                        new Position(edit.range.start.line, edit.range.start.character),
+                        new Position(edit.range.end.line, edit.range.end.character),
+                    );
+
+                    firstEditRange ??= range;
+
+                    if (edit.newText.includes('${1:')) {
+                        hasPlaceholder = true;
+                    }
+
+                    return new TextEdit(range, edit.newText);
+                });
                 workspaceEdit.set(vsCodeUri, vsCodeEdits);
             }
+
             await workspace.applyEdit(workspaceEdit);
+
+            if (hasPlaceholder && firstEditUri && firstEditRange) {
+                await this.repositionCursorToFirstPlaceholder(firstEditUri, firstEditRange);
+            }
+        }
+    }
+
+    private async repositionCursorToFirstPlaceholder(uri: Uri, searchStartRange: Range): Promise<void> {
+        const document = await workspace.openTextDocument(uri);
+        const editor = await window.showTextDocument(document);
+        const searchStartOffset = document.offsetAt(searchStartRange.start);
+        const text = document.getText();
+        const textFromStart = text.substring(searchStartOffset);
+
+        const placeholderMatch = textFromStart.match(/\$\{1:([^}]+)\}/);
+        if (placeholderMatch) {
+            const placeholderStart = searchStartOffset + textFromStart.indexOf(placeholderMatch[0]);
+            const placeholderEnd = placeholderStart + placeholderMatch[0].length;
+
+            const startPos = document.positionAt(placeholderStart);
+            const endPos = document.positionAt(placeholderEnd);
+
+            editor.selection = new Selection(startPos, endPos);
+            editor.revealRange(new Range(startPos, endPos));
         }
     }
 
