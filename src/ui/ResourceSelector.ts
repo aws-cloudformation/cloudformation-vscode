@@ -10,7 +10,7 @@ export interface ResourceSelectionResult {
 export class ResourceSelector {
     constructor(private client: LanguageClient) {}
 
-    async selectResourceTypes(selectedTypes: string[] = []): Promise<string[] | undefined> {
+    async selectResourceTypes(selectedTypes: string[] = [], multiSelect = true): Promise<string[] | undefined> {
         try {
             const response = await this.client.sendRequest(ResourceTypesRequest, {});
             const availableTypes = response.resourceTypes;
@@ -25,13 +25,20 @@ export class ResourceSelector {
                 picked: selectedTypes.includes(type),
             }));
 
-            const selectedItems = await window.showQuickPick(quickPickItems, {
-                canPickMany: true,
+            const result = await window.showQuickPick(quickPickItems, {
+                canPickMany: multiSelect,
                 placeHolder: 'Select resource types',
                 title: 'Select Resource Types',
             });
 
-            return selectedItems?.map((item) => item.label);
+            if (!result) {
+                return undefined;
+            }
+
+            if (Array.isArray(result)) {
+                return result.map((item: { label: string }) => item.label);
+            }
+            return [(result as { label: string }).label];
         } catch (error) {
             console.error('Failed to get resource types:', error);
             window.showErrorMessage('Failed to get available resource types');
@@ -39,17 +46,15 @@ export class ResourceSelector {
         }
     }
 
-    async selectResourcesForImport(): Promise<ResourceSelectionResult[]> {
+    async selectResources(multiSelect = true): Promise<ResourceSelectionResult[]> {
         try {
-            // Step 1: Select multiple resource types
-            const selectedTypes = await this.selectResourceTypes();
+            const selectedTypes = await this.selectResourceTypes([], multiSelect);
             if (!selectedTypes || selectedTypes.length === 0) {
                 return [];
             }
 
             const allSelections: ResourceSelectionResult[] = [];
 
-            // Step 2: For each resource type, get and select resources
             for (const resourceType of selectedTypes) {
                 const resourceIdentifiers = await this.getResourceIdentifiers(resourceType);
                 if (resourceIdentifiers.length === 0) {
@@ -57,27 +62,32 @@ export class ResourceSelector {
                     continue;
                 }
 
-                // Step 3: Select multiple resources for this type
-                const selectedIdentifiers = await window.showQuickPick(resourceIdentifiers, {
-                    canPickMany: true,
+                const result = await window.showQuickPick(resourceIdentifiers, {
+                    canPickMany: multiSelect,
                     placeHolder: `Select ${resourceType} identifiers`,
                     title: `Select ${resourceType} Resources`,
                 });
 
-                if (selectedIdentifiers && selectedIdentifiers.length > 0) {
-                    // Add all combinations to the selection list
-                    selectedIdentifiers.forEach((identifier) => {
-                        allSelections.push({ resourceType, resourceIdentifier: identifier });
-                    });
+                if (!result) {
+                    continue;
                 }
+
+                const identifiers = Array.isArray(result) ? result : [result];
+                identifiers.forEach((identifier: string) => {
+                    allSelections.push({ resourceType, resourceIdentifier: identifier });
+                });
             }
 
             return allSelections;
         } catch (error) {
-            console.error('Failed to select resources for import:', error);
-            window.showErrorMessage('Failed to select resources for import');
+            window.showErrorMessage('Failed to select resources');
             return [];
         }
+    }
+
+    async selectSingleResource(): Promise<ResourceSelectionResult | undefined> {
+        const result = await this.selectResources(false);
+        return result[0];
     }
 
     private async getResourceIdentifiers(resourceType: string, cachedResources?: ResourceList[]): Promise<string[]> {

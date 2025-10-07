@@ -26,6 +26,7 @@ import {
     viewStackDiffCommand,
     focusDiffCommand,
     getStackManagementInfoCommand,
+    getStackManagementInfoCommandPalette,
 } from './commands/CfnCommands';
 import { AwsCredentialsService } from './auth/awsCredentials';
 import { ExtensionId, ExtensionName, Version } from './ExtensionConfig';
@@ -153,15 +154,17 @@ export async function activate(context: ExtensionContext) {
                 window.createTreeView('aws.cloudformation', {
                     treeDataProvider: cfnPanel,
                     showCollapseAll: true,
+                    canSelectMany: true,
                 }),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager),
                 copyResourceIdentifierCommand(),
                 selectResourceTypesCommand(resourcesManager),
-                importResourceStateCommand(resourcesManager),
-                cloneResourceStateCommand(resourcesManager),
+                ...importResourceStateCommand(resourcesManager),
+                ...cloneResourceStateCommand(resourcesManager),
                 getStackManagementInfoCommand(resourcesManager),
+                getStackManagementInfoCommandPalette(resourcesManager),
                 window.registerWebviewViewProvider('aws.cloudformation.diff', diffProvider),
                 viewStackDiffCommand(),
                 focusDiffCommand(),
