@@ -45,11 +45,12 @@ export class RemoteManifest {
         this.manifestUrl = `${baseRemoteUrl}/${ManifestFileName}`;
         this.manifestFile = join(storageLocation, ManifestFileName);
 
+        // Load from local manifest first
         if (existsSync(this.manifestFile)) {
             this._manifest = JSON.parse(readFileSync(this.manifestFile, 'utf-8')) as ManifestType;
-        } else {
-            this.getAndSave();
         }
+
+        this.getAndSave(); // Always try to get the latest manifest from online on startup
 
         // Refresh manifest eventually
         this.timeout = setInterval(
