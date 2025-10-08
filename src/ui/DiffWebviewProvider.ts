@@ -21,9 +21,9 @@ export class DiffWebviewProvider implements WebviewViewProvider {
         webviewView.webview.options = { enableScripts: true };
         webviewView.webview.html = this.getHtmlContent();
 
-        webviewView.webview.onDidReceiveMessage(message => {
+        webviewView.webview.onDidReceiveMessage((message: { command: string; resourceId?: string }) => {
             if (message.command === 'openDiff') {
-                DiffViewHelper.openDiff(this.stackName, this.changes, message.resourceId);
+                void DiffViewHelper.openDiff(this.stackName, this.changes, message.resourceId);
             }
         });
     }
@@ -77,10 +77,14 @@ export class DiffWebviewProvider implements WebviewViewProvider {
             const rc = change.resourceChange;
             if (!rc) return;
 
-            const bgColor = rc.action === 'Add' ? 'rgba(0, 255, 0, 0.8)' :
-                           rc.action === 'Remove' ? 'rgba(255, 0, 0, 0.8)' :
-                           rc.action === 'Modify' ? 'rgba(255, 165, 0, 0.8)' :
-                           'transparent';
+            const bgColor =
+                rc.action === 'Add'
+                    ? 'rgba(0, 255, 0, 0.8)'
+                    : rc.action === 'Remove'
+                      ? 'rgba(255, 0, 0, 0.8)'
+                      : rc.action === 'Modify'
+                        ? 'rgba(255, 165, 0, 0.8)'
+                        : 'transparent';
 
             tableHtml += `<tr style="background-color: ${bgColor};">
                 <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; font-weight: bold;">${rc.action ?? 'Unknown'}</td>

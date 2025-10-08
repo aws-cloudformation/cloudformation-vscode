@@ -10,10 +10,10 @@ export class DiffViewHelper {
         const beforePath = path.join(tmpDir, `${stackName}-before.json`);
         const afterPath = path.join(tmpDir, `${stackName}-after.json`);
 
-        const beforeData: any = {};
-        const afterData: any = {};
+        const beforeData: Record<string, unknown> = {};
+        const afterData: Record<string, unknown> = {};
 
-        changes.forEach(change => {
+        changes.forEach((change) => {
             const rc = change.resourceChange;
             if (!rc?.logicalResourceId) return;
 
@@ -22,7 +22,7 @@ export class DiffViewHelper {
             if (rc.action !== 'Add') {
                 if (rc.beforeContext) {
                     try {
-                        beforeData[id] = JSON.parse(rc.beforeContext);
+                        beforeData[id] = JSON.parse(rc.beforeContext) as Record<string, unknown>;
                     } catch {
                         beforeData[id] = {};
                     }
@@ -34,7 +34,7 @@ export class DiffViewHelper {
             if (rc.action !== 'Remove') {
                 if (rc.afterContext) {
                     try {
-                        afterData[id] = JSON.parse(rc.afterContext);
+                        afterData[id] = JSON.parse(rc.afterContext) as Record<string, unknown>;
                     } catch {
                         afterData[id] = {};
                     }
@@ -44,14 +44,16 @@ export class DiffViewHelper {
             }
 
             if (!rc.beforeContext && !rc.afterContext) {
-                rc.details?.forEach(detail => {
+                rc.details?.forEach((detail) => {
                     const target = detail.Target;
                     if (target?.Name) {
                         if (rc.action !== 'Add') {
-                            beforeData[id][target.Name] = target.BeforeValue ?? '<UnknownBefore>';
+                            (beforeData[id] as Record<string, unknown>)[target.Name] =
+                                target.BeforeValue ?? '<UnknownBefore>';
                         }
                         if (rc.action !== 'Remove') {
-                            afterData[id][target.Name] = target.AfterValue ?? '<UnknownAfter>';
+                            (afterData[id] as Record<string, unknown>)[target.Name] =
+                                target.AfterValue ?? '<UnknownAfter>';
                         }
                     }
                 });
@@ -72,11 +74,11 @@ export class DiffViewHelper {
             const editor = await workspace.openTextDocument(afterUri);
             const text = editor.getText();
             const lines = text.split('\n');
-            const lineIndex = lines.findIndex(line => line.includes(`"${resourceId}"`));
+            const lineIndex = lines.findIndex((line) => line.includes(`"${resourceId}"`));
 
             if (lineIndex !== -1) {
                 await commands.executeCommand('vscode.diff', beforeUri, afterUri, `${stackName}: Before ↔ After`, {
-                    selection: new Range(new Position(lineIndex, 0), new Position(lineIndex + 1, 0))
+                    selection: new Range(new Position(lineIndex, 0), new Position(lineIndex + 1, 0)),
                 });
             }
         }

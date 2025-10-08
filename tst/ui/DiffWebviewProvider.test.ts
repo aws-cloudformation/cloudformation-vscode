@@ -12,6 +12,7 @@ describe('DiffWebviewProvider', () => {
                 html: '',
                 options: {},
                 cspSource: 'test',
+                onDidReceiveMessage: jest.fn(),
             },
         };
     });
