@@ -15,6 +15,7 @@ import { ResourcesManager } from '../resources/ResourcesManager';
 import { DocumentManager } from '../documents/DocumentManager';
 
 import { DiffWebviewProvider } from '../ui/DiffWebviewProvider';
+import { ResourceContextValue } from '../treeview/ContextValue';
 
 export function validateTemplateCommand(
     client: LanguageClient,
@@ -155,15 +156,29 @@ export function addResourceTypesCommand(resourcesManager: ResourcesManager) {
 }
 
 export function importResourceStateCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(commandKey('api.importResourceState'), async (resourceNode?: ResourceNode) => {
-        await resourcesManager.importResourceStates(resourceNode);
-    });
+    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+        const nodes = selectedNodes ?? (node ? [node] : []);
+        const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue);
+        await resourcesManager.importResourceStates(resourceNodes);
+    };
+
+    return [
+        commands.registerCommand(commandKey('api.importResourceState'), handler),
+        commands.registerCommand(commandKey('api.importResourceState.palette'), () => handler({} as ResourceNode)),
+    ];
 }
 
 export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(commandKey('api.cloneResourceState'), async (resourceNode?: ResourceNode) => {
-        await resourcesManager.cloneResourceStates(resourceNode);
-    });
+    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+        const nodes = selectedNodes ?? (node ? [node] : []);
+        const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue);
+        await resourcesManager.cloneResourceStates(resourceNodes);
+    };
+
+    return [
+        commands.registerCommand(commandKey('api.cloneResourceState'), handler),
+        commands.registerCommand(commandKey('api.cloneResourceState.palette'), () => handler({} as ResourceNode)),
+    ];
 }
 
 export const RefreshResourceListCommand: Command = {
@@ -239,4 +254,10 @@ export function extractToParameterPositionCursorCommand() {
             }
         },
     );
+}
+
+export function getStackManagementInfoCommandPalette(resourcesManager: ResourcesManager) {
+    return commands.registerCommand(commandKey('api.getStackManagementInfo.palette'), async () => {
+        await resourcesManager.getStackManagementInfo();
+    });
 }

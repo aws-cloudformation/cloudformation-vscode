@@ -118,7 +118,7 @@ export class ResourcesManager {
         }
     }
 
-    async importResourceStates(resourceNode?: ResourceNode): Promise<void> {
+    async importResourceStates(resourceNodes?: ResourceNode[]): Promise<void> {
         const editor = window.activeTextEditor;
         if (!editor) {
             showErrorMessage('No active editor');
@@ -126,7 +126,7 @@ export class ResourcesManager {
         }
 
         try {
-            const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNode);
+            const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNodes);
             if (resourceSelectionsArray.length === 0) {
                 return;
             }
@@ -208,7 +208,7 @@ export class ResourcesManager {
         return [successCount, failureCount];
     }
 
-    async cloneResourceStates(resourceNode?: ResourceNode): Promise<void> {
+    async cloneResourceStates(resourceNodes?: ResourceNode[]): Promise<void> {
         const editor = window.activeTextEditor;
         if (!editor) {
             showErrorMessage('No active editor');
@@ -216,7 +216,7 @@ export class ResourcesManager {
         }
 
         try {
-            const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNode);
+            const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNodes);
             if (resourceSelectionsArray.length === 0) {
                 return;
             }
@@ -247,19 +247,21 @@ export class ResourcesManager {
         }
     }
 
-    private async getResourceSelectionArray(resourceNode?: ResourceNode): Promise<ResourceSelection[]> {
+    private async getResourceSelectionArray(resourceNodes?: ResourceNode[]): Promise<ResourceSelection[]> {
         let selections: ResourceSelectionResult[];
 
-        if (resourceNode?.resourceList && resourceNode.resourceType) {
-            // Called from tree view with specific resource
-            selections = [
-                {
-                    resourceType: resourceNode.resourceType,
-                    resourceIdentifier: resourceNode.label,
-                },
-            ];
+        if (resourceNodes && resourceNodes.length > 0) {
+            selections = resourceNodes
+                .filter(
+                    (node): node is ResourceNode & { resourceType: string } =>
+                        !!node.resourceList && !!node.resourceType,
+                )
+                .map((node) => ({
+                    resourceType: node.resourceType,
+                    resourceIdentifier: node.label,
+                }));
         } else {
-            selections = await this.resourceSelector.selectResourcesForImport();
+            selections = await this.resourceSelector.selectResources();
         }
 
         if (selections.length === 0) {
@@ -300,9 +302,16 @@ export class ResourcesManager {
     }
 
     async getStackManagementInfo(resourceNode?: ResourceNode): Promise<void> {
-        if (!resourceNode?.resourceIdentifier) {
-            showErrorMessage('No resource selected');
-            return;
+        let resourceIdentifier: string | undefined;
+
+        if (resourceNode?.resourceIdentifier) {
+            resourceIdentifier = resourceNode.resourceIdentifier;
+        } else {
+            const selection = await this.resourceSelector.selectSingleResource();
+            if (!selection) {
+                return;
+            }
+            resourceIdentifier = selection.resourceIdentifier;
         }
 
         try {
@@ -316,7 +325,7 @@ export class ResourcesManager {
                     async () => {
                         const result: ResourceStackManagementResult = await this.client.sendRequest(
                             StackMgmtInfoRequest.method,
-                            resourceNode.resourceIdentifier,
+                            resourceIdentifier,
                         );
                         return result;
                     },
