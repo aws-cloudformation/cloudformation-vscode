@@ -67,7 +67,8 @@ export class DiffViewHelper {
         await commands.executeCommand('vscode.diff', beforeUri, afterUri, `${stackName}: Before ↔ After`);
 
         if (resourceId) {
-            // Find the line with the resource ID in the active editor
+            // Find the line with the resource ID in the after doc.
+            // In a deleted resource case this will just be the top
             const editor = await workspace.openTextDocument(afterUri);
             const text = editor.getText();
             const lines = text.split('\n');
