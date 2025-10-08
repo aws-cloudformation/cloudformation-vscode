@@ -3,6 +3,8 @@ import { ResourceChangeDetail } from '@aws-sdk/client-cloudformation';
 import { TemplateChange } from '../cfn/TemplateRequestType';
 import { DiffViewHelper } from './DiffViewHelper';
 
+const WEBVIEW_COMMAND_OPEN_DIFF = 'openDiff';
+
 export class DiffWebviewProvider implements WebviewViewProvider {
     private _view?: WebviewView;
     private stackName = '';
@@ -22,7 +24,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
         webviewView.webview.html = this.getHtmlContent();
 
         webviewView.webview.onDidReceiveMessage((message: { command: string; resourceId?: string }) => {
-            if (message.command === 'openDiff') {
+            if (message.command === WEBVIEW_COMMAND_OPEN_DIFF) {
                 void DiffViewHelper.openDiff(this.stackName, this.changes, message.resourceId);
             }
         });
@@ -152,10 +154,10 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 <script>
                     const vscode = acquireVsCodeApi();
                     function openDiff() {
-                        vscode.postMessage({ command: 'openDiff' });
+                        vscode.postMessage({ command: '${WEBVIEW_COMMAND_OPEN_DIFF}' });
                     }
                     function openDiffToResource(resourceId) {
-                        vscode.postMessage({ command: 'openDiff', resourceId: resourceId });
+                        vscode.postMessage({ command: '${WEBVIEW_COMMAND_OPEN_DIFF}', resourceId: resourceId });
                     }
                 </script>
             </body>
