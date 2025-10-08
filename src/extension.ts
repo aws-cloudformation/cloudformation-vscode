@@ -28,6 +28,7 @@ import {
     getStackManagementInfoCommand,
     getStackManagementInfoCommandPalette,
 } from './commands/CfnCommands';
+import { openStackTemplateCommand } from './commands/OpenStackTemplate';
 import { AwsCredentialsService } from './auth/awsCredentials';
 import { ExtensionId, ExtensionName, Version } from './ExtensionConfig';
 import { CfnPanel } from './cfn/CfnPanel';
@@ -41,6 +42,7 @@ import { ResourcesManager } from './resources/ResourcesManager';
 import { ResourceSelector } from './ui/ResourceSelector';
 import { ResourcesSectionUI } from './resources/ResourcesSectionUI';
 import { CfnInlineCompletionProvider } from './inlineCompletion/InlineCompletionProvider';
+import { StackActionCodeLensProvider } from './codelens/StackActionCodeLensProvider';
 import { LspServerResolver } from './lsp-server/LspServerProvider';
 import { CfnDevLspServerProvider } from './lsp-server/CfnDevLspServerProvider';
 import { CfnRemoteLspServerProvider } from './lsp-server/CfnRemoteLspServerProvider';
@@ -135,21 +137,29 @@ export async function activate(context: ExtensionContext) {
     // Create diff webview provider
     const diffProvider = new DiffWebviewProvider();
 
+    const documentSelector = [
+        { scheme: 'file', language: 'cloudformation' },
+        { scheme: 'file', language: 'yaml' },
+        { scheme: 'file', language: 'json' },
+    ];
+
     client
         .start()
         .then(() => {
             const inlineCompletionProvider = languages.registerInlineCompletionItemProvider(
-                [
-                    { scheme: 'file', language: 'cloudformation' },
-                    { scheme: 'file', language: 'yaml' },
-                    { scheme: 'file', language: 'json' },
-                ],
+                documentSelector,
                 new CfnInlineCompletionProvider(client),
+            );
+
+            const codeLensProvider = languages.registerCodeLensProvider(
+                documentSelector,
+                new StackActionCodeLensProvider(client),
             );
 
             context.subscriptions.push(
                 client,
                 inlineCompletionProvider,
+                codeLensProvider,
                 stacksManager,
                 window.createTreeView('aws.cloudformation', {
                     treeDataProvider: cfnPanel,
@@ -173,6 +183,7 @@ export async function activate(context: ExtensionContext) {
                 validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
                 deployTemplateCommand(client, stacksManager, documentManager),
                 refreshCommand(stacksManager),
+                openStackTemplateCommand(client),
                 describeTemplate(client, () => {
                     return documentManager.get();
                 }),

@@ -23,9 +23,9 @@ export function validateTemplateCommand(
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager,
 ) {
-    return commands.registerCommand(commandKey('api.validateTemplate'), async () => {
+    return commands.registerCommand(commandKey('api.validateTemplate'), async (templateUri?: string) => {
         try {
-            const templateUri = await getTemplatePath(documentManager);
+            templateUri ??= await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
@@ -60,9 +60,9 @@ export function validateTemplateCommand(
 }
 
 export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
-    return commands.registerCommand(commandKey('api.deployTemplate'), async () => {
+    return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
-            const templateUri = await getTemplatePath(documentManager);
+            templateUri ??= await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
