@@ -94,12 +94,13 @@ function findYamlParameterDescriptionPosition(lines: string[], parameterName: st
 
         if (inParameter) {
             // Look for the Description property
-            const descriptionMatch = line.match(/^(\s*)Description\s*:\s*"([^"]*)"/);
+            const descriptionMatch = line.match(/^(\s*)Description\s*:\s*(['"]?)([^'"]*)\2/);
             if (descriptionMatch) {
                 const indentation = descriptionMatch[1];
-                const descriptionValue = descriptionMatch[2];
+                const quote = descriptionMatch[2];
+                const descriptionValue = descriptionMatch[3];
                 // Position cursor between the quotes, after any existing description text
-                const character = indentation.length + 'Description: "'.length + descriptionValue.length;
+                const character = indentation.length + 'Description: '.length + quote.length + descriptionValue.length;
                 return new Position(i, character);
             }
 
