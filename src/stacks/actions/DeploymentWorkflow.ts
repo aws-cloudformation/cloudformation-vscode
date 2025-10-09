@@ -1,16 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
-import { TemplateActionParams, TemplateStatus, WorkflowResult } from './TemplateRequestType';
+import { StackActionPhase, StackActionState } from './StackActionRequestType';
 import { LanguageClient } from 'vscode-languageclient/node';
 import {
     showDeploymentStarted,
     showDeploymentSuccess,
     showDeploymentFailure,
     showValidationComplete,
-} from '../ui/Message';
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
+} from '../../ui/Message';
+import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/StatusBar';
 import { StatusBarItem } from 'vscode';
-import { deployTemplate, getTemplateDeploymentStatus } from './TemplateAPIs';
+import { deploy, getDeploymentStatus } from './StackActionApi';
+import { createStackActionParams } from './StackActionUtil';
 
 let lastDeployment: Deployment | null = null;
 
@@ -29,7 +30,7 @@ export class Deployment {
     private readonly parameters?: Parameter[];
     private readonly capabilities?: Capability[];
     private readonly client: LanguageClient;
-    private status: TemplateStatus | undefined;
+    private status: StackActionPhase | undefined;
     private statusBarItem?: StatusBarItem;
 
     constructor(
@@ -48,52 +49,45 @@ export class Deployment {
     }
 
     async deploy() {
-        await deployTemplate(this.client, this.getTemplateWorkflowParams());
+        await deploy(
+            this.client,
+            createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities),
+        );
         showDeploymentStarted(this.stackName);
         this.statusBarItem = createDeploymentStatusBar();
         this.pollForProgress();
     }
 
-    private getTemplateWorkflowParams(): TemplateActionParams {
-        return {
-            id: this.id,
-            uri: this.uri,
-            stackName: this.stackName,
-            parameters: this.parameters,
-            capabilities: this.capabilities,
-        };
-    }
-
     private pollForProgress() {
         const interval = setInterval(() => {
-            getTemplateDeploymentStatus(this.client, { id: this.id })
+            getDeploymentStatus(this.client, { id: this.id })
                 .then((deploymentResult) => {
-                    if (deploymentResult.status === this.status) {
+                    if (deploymentResult.phase === this.status) {
                         return;
                     }
 
-                    this.status = deploymentResult.status;
+                    this.status = deploymentResult.phase;
                     if (this.statusBarItem) {
-                        updateDeploymentStatus(this.statusBarItem, deploymentResult.status);
+                        updateDeploymentStatus(this.statusBarItem, deploymentResult.phase);
                     }
 
-                    switch (deploymentResult.status) {
-                        case TemplateStatus.VALIDATION_COMPLETE:
-                            if (deploymentResult.status === TemplateStatus.VALIDATION_COMPLETE) {
+                    switch (deploymentResult.phase) {
+                        case StackActionPhase.VALIDATION_COMPLETE:
+                            if (deploymentResult.phase === StackActionPhase.VALIDATION_COMPLETE) {
                                 showValidationComplete(this.stackName);
                             }
                             // Status bar updated above, continue polling
                             break;
-                        case TemplateStatus.DEPLOYMENT_COMPLETE:
-                            if (deploymentResult.result === WorkflowResult.SUCCESSFUL) {
+                        case StackActionPhase.DEPLOYMENT_COMPLETE:
+                            if (deploymentResult.state === StackActionState.SUCCESSFUL) {
                                 showDeploymentSuccess(this.stackName);
                             } else {
                                 showDeploymentFailure(this.stackName);
                             }
                             clearInterval(interval);
                             break;
-                        case TemplateStatus.DEPLOYMENT_FAILED:
-                        case TemplateStatus.VALIDATION_FAILED:
+                        case StackActionPhase.DEPLOYMENT_FAILED:
+                        case StackActionPhase.VALIDATION_FAILED:
                             showDeploymentFailure(this.stackName);
                             clearInterval(interval);
                             break;

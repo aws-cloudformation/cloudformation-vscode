@@ -1,12 +1,18 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
-import { TemplateStatus, TemplateChange, TemplateActionParams, WorkflowResult } from './TemplateRequestType';
+import { StackActionPhase, StackChange, StackActionState } from './StackActionRequestType';
 import { LanguageClient } from 'vscode-languageclient/node';
-import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../ui/Message';
-import { getTemplateValidationStatus, validateTemplate } from './TemplateAPIs';
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../ui/StatusBar';
+import {
+    showErrorMessage,
+    showValidationStarted,
+    showValidationSuccess,
+    showValidationFailure,
+} from '../../ui/Message';
+import { getValidationStatus, validate } from './StackActionApi';
+import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/StatusBar';
 import { StatusBarItem, commands } from 'vscode';
-import { DiffWebviewProvider } from '../ui/DiffWebviewProvider';
+import { DiffWebviewProvider } from '../../ui/DiffWebviewProvider';
+import { createStackActionParams } from './StackActionUtil';
 
 // TODO move this to server side, we should let server handle last validation
 let lastValidation: Validation | null = null;
@@ -27,8 +33,8 @@ export class Validation {
     private capabilities?: Capability[];
     private client: LanguageClient;
     private diffProvider: DiffWebviewProvider;
-    private status: TemplateStatus | undefined;
-    private changes: TemplateChange[] | undefined;
+    private status: StackActionPhase | undefined;
+    private changes: StackChange[] | undefined;
     private statusBarItem: StatusBarItem | undefined;
 
     constructor(
@@ -52,48 +58,41 @@ export class Validation {
         try {
             showValidationStarted(this.stackName);
             this.statusBarItem = createDeploymentStatusBar();
-            await validateTemplate(this.client, this.getTemplateWorkflowParams());
+            await validate(
+                this.client,
+                createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities),
+            );
             this.pollForProgress();
         } catch (error) {
             showErrorMessage(`Error validating template: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
-    getChanges(): TemplateChange[] | undefined {
+    getChanges(): StackChange[] | undefined {
         return this.changes;
-    }
-
-    private getTemplateWorkflowParams(): TemplateActionParams {
-        return {
-            id: this.id,
-            uri: this.uri,
-            stackName: this.stackName,
-            parameters: this.parameters,
-            capabilities: this.capabilities,
-        };
     }
 
     private pollForProgress() {
         const interval = setInterval(() => {
-            getTemplateValidationStatus(this.client, { id: this.id })
+            getValidationStatus(this.client, { id: this.id })
                 .then((validationResult) => {
-                    if (validationResult.status === this.status) {
+                    if (validationResult.phase === this.status) {
                         return;
                     }
 
-                    this.status = validationResult.status;
+                    this.status = validationResult.phase;
                     this.changes = validationResult.changes;
 
                     if (this.statusBarItem) {
-                        updateDeploymentStatus(this.statusBarItem, validationResult.status);
+                        updateDeploymentStatus(this.statusBarItem, validationResult.phase);
                     }
 
-                    switch (validationResult.status) {
-                        case TemplateStatus.VALIDATION_IN_PROGRESS:
+                    switch (validationResult.phase) {
+                        case StackActionPhase.VALIDATION_IN_PROGRESS:
                             // Status bar updated above
                             break;
-                        case TemplateStatus.VALIDATION_COMPLETE:
-                            if (validationResult.result === WorkflowResult.SUCCESSFUL) {
+                        case StackActionPhase.VALIDATION_COMPLETE:
+                            if (validationResult.state === StackActionState.SUCCESSFUL) {
                                 showValidationSuccess(this.stackName);
 
                                 this.showDiffView();
@@ -102,7 +101,7 @@ export class Validation {
                             }
                             clearInterval(interval);
                             break;
-                        case TemplateStatus.VALIDATION_FAILED:
+                        case StackActionPhase.VALIDATION_FAILED:
                             showValidationFailure(this.stackName);
                             clearInterval(interval);
                             break;
@@ -128,7 +127,7 @@ export class Validation {
         return this.diffProvider;
     }
 
-    protected setChanges(changes: TemplateChange[]): void {
+    protected setChanges(changes: StackChange[]): void {
         this.changes = changes;
     }
 

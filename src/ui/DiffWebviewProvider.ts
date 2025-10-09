@@ -1,6 +1,6 @@
 import { WebviewView, WebviewViewProvider } from 'vscode';
 import { ResourceChangeDetail } from '@aws-sdk/client-cloudformation';
-import { TemplateChange } from '../cfn/TemplateRequestType';
+import { StackChange } from '../stacks/actions/StackActionRequestType';
 import { DiffViewHelper } from './DiffViewHelper';
 
 const WEBVIEW_COMMAND_OPEN_DIFF = 'openDiff';
@@ -8,9 +8,9 @@ const WEBVIEW_COMMAND_OPEN_DIFF = 'openDiff';
 export class DiffWebviewProvider implements WebviewViewProvider {
     private _view?: WebviewView;
     private stackName = '';
-    private changes: TemplateChange[] = [];
+    private changes: StackChange[] = [];
 
-    updateData(stackName: string, changes: TemplateChange[] = []) {
+    updateData(stackName: string, changes: StackChange[] = []) {
         this.stackName = stackName;
         this.changes = changes;
         if (this._view) {

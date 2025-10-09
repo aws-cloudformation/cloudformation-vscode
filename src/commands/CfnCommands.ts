@@ -2,19 +2,20 @@ import { commands, env, Uri, window, workspace } from 'vscode';
 import { commandKey } from '../utils';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { Command } from 'vscode-languageclient';
-import { Deployment, setLastDeployment } from '../cfn/Deployment';
+import { Deployment, setLastDeployment } from '../stacks/actions/DeploymentWorkflow';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getParameterValues, getStackName, getTemplatePath, confirmCapabilities } from '../ui/InputBox';
 import { showErrorMessage } from '../ui/Message';
-import { getLastValidation, setLastValidation, Validation } from '../cfn/Validation';
-import { getParameters, getCapabilities } from '../cfn/TemplateAPIs';
-import { TemplateParameter } from '../cfn/TemplateRequestType';
+import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/ValidationWorkflow';
+import { getParameters, getCapabilities } from '../stacks/actions/StackActionApi';
+import { TemplateParameter } from '../stacks/actions/StackActionRequestType';
 import { StacksManager } from '../stacks/StacksManager';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
 import { ResourcesManager } from '../resources/ResourcesManager';
 import { DocumentManager } from '../documents/DocumentManager';
 
 import { DiffWebviewProvider } from '../ui/DiffWebviewProvider';
+import { ResourceContextValue } from '../treeview/ContextValue';
 
 export function validateTemplateCommand(
     client: LanguageClient,
@@ -22,9 +23,9 @@ export function validateTemplateCommand(
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager,
 ) {
-    return commands.registerCommand(commandKey('api.validateTemplate'), async () => {
+    return commands.registerCommand(commandKey('api.validateTemplate'), async (templateUri?: string) => {
         try {
-            const templateUri = await getTemplatePath(documentManager);
+            templateUri ??= await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
@@ -40,7 +41,7 @@ export function validateTemplateCommand(
             }
             if (paramDefinition.length > 0 && !parameters) return;
 
-            const capabilitiesResult = await getCapabilities(client, { uri: templateUri });
+            const capabilitiesResult = await getCapabilities(client, templateUri);
             const capabilities = await confirmCapabilities(capabilitiesResult.capabilities);
             if (capabilities === undefined) return; // User cancelled
 
@@ -59,9 +60,9 @@ export function validateTemplateCommand(
 }
 
 export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
-    return commands.registerCommand(commandKey('api.deployTemplate'), async () => {
+    return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
-            const templateUri = await getTemplatePath(documentManager);
+            templateUri ??= await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
@@ -77,7 +78,7 @@ export function deployTemplateCommand(client: LanguageClient, stacks: StacksMana
             }
             if (paramDefinition.length > 0 && !parameters) return;
 
-            const capabilitiesResult = await getCapabilities(client, { uri: templateUri });
+            const capabilitiesResult = await getCapabilities(client, templateUri);
             const capabilities = await confirmCapabilities(capabilitiesResult.capabilities);
             if (capabilities === undefined) return; // User cancelled
 
@@ -124,7 +125,7 @@ async function ensureFileIsOpen(templateUri: string): Promise<void> {
 
 async function getTemplateParameters(client: LanguageClient, templateUri: string): Promise<TemplateParameter[]> {
     try {
-        const result = await getParameters(client, { uri: templateUri });
+        const result = await getParameters(client, templateUri);
         return result.parameters;
     } catch (error) {
         showErrorMessage(
@@ -155,15 +156,29 @@ export function addResourceTypesCommand(resourcesManager: ResourcesManager) {
 }
 
 export function importResourceStateCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(commandKey('api.importResourceState'), async (resourceNode?: ResourceNode) => {
-        await resourcesManager.importResourceStates(resourceNode);
-    });
+    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+        const nodes = selectedNodes ?? (node ? [node] : []);
+        const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue);
+        await resourcesManager.importResourceStates(resourceNodes);
+    };
+
+    return [
+        commands.registerCommand(commandKey('api.importResourceState'), handler),
+        commands.registerCommand(commandKey('api.importResourceState.palette'), () => handler({} as ResourceNode)),
+    ];
 }
 
 export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(commandKey('api.cloneResourceState'), async (resourceNode?: ResourceNode) => {
-        await resourcesManager.cloneResourceStates(resourceNode);
-    });
+    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+        const nodes = selectedNodes ?? (node ? [node] : []);
+        const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue);
+        await resourcesManager.cloneResourceStates(resourceNodes);
+    };
+
+    return [
+        commands.registerCommand(commandKey('api.cloneResourceState'), handler),
+        commands.registerCommand(commandKey('api.cloneResourceState.palette'), () => handler({} as ResourceNode)),
+    ];
 }
 
 export const RefreshResourceListCommand: Command = {
@@ -212,5 +227,11 @@ export function focusDiffCommand() {
 export function getStackManagementInfoCommand(resourcesManager: ResourcesManager) {
     return commands.registerCommand(commandKey('api.getStackManagementInfo'), async (resourceNode?: ResourceNode) => {
         await resourcesManager.getStackManagementInfo(resourceNode);
+    });
+}
+
+export function getStackManagementInfoCommandPalette(resourcesManager: ResourcesManager) {
+    return commands.registerCommand(commandKey('api.getStackManagementInfo.palette'), async () => {
+        await resourcesManager.getStackManagementInfo();
     });
 }

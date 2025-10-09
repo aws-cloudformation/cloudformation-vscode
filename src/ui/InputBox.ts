@@ -1,7 +1,7 @@
 import { window, workspace, Uri } from 'vscode';
-import { validateStackName, validateParameterValue } from '../cfn/InputValidationUtil';
+import { validateStackName, validateParameterValue } from '../stacks/actions/StackActionInputValidation';
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation';
-import { TemplateParameter } from '../cfn/TemplateRequestType';
+import { TemplateParameter } from '../stacks/actions/StackActionRequestType';
 import { DocumentManager } from '../documents/DocumentManager';
 
 export async function getTemplatePath(documentManager: DocumentManager): Promise<string | undefined> {

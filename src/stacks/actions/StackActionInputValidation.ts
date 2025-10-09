@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { TemplateParameter } from './TemplateRequestType';
+import { TemplateParameter } from './StackActionRequestType';
 
 export function validateTemplatePath(value: string): string | null {
     if (!value) {

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../src/ui/StatusBar';
-import { TemplateStatus } from '../../src/cfn/TemplateRequestType';
+import { StackActionPhase } from '../../src/stacks/actions/StackActionRequestType';
 
 jest.mock('vscode', () => ({
     window: {
@@ -42,25 +42,25 @@ describe('StatusBar', () => {
 
     describe('updateDeploymentStatus', () => {
         it('should update status for validation in progress', () => {
-            updateDeploymentStatus(mockStatusBarItem, TemplateStatus.VALIDATION_IN_PROGRESS);
+            updateDeploymentStatus(mockStatusBarItem, StackActionPhase.VALIDATION_IN_PROGRESS);
 
             expect(mockStatusBarItem.text).toBe('$(sync~spin) Validating Template...');
         });
 
         it('should update status for deployment in progress', () => {
-            updateDeploymentStatus(mockStatusBarItem, TemplateStatus.DEPLOYMENT_IN_PROGRESS);
+            updateDeploymentStatus(mockStatusBarItem, StackActionPhase.DEPLOYMENT_IN_PROGRESS);
 
             expect(mockStatusBarItem.text).toBe('$(sync~spin) Deploying Stack...');
         });
 
         it('should update status for completion', () => {
-            updateDeploymentStatus(mockStatusBarItem, TemplateStatus.DEPLOYMENT_COMPLETE);
+            updateDeploymentStatus(mockStatusBarItem, StackActionPhase.DEPLOYMENT_COMPLETE);
 
             expect(mockStatusBarItem.text).toBe('$(check) Deployment Complete');
         });
 
         it('should update status for failure with error color', () => {
-            updateDeploymentStatus(mockStatusBarItem, TemplateStatus.DEPLOYMENT_FAILED);
+            updateDeploymentStatus(mockStatusBarItem, StackActionPhase.DEPLOYMENT_FAILED);
 
             expect(mockStatusBarItem.text).toBe('$(error) Deployment Failed');
             expect(mockStatusBarItem.backgroundColor).toBeDefined();
