@@ -26,6 +26,7 @@ import {
     viewStackDiffCommand,
     focusDiffCommand,
     getStackManagementInfoCommand,
+    extractToParameterPositionCursorCommand,
     getStackManagementInfoCommandPalette,
 } from './commands/CfnCommands';
 import { openStackTemplateCommand } from './commands/OpenStackTemplate';
@@ -196,6 +197,7 @@ export async function activate(context: ExtensionContext) {
                     return documentManager.get();
                 }),
                 rerunLastValidationCommand(),
+                extractToParameterPositionCursorCommand(),
                 credentialsService,
                 serverProvider,
             );

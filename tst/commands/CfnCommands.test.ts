@@ -1,4 +1,4 @@
-import { rerunLastValidationCommand } from '../../src/commands/CfnCommands';
+import { rerunLastValidationCommand, extractToParameterPositionCursorCommand } from '../../src/commands/CfnCommands';
 import { getLastValidation } from '../../src/stacks/actions/ValidationWorkflow';
 import * as vscode from 'vscode';
 import { showErrorMessage } from '../../src/ui/Message';
@@ -47,6 +47,19 @@ describe('CfnCommands', () => {
             await mockCommand();
 
             expect(showErrorMessage).toHaveBeenCalledWith('No previous validation to rerun');
+        });
+    });
+
+    describe('extractToParameterPositionCursorCommand', () => {
+        it('should register the command', () => {
+            (vscode.commands.registerCommand as jest.Mock).mockImplementation((commandName, handler) => {
+                expect(commandName).toBe('aws.cloudformation.extractToParameter.positionCursor');
+                expect(typeof handler).toBe('function');
+                return { dispose: jest.fn() };
+            });
+
+            const disposable = extractToParameterPositionCursorCommand();
+            expect(disposable).toBeDefined();
         });
     });
 });

@@ -34,6 +34,10 @@ const vscode = {
     Disposable: jest.fn(),
     TabInputText: jest.fn(),
     Uri: jest.fn(),
+    Position: jest.fn().mockImplementation((line: number, character: number) => ({
+        line,
+        character,
+    })),
 };
 
 module.exports = vscode;

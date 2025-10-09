@@ -1,5 +1,5 @@
-import { commands, env, Uri, window, workspace } from 'vscode';
-import { commandKey } from '../utils';
+import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType } from 'vscode';
+import { commandKey, findParameterDescriptionPosition } from '../utils';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { Command } from 'vscode-languageclient';
 import { Deployment, setLastDeployment } from '../stacks/actions/DeploymentWorkflow';
@@ -228,6 +228,32 @@ export function getStackManagementInfoCommand(resourcesManager: ResourcesManager
     return commands.registerCommand(commandKey('api.getStackManagementInfo'), async (resourceNode?: ResourceNode) => {
         await resourcesManager.getStackManagementInfo(resourceNode);
     });
+}
+
+export function extractToParameterPositionCursorCommand() {
+    return commands.registerCommand(
+        'aws.cloudformation.extractToParameter.positionCursor',
+        async (documentUri: string, parameterName: string, documentType: string) => {
+            try {
+                // Open the document if it's not already open
+                const uri = Uri.parse(documentUri);
+                const document = await workspace.openTextDocument(uri);
+                const editor = await window.showTextDocument(document);
+
+                // Find the parameter definition in the document
+                const text = document.getText();
+                const position = findParameterDescriptionPosition(text, parameterName, documentType);
+
+                if (position) {
+                    // Position cursor at the description value (between the quotes)
+                    editor.selection = new Selection(position, position);
+                    editor.revealRange(new Range(position, position), TextEditorRevealType.InCenter);
+                }
+            } catch (error) {
+                console.error('Error positioning cursor in parameter description:', error);
+            }
+        },
+    );
 }
 
 export function getStackManagementInfoCommandPalette(resourcesManager: ResourcesManager) {
