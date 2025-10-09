@@ -1,11 +1,11 @@
 import { Uri, commands, workspace, Range, Position } from 'vscode';
-import { TemplateChange } from '../cfn/TemplateRequestType';
+import { StackChange } from '../stacks/actions/StackActionRequestType';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 
 export class DiffViewHelper {
-    static async openDiff(stackName: string, changes: TemplateChange[], resourceId?: string) {
+    static async openDiff(stackName: string, changes: StackChange[], resourceId?: string) {
         const tmpDir = os.tmpdir();
         const beforePath = path.join(tmpDir, `${stackName}-before.json`);
         const afterPath = path.join(tmpDir, `${stackName}-after.json`);
