@@ -1,9 +1,9 @@
 import { rerunLastValidationCommand, extractToParameterPositionCursorCommand } from '../../src/commands/CfnCommands';
-import { getLastValidation } from '../../src/cfn/Validation';
+import { getLastValidation } from '../../src/stacks/actions/ValidationWorkflow';
 import * as vscode from 'vscode';
 import { showErrorMessage } from '../../src/ui/Message';
 
-jest.mock('../../src/cfn/Validation');
+jest.mock('../../src/stacks/actions/ValidationWorkflow');
 jest.mock('../../src/ui/Message');
 jest.mock('vscode');
 

@@ -2,13 +2,13 @@ import { commands, env, Uri, window, workspace, Range, Selection, TextEditorReve
 import { commandKey, findParameterDescriptionPosition } from '../utils';
 import { LanguageClient } from 'vscode-languageclient/node';
 import { Command } from 'vscode-languageclient';
-import { Deployment, setLastDeployment } from '../cfn/Deployment';
+import { Deployment, setLastDeployment } from '../stacks/actions/DeploymentWorkflow';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getParameterValues, getStackName, getTemplatePath, confirmCapabilities } from '../ui/InputBox';
 import { showErrorMessage } from '../ui/Message';
-import { getLastValidation, setLastValidation, Validation } from '../cfn/Validation';
-import { getParameters, getCapabilities } from '../cfn/TemplateAPIs';
-import { TemplateParameter } from '../cfn/TemplateRequestType';
+import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/ValidationWorkflow';
+import { getParameters, getCapabilities } from '../stacks/actions/StackActionApi';
+import { TemplateParameter } from '../stacks/actions/StackActionRequestType';
 import { StacksManager } from '../stacks/StacksManager';
 import { ResourceNode } from '../treeview/nodes/ResourceNode';
 import { ResourcesManager } from '../resources/ResourcesManager';
@@ -23,9 +23,9 @@ export function validateTemplateCommand(
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager,
 ) {
-    return commands.registerCommand(commandKey('api.validateTemplate'), async () => {
+    return commands.registerCommand(commandKey('api.validateTemplate'), async (templateUri?: string) => {
         try {
-            const templateUri = await getTemplatePath(documentManager);
+            templateUri ??= await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
@@ -41,7 +41,7 @@ export function validateTemplateCommand(
             }
             if (paramDefinition.length > 0 && !parameters) return;
 
-            const capabilitiesResult = await getCapabilities(client, { uri: templateUri });
+            const capabilitiesResult = await getCapabilities(client, templateUri);
             const capabilities = await confirmCapabilities(capabilitiesResult.capabilities);
             if (capabilities === undefined) return; // User cancelled
 
@@ -60,9 +60,9 @@ export function validateTemplateCommand(
 }
 
 export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
-    return commands.registerCommand(commandKey('api.deployTemplate'), async () => {
+    return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
-            const templateUri = await getTemplatePath(documentManager);
+            templateUri ??= await getTemplatePath(documentManager);
             if (!templateUri) return;
 
             await ensureFileIsOpen(templateUri);
@@ -78,7 +78,7 @@ export function deployTemplateCommand(client: LanguageClient, stacks: StacksMana
             }
             if (paramDefinition.length > 0 && !parameters) return;
 
-            const capabilitiesResult = await getCapabilities(client, { uri: templateUri });
+            const capabilitiesResult = await getCapabilities(client, templateUri);
             const capabilities = await confirmCapabilities(capabilitiesResult.capabilities);
             if (capabilities === undefined) return; // User cancelled
 
@@ -125,7 +125,7 @@ async function ensureFileIsOpen(templateUri: string): Promise<void> {
 
 async function getTemplateParameters(client: LanguageClient, templateUri: string): Promise<TemplateParameter[]> {
     try {
-        const result = await getParameters(client, { uri: templateUri });
+        const result = await getParameters(client, templateUri);
         return result.parameters;
     } catch (error) {
         showErrorMessage(

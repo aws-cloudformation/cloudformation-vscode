@@ -1,15 +1,14 @@
 import { Parameter, Capability, ResourceChangeDetail } from '@aws-sdk/client-cloudformation';
-import { RequestType } from 'vscode-languageserver-protocol';
-import { Identifiable } from '../LspTypes';
+import { Identifiable } from '../../LspTypes';
 
-export type TemplateActionParams = Identifiable & {
+export type CreateStackActionParams = Identifiable & {
     uri: string;
     stackName: string;
     parameters?: Parameter[];
     capabilities?: Capability[];
 };
 
-export type TemplateActionResult = Identifiable & {
+export type CreateStackActionResult = Identifiable & {
     id: string;
     changeSetName: string;
     stackName: string;
@@ -26,7 +25,7 @@ export type ValidationResult = {
     detailedStatus?: string;
 };
 
-export type TemplateChange = {
+export type StackChange = {
     type?: string;
     resourceChange?: {
         action?: string;
@@ -40,7 +39,7 @@ export type TemplateChange = {
     validationResults?: ValidationResult[];
 };
 
-export enum TemplateStatus {
+export enum StackActionPhase {
     VALIDATION_STARTED = 'VALIDATION_STARTED',
     DEPLOYMENT_STARTED = 'DEPLOYMENT_STARTED',
     VALIDATION_IN_PROGRESS = 'VALIDATION_IN_PROGRESS',
@@ -51,20 +50,16 @@ export enum TemplateStatus {
     DEPLOYMENT_FAILED = 'DEPLOYMENT_FAILED',
 }
 
-export enum WorkflowResult {
+export enum StackActionState {
     IN_PROGRESS = 'IN_PROGRESS',
     SUCCESSFUL = 'SUCCESSFUL',
     FAILED = 'FAILED',
 }
 
-export type TemplateStatusResult = Identifiable & {
-    status: TemplateStatus;
-    result: WorkflowResult;
-    changes?: TemplateChange[];
-};
-
-export type TemplateMetadataParams = {
-    uri: string;
+export type GetStackActionStatusResult = Identifiable & {
+    phase: StackActionPhase;
+    state: StackActionState;
+    changes?: StackChange[];
 };
 
 export type GetParametersResult = {
@@ -88,26 +83,4 @@ export type TemplateParameter = {
     MaxValue?: number;
 };
 
-export const TemplateValidationCreateRequest = new RequestType<TemplateActionParams, TemplateActionResult, void>(
-    'aws/cfn/template/validation/create',
-);
-
-export const TemplateDeploymentCreateRequest = new RequestType<TemplateActionParams, TemplateActionResult, void>(
-    'aws/cfn/template/deployment/create',
-);
-
-export const TemplateValidationStatusRequest = new RequestType<Identifiable, TemplateStatusResult, void>(
-    'aws/cfn/template/validation/status',
-);
-
-export const TemplateDeploymentStatusRequest = new RequestType<Identifiable, TemplateStatusResult, void>(
-    'aws/cfn/template/deployment/status',
-);
-
-export const GetParametersRequest = new RequestType<TemplateMetadataParams, GetParametersResult, void>(
-    'aws/cfn/template/parameters',
-);
-
-export const GetCapabilitiesRequest = new RequestType<TemplateMetadataParams, GetCapabilitiesResult, void>(
-    'aws/cfn/template/capabilities',
-);
+export type TemplateUri = string;
