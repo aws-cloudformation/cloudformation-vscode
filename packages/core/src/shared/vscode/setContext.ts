@@ -28,10 +28,12 @@ export type contextKey =
     | 'aws.toolkit.amazonq.dismissed'
     | 'aws.toolkit.amazonqInstall.dismissed'
     | 'aws.stepFunctions.isWorkflowStudioFocused'
+    | 'aws.toolkit.cloudformation.diffVisible'
     | 'aws.toolkit.notifications.show'
     | 'aws.amazonq.editSuggestionActive'
     | 'aws.smus.connected'
     | 'aws.smus.inSmusSpaceEnvironment'
+    | 'aws.cloudFormation.serviceEnabled'
     // Deprecated/legacy names. New keys should start with "aws.".
     | 'codewhisperer.activeLine'
     | 'gumby.isPlanAvailable'

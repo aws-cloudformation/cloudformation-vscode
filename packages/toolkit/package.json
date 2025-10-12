@@ -240,12 +240,24 @@
                     "type": "object",
                     "markdownDescription": "%AWS.configuration.description.experiments%",
                     "default": {
-                        "jsonResourceModification": false
+                        "jsonResourceModification": false,
+                        "cloudFormationService": false,
+                        "useLocalCloudFormationLsp": false
                     },
                     "properties": {
                         "jsonResourceModification": {
                             "type": "boolean",
                             "default": false
+                        },
+                        "cloudFormationService": {
+                            "type": "boolean",
+                            "default": false,
+                            "markdownDescription": "Enable the new CloudFormation language server and service features"
+                        },
+                        "useLocalCloudFormationLsp": {
+                            "type": "boolean",
+                            "default": false,
+                            "markdownDescription": "Use local CloudFormation Language Server for development"
                         },
                         "amazonqLSP": {
                             "type": "boolean",
@@ -767,6 +779,11 @@
                 {
                     "id": "aws.cdk",
                     "name": "%AWS.cdk.explorerTitle%",
+                    "when": "!aws.explorer.showAuthView"
+                },
+                {
+                    "id": "aws.cloudformation",
+                    "name": "CloudFormation",
                     "when": "!aws.explorer.showAuthView"
                 },
                 {
@@ -2399,6 +2416,31 @@
                     "command": "aws.appBuilder.tailLogs",
                     "when": "view =~ /^(aws.appBuilder|aws.appBuilderForFileExplorer)$/ && viewItem =~ /^(awsRegionFunctionNode|awsRegionFunctionNodeDownloadable|awsRegionFunctionNodeDownloadableOnly|awsCloudFormationFunctionNode)$/",
                     "group": "inline@3"
+                },
+                {
+                    "command": "aws.cloudformation.api.importResourceState",
+                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "group": "1@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.copyResourceIdentifier",
+                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "group": "1@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.refreshResourceList",
+                    "when": "view == aws.cloudformation && viewItem == resourceType",
+                    "group": "1@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.addResourceTypes",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "group": "1@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.refreshAllResources",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "group": "1@2"
                 }
             ],
             "aws.toolkit.auth": [
@@ -4428,6 +4470,31 @@
                 "command": "aws.smus.notebookscheduling.viewjobs",
                 "title": "View Notebook Jobs",
                 "category": "Job"
+            },
+            {
+                "command": "aws.cloudformation.api.importResourceState",
+                "title": "Import Resource State",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.copyResourceIdentifier",
+                "title": "Copy Resource Identifier",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.refreshResourceList",
+                "title": "Refresh Resource List",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.addResourceTypes",
+                "title": "Add Resource Types",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.refreshAllResources",
+                "title": "Refresh All Resources",
+                "category": "CloudFormation"
             }
         ],
         "jsonValidation": [
@@ -4441,6 +4508,17 @@
             }
         ],
         "languages": [
+            {
+                "id": "cloudformation",
+                "extensions": [
+                    ".template",
+                    ".cfn"
+                ],
+                "aliases": [
+                    "CloudFormation"
+                ],
+                "configuration": "./cloudformation-language-config.json"
+            },
             {
                 "id": "asl",
                 "extensions": [
@@ -4502,6 +4580,11 @@
             }
         ],
         "grammars": [
+            {
+                "language": "cloudformation",
+                "scopeName": "source.cloudformation",
+                "path": "./syntaxes/cloudformation.tmLanguage.json"
+            },
             {
                 "language": "asl",
                 "scopeName": "source.asl",
