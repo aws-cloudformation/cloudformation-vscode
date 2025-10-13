@@ -27,7 +27,10 @@ interface CloudFrontTarget {
 }
 
 export class CloudFrontManifestAdapter {
-    constructor(private readonly manifestUrl: string) {}
+    constructor(
+        private readonly manifestUrl: string,
+        private readonly environment: string = 'alpha'
+    ) {}
 
     async getManifest(): Promise<Manifest> {
         const response = await fetch(this.manifestUrl)
@@ -37,10 +40,10 @@ export class CloudFrontManifestAdapter {
 
         const cfManifest: CloudFrontManifest = await response.json()
 
-        // Use alpha environment for now
-        const alphaEnv = cfManifest.environments.alpha
-        if (!alphaEnv || alphaEnv.versions.length === 0) {
-            throw new Error('No alpha versions available')
+        // Use specified environment
+        const env = cfManifest.environments[this.environment]
+        if (!env || env.versions.length === 0) {
+            throw new Error(`No ${this.environment} versions available`)
         }
 
         return {
@@ -48,7 +51,7 @@ export class CloudFrontManifestAdapter {
             artifactId: 'cloudformation-lsp',
             artifactDescription: 'CloudFormation Language Server',
             isManifestDeprecated: false,
-            versions: alphaEnv.versions.map((version) => this.convertVersion(version, alphaEnv.targets[version])),
+            versions: env.versions.map((version) => this.convertVersion(version, env.targets[version])),
         }
     }
 
