@@ -12,62 +12,31 @@ import { tryStageResolvers } from '../../../shared/lsp/utils/setupStage'
 import { fs } from '../../../shared/fs/fs'
 import { Range } from 'semver'
 import * as path from 'path'
-import { Experiments } from '../../../shared/settings'
-import * as vscode from 'vscode'
+import { getCloudFormationLspConfig, CloudFormationLspConfig } from './config'
 
-export class CfnLspInstaller extends BaseLspInstaller<ResourcePaths> {
+export class CfnLspInstaller extends BaseLspInstaller<ResourcePaths, CloudFormationLspConfig> {
     // @ts-expect-error
     private githubAdapter: GitHubManifestAdapter
     private cloudFrontAdapter: CloudFrontManifestAdapter
 
-    constructor() {
-        super(
-            {
-                manifestUrl: 'https://d2485r7obgomg5.cloudfront.net/manifest.json',
-                supportedVersions: '0.*.*',
-                id: 'CloudFormation',
-                suppressPromptPrefix: 'cloudformation',
-            },
-            'awsCfnLsp'
-        )
+    constructor(lspConfig: CloudFormationLspConfig = getCloudFormationLspConfig()) {
+        super(lspConfig, 'awsCfnLsp')
 
         this.githubAdapter = new GitHubManifestAdapter('aws', 'cloudformation-language-server')
-        this.cloudFrontAdapter = new CloudFrontManifestAdapter(this.config.manifestUrl)
+        this.cloudFrontAdapter = new CloudFrontManifestAdapter(this.config.manifestUrl, this.config.environment)
     }
 
     override async resolve(): Promise<LspResolution<ResourcePaths>> {
-        // Check for experiment-based local LSP first
-        const useLocal = Experiments.instance.get('useLocalCloudFormationLsp', false)
-        const envPath = process.env.AWS_CFN_LSP_PATH
-
-        if (useLocal) {
-            const lspPath = envPath || (await CfnLspInstaller.findLocalLspPath())
-            if (lspPath) {
-                return {
-                    assetDirectory: lspPath,
-                    location: 'override',
-                    version: '0.0.0',
-                    resourcePaths: this.resourcePaths(lspPath, '0.0.0'),
-                }
-            } else {
-                throw new Error(
-                    'CloudFormation LSP: useLocalCloudFormationLsp is enabled but no local LSP server found. Set AWS_CFN_LSP_PATH environment variable or ensure local server exists.'
-                )
-            }
-        }
-
-        // Check for config.path override (original logic)
         const { path } = this.config
         if (path) {
             return {
                 assetDirectory: path,
                 location: 'override',
                 version: '0.0.0',
-                resourcePaths: this.resourcePaths(),
+                resourcePaths: this.resourcePaths(path, '0.0.0'),
             }
         }
 
-        // Fall back to remote download
         const manifest = await this.resolveManifest()
 
         const installationResult = await new LanguageServerResolver(
@@ -86,40 +55,6 @@ export class CfnLspInstaller extends BaseLspInstaller<ResourcePaths> {
             version: installationResult.version,
             resourcePaths: this.resourcePaths(installationResult.assetDirectory, installationResult.version),
         }
-    }
-
-    private static async findLocalLspPath(): Promise<string | undefined> {
-        const extensionPath = __dirname
-        // Go up to find sibling repositories next to cloudformation-vscode
-        const parentDir = path.dirname(
-            path.dirname(
-                path.dirname(path.dirname(path.dirname(path.dirname(path.dirname(path.dirname(extensionPath))))))
-            )
-        )
-
-        try {
-            const entries = await fs.readdir(parentDir)
-            const siblingDirs = entries
-                .filter(([, fileType]) => fileType === vscode.FileType.Directory)
-                .map(([name]) => name)
-
-            for (const siblingDir of siblingDirs) {
-                const serverPath = path.join(
-                    parentDir,
-                    siblingDir,
-                    'bundle',
-                    'development',
-                    'cfn-lsp-server-standalone.js'
-                )
-                if (await fs.existsFile(serverPath)) {
-                    return path.dirname(serverPath)
-                }
-            }
-        } catch (error) {
-            // Fall back if local search fails
-        }
-
-        return undefined
     }
 
     protected async resolveManifest(): Promise<Manifest> {

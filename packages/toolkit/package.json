@@ -241,8 +241,7 @@
                     "markdownDescription": "%AWS.configuration.description.experiments%",
                     "default": {
                         "jsonResourceModification": false,
-                        "cloudFormationService": false,
-                        "useLocalCloudFormationLsp": false
+                        "cloudFormationService": false
                     },
                     "properties": {
                         "jsonResourceModification": {
@@ -253,11 +252,6 @@
                             "type": "boolean",
                             "default": false,
                             "markdownDescription": "Enable the new CloudFormation language server and service features"
-                        },
-                        "useLocalCloudFormationLsp": {
-                            "type": "boolean",
-                            "default": false,
-                            "markdownDescription": "Use local CloudFormation Language Server for development"
                         },
                         "amazonqLSP": {
                             "type": "boolean",

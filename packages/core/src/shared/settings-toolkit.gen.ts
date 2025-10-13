@@ -43,7 +43,6 @@ export const toolkitSettings = {
     "aws.experiments": {
         "jsonResourceModification": {},
         "cloudFormationService": {},
-        "useLocalCloudFormationLsp": {},
         "amazonqLSP": {},
         "amazonqLSPInline": {},
         "amazonqChatLSP": {},
