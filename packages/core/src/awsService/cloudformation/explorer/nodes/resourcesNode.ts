@@ -12,7 +12,7 @@ export class ResourcesNode implements TreeNode {
 
     getTreeItem(): TreeItem {
         const item = new TreeItem('Resources', TreeItemCollapsibleState.Collapsed)
-        item.contextValue = 'resourcesSection'
+        item.contextValue = 'resourceSection'
         return item
     }
 

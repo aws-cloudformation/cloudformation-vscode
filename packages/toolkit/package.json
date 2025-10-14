@@ -728,6 +728,13 @@
                         }
                     }
                 }
+            ],
+            "panel": [
+                {
+                    "id": "cfn-diff",
+                    "title": "CloudFormation",
+                    "icon": "$(diff)"
+                }
             ]
         },
         "viewsWelcome": [
@@ -743,6 +750,14 @@
             }
         ],
         "views": {
+            "cfn-diff": [
+                {
+                    "id": "aws.cloudformation.diff",
+                    "name": "Stack Changes",
+                    "type": "webview",
+                    "when": "aws.cloudformation.stacks.diffVisible"
+                }
+            ],
             "explorer": [
                 {
                     "id": "aws.appBuilderForFileExplorer",
@@ -2410,6 +2425,46 @@
                     "command": "aws.appBuilder.tailLogs",
                     "when": "view =~ /^(aws.appBuilder|aws.appBuilderForFileExplorer)$/ && viewItem =~ /^(awsRegionFunctionNode|awsRegionFunctionNodeDownloadable|awsRegionFunctionNodeDownloadableOnly|awsCloudFormationFunctionNode)$/",
                     "group": "inline@3"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.viewDiff",
+                    "when": "view == aws.cloudformation && viewItem == stack && !listMultiSelection",
+                    "group": "navigation"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.refresh",
+                    "when": "view == aws.cloudformation && viewItem == stackSection",
+                    "group": "inline"
+                },
+                {
+                    "command": "aws.cloudformation.api.addResourceTypes",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.refreshAllResources",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.importResourceState",
+                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.cloneResourceState",
+                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.getStackManagementInfo",
+                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "group": "inline@3"
+                },
+                {
+                    "command": "aws.cloudformation.api.refreshResourceList",
+                    "when": "view == aws.cloudformation && viewItem == resourceType",
+                    "group": "inline@1"
                 },
                 {
                     "command": "aws.cloudformation.api.importResourceState",
@@ -4468,6 +4523,7 @@
             {
                 "command": "aws.cloudformation.api.importResourceState",
                 "title": "Import Resource State",
+                "icon": "$(cloud-download)",
                 "category": "CloudFormation"
             },
             {
@@ -4478,16 +4534,48 @@
             {
                 "command": "aws.cloudformation.api.refreshResourceList",
                 "title": "Refresh Resource List",
+                "icon": "$(refresh)",
                 "category": "CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.addResourceTypes",
                 "title": "Add Resource Types",
+                "icon": "$(add)",
                 "category": "CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.refreshAllResources",
                 "title": "Refresh All Resources",
+                "icon": "$(refresh)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.stacks.refresh",
+                "title": "Refresh Stacks",
+                "icon": "$(refresh)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.cloneResourceState",
+                "title": "Clone Resource State",
+                "icon": "$(copy)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.getStackManagementInfo",
+                "title": "Get Stack Management Info",
+                "icon": "$(info)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.stacks.viewDiff",
+                "title": "View Stack Diff",
+                "icon": "$(diff)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.diff.focus",
+                "title": "Focus CloudFormation Diff View",
                 "category": "CloudFormation"
             }
         ],
