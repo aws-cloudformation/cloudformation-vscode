@@ -12,7 +12,7 @@ export class StacksNode implements TreeNode {
 
     getTreeItem(): TreeItem {
         const item = new TreeItem('Stacks', TreeItemCollapsibleState.Collapsed)
-        item.contextValue = 'stacksSection'
+        item.contextValue = 'stackSection'
         return item
     }
 

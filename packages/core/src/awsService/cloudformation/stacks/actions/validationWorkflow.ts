@@ -118,7 +118,7 @@ export class Validation {
     }
 
     private showDiffView() {
-        void setContext('aws.toolkit.cloudformation.diffVisible', true)
+        void setContext('aws.cloudformation.stacks.diffVisible', true)
         this.diffProvider.updateData(this.stackName, this.changes)
         void commands.executeCommand('aws.cloudformation.diff.focus')
     }

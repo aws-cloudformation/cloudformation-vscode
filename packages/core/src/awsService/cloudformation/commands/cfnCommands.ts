@@ -235,7 +235,7 @@ export function refreshResourceListCommand(resourcesManager: ResourcesManager) {
 
 export function viewStackDiffCommand() {
     return commands.registerCommand(commandKey('stacks.viewDiff'), () => {
-        void setContext('aws.toolkit.cloudformation.diffVisible', true)
+        void setContext('aws.cloudformation.stacks.diffVisible', true)
         void commands.executeCommand('aws.cloudformation.diff.focus')
     })
 }
