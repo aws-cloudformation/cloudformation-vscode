@@ -136,7 +136,10 @@ export class ResourcesManager {
         }
     }
 
-    async importResourceStates(resourceNodes?: ResourceNode[]): Promise<void> {
+    private async executeResourceStateOperation(
+        resourceNodes: ResourceNode[] | undefined,
+        purpose: ResourceStatePurpose
+    ): Promise<void> {
         const editor = window.activeTextEditor
         if (!editor) {
             showErrorMessage('No active editor')
@@ -154,27 +157,34 @@ export class ResourcesManager {
                 range: { start: editor.selection.start, end: editor.selection.end },
                 context: { diagnostics: [] },
                 resourceSelections: resourceSelectionsArray,
-                purpose: ResourceStatePurpose.Import,
+                purpose,
             }
 
+            const title =
+                purpose === ResourceStatePurpose.Import ? 'Importing Resource State' : 'Cloning Resource State'
             void window.withProgress(
                 {
                     location: ProgressLocation.Notification,
-                    title: 'Importing Resource State',
+                    title,
                     cancellable: false,
                 },
                 async () => {
                     const result = await this.client.sendRequest(ResourceStateRequest.method, params)
                     await this.applyCodeActionEdits(result as ResourceStateResult)
                     const [successCount, failureCount] = this.getSuccessAndFailureCount(result as ResourceStateResult)
-                    this.renderResultMessage(successCount, failureCount, ResourceStatePurpose.Import)
+                    this.renderResultMessage(successCount, failureCount, purpose)
                 }
             )
         } catch (error) {
+            const action = purpose === ResourceStatePurpose.Import ? 'importing' : 'cloning'
             showErrorMessage(
-                `Error importing resource state: ${error instanceof Error ? error.message : String(error)}`
+                `Error ${action} resource state: ${error instanceof Error ? error.message : String(error)}`
             )
         }
+    }
+
+    async importResourceStates(resourceNodes?: ResourceNode[]): Promise<void> {
+        await this.executeResourceStateOperation(resourceNodes, ResourceStatePurpose.Import)
     }
 
     private getResourcesToImportInput(selections: ResourceSelectionResult[]): ResourceSelection[] {
@@ -262,42 +272,7 @@ export class ResourcesManager {
     }
 
     async cloneResourceStates(resourceNodes?: ResourceNode[]): Promise<void> {
-        const editor = window.activeTextEditor
-        if (!editor) {
-            showErrorMessage('No active editor')
-            return
-        }
-
-        try {
-            const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNodes)
-            if (resourceSelectionsArray.length === 0) {
-                return
-            }
-
-            const params: ResourceStateParams = {
-                textDocument: { uri: editor.document.uri.toString() },
-                range: { start: editor.selection.start, end: editor.selection.end },
-                context: { diagnostics: [] },
-                resourceSelections: resourceSelectionsArray,
-                purpose: ResourceStatePurpose.Clone,
-            }
-
-            void window.withProgress(
-                {
-                    location: ProgressLocation.Notification,
-                    title: 'Cloning Resource State',
-                    cancellable: false,
-                },
-                async () => {
-                    const result = await this.client.sendRequest(ResourceStateRequest.method, params)
-                    await this.applyCodeActionEdits(result as ResourceStateResult)
-                    const [successCount, failureCount] = this.getSuccessAndFailureCount(result as ResourceStateResult)
-                    this.renderResultMessage(successCount, failureCount, ResourceStatePurpose.Clone)
-                }
-            )
-        } catch (error) {
-            showErrorMessage(`Error cloning resource state: ${error instanceof Error ? error.message : String(error)}`)
-        }
+        await this.executeResourceStateOperation(resourceNodes, ResourceStatePurpose.Clone)
     }
 
     private async getResourceSelectionArray(resourceNodes?: ResourceNode[]): Promise<ResourceSelection[]> {

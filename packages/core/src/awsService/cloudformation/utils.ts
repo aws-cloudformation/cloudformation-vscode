@@ -48,9 +48,13 @@ export function findParameterDescriptionPosition(
  * Finds the description position in JSON format.
  * Looks for: "ParameterName": { ... "Description": "HERE" ... }
  */
-function findJsonParameterDescriptionPosition(lines: string[], parameterName: string): Position | undefined {
+function findParameterDescription(
+    lines: string[],
+    parameterPattern: RegExp,
+    descriptionMatcher: (line: string) => { match: RegExpMatchArray; character: number } | undefined,
+    endMatcher: (line: string) => boolean
+): Position | undefined {
     let inParameter = false
-    const parameterPattern = new RegExp(`^\\s*"${escapeRegex(parameterName)}"\\s*:\\s*\\{`)
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
@@ -61,18 +65,12 @@ function findJsonParameterDescriptionPosition(lines: string[], parameterName: st
         }
 
         if (inParameter) {
-            // Look for the Description property
-            const descriptionMatch = line.match(/^(\s*)"Description"\s*:\s*"([^"]*)"/)
-            if (descriptionMatch) {
-                const indentation = descriptionMatch[1]
-                const descriptionValue = descriptionMatch[2]
-                // Position cursor between the quotes, after any existing description text
-                const character = indentation.length + '"Description": "'.length + descriptionValue.length
-                return new Position(i, character)
+            const result = descriptionMatcher(line)
+            if (result) {
+                return new Position(i, result.character)
             }
 
-            // Check if we've reached the end of this parameter
-            if (line.match(/^\s*\}/)) {
+            if (endMatcher(line)) {
                 break
             }
         }
@@ -81,42 +79,40 @@ function findJsonParameterDescriptionPosition(lines: string[], parameterName: st
     return undefined
 }
 
+function findJsonParameterDescriptionPosition(lines: string[], parameterName: string): Position | undefined {
+    const parameterPattern = new RegExp(`^\\s*"${escapeRegex(parameterName)}"\\s*:\\s*\\{`)
+
+    return findParameterDescription(
+        lines,
+        parameterPattern,
+        (line) => {
+            const match = line.match(/^(\s*)"Description"\s*:\s*"([^"]*)"/)
+            return match
+                ? { match, character: match[1].length + '"Description": "'.length + match[2].length }
+                : undefined
+        },
+        (line) => !!line.match(/^\s*\}/)
+    )
+}
+
 /**
  * Finds the description position in YAML format.
  * Looks for: ParameterName: ... Description: "HERE" ...
  */
 function findYamlParameterDescriptionPosition(lines: string[], parameterName: string): Position | undefined {
-    let inParameter = false
     const parameterPattern = new RegExp(`^\\s*${escapeRegex(parameterName)}\\s*:`)
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i]
-
-        if (!inParameter && parameterPattern.test(line)) {
-            inParameter = true
-            continue
-        }
-
-        if (inParameter) {
-            // Look for the Description property
-            const descriptionMatch = line.match(/^(\s*)Description\s*:\s*(['"]?)([^'"]*)\2/)
-            if (descriptionMatch) {
-                const indentation = descriptionMatch[1]
-                const quote = descriptionMatch[2]
-                const descriptionValue = descriptionMatch[3]
-                // Position cursor between the quotes, after any existing description text
-                const character = indentation.length + 'Description: '.length + quote.length + descriptionValue.length
-                return new Position(i, character)
-            }
-
-            // Check if we've reached the end of this parameter (next parameter or section)
-            if (line.match(/^\s*\w+\s*:/) && !line.match(/^\s*(Type|Default|Description|AllowedValues)\s*:/)) {
-                break
-            }
-        }
-    }
-
-    return undefined
+    return findParameterDescription(
+        lines,
+        parameterPattern,
+        (line) => {
+            const match = line.match(/^(\s*)Description\s*:\s*(['"]?)([^'"]*)\2/)
+            return match
+                ? { match, character: match[1].length + 'Description: '.length + match[2].length + match[3].length }
+                : undefined
+        },
+        (line) => !!line.match(/^\s*\w+\s*:/) && !line.match(/^\s*(Type|Default|Description|AllowedValues)\s*:/)
+    )
 }
 
 /**
