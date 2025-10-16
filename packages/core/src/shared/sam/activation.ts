@@ -28,7 +28,7 @@ import { CodelensRootRegistry } from '../fs/codelensRootRegistry'
 import { AWS_SAM_DEBUG_TYPE } from './debugger/awsSamDebugConfiguration'
 import { SamDebugConfigProvider } from './debugger/awsSamDebugger'
 import { addSamDebugConfiguration } from './debugger/commands/addSamDebugConfiguration'
-import { ToolkitPromptSettings } from '../settings'
+import { ToolkitPromptSettings, Experiments } from '../settings'
 import { shared } from '../utilities/functionUtils'
 import { SamCliSettings } from './cli/samCliSettings'
 import { Commands } from '../vscode/commands2'
@@ -411,6 +411,13 @@ async function promptInstallYamlPlugin(disposables: vscode.Disposable[]) {
     for (const prompt of disposables) {
         prompt.dispose()
     }
+
+    // Don't prompt for YAML plugin if CloudFormation service is enabled
+    const cloudFormationServiceEnabled = Experiments.instance.get('cloudFormationService', false)
+    if (cloudFormationServiceEnabled) {
+        return
+    }
+
     const settings = ToolkitPromptSettings.instance
 
     const installBtn = localize('AWS.missingExtension.install', 'Install...')
