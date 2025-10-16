@@ -10,6 +10,7 @@ import { LanguageClient } from 'vscode-languageclient'
 
 export class AwsCredentialsService implements Disposable {
     private authChangeListener: Disposable
+    private client: LanguageClient | undefined
 
     constructor(
         private stacksManager: any,
@@ -22,21 +23,27 @@ export class AwsCredentialsService implements Disposable {
     }
 
     async initialize(client: LanguageClient): Promise<void> {
+        this.client = client
+
         await this.updateCredentialsFromActiveConnection()
-        // Send credentials to CloudFormation Language Server
-        const connection = Auth.instance.activeConnection
-        if (connection && isIamConnection(connection)) {
-            await client.sendRequest('aws/credentials/iam/update', {
-                profileName: connection.label.replace('profile:', ''),
-                region: 'us-east-1', // TODO: Get actual region from settings or connection
-            })
-        }
     }
 
     private async updateCredentialsFromActiveConnection(): Promise<void> {
         const connection = Auth.instance.activeConnection
-        if (connection && isIamConnection(connection)) {
-            // Reload CloudFormation data when auth changes
+
+        if (this.client && connection && isIamConnection(connection)) {
+            const credentials = await connection.getCredentials()
+
+            await this.client.sendRequest('aws/credentials/iam/update', {
+                data: {
+                    profile: connection.label.replace('profile:', ''),
+                    region: 'us-east-1', // TODO: Get actual region from settings or connection,
+                    accessKeyId: credentials.accessKeyId,
+                    secretAccessKey: credentials.secretAccessKey,
+                    sessionToken: credentials.sessionToken,
+                },
+            })
+
             void this.stacksManager.reload()
             void this.resourcesManager.reload()
         }
