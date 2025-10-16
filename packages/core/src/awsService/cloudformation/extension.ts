@@ -28,18 +28,18 @@ import {
     getStackManagementInfoCommandPalette,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
+import { showRegionsCommand } from './commands/regionCommands'
 import { AwsCredentialsService } from './auth/credentials'
 import { ExtensionId, ExtensionName, Version } from './extensionConfig'
-import { CfnPanel } from './cfn/cfnPanel'
-import { StacksSectionUI } from './stacks/stacksSectionUI'
+import { CloudFormationExplorer } from './explorer/explorer'
+
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
 import { DiffWebviewProvider } from './ui/diffWebviewProvider'
 import { DocumentManager } from './documents/documentManager'
-import { DocumentsSectionUI } from './documents/documentsSectionUI'
 
 import { ResourcesManager } from './resources/resourcesManager'
 import { ResourceSelector } from './ui/resourceSelector'
-import { ResourcesSectionUI } from './resources/resourcesSectionUI'
+
 import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
 import { CfnLspServerProvider } from './lsp-server/cfnLspServerProvider'
@@ -111,24 +111,27 @@ export async function activate(context: ExtensionContext) {
     client = new LanguageClient(ExtensionId, ExtensionName, serverOptions, clientOptions)
 
     const stacksManager = new StacksManager(client)
-    const stacksSection = new StacksSectionUI()
-    stacksManager.addListener(stacksSection.onChange())
-
     const clientDisposable = client.start()
 
     client
         .onReady()
         .then(() => {
             const documentManager = new DocumentManager(client)
-            const documentSection = new DocumentsSectionUI()
-            documentManager.addListener(documentSection.onChange())
 
             const resourceSelector = new ResourceSelector(client)
             const resourcesManager = new ResourcesManager(client, resourceSelector)
-            const resourcesSection = new ResourcesSectionUI()
-            resourcesManager.addListener(resourcesSection.onChange())
 
-            const cfnPanel = new CfnPanel([resourcesSection, stacksSection, documentSection])
+            const cfnExplorer = new CloudFormationExplorer(
+                globals.regionProvider,
+                stacksManager,
+                resourcesManager,
+                documentManager
+            )
+
+            // Add listener to refresh explorer when resources change
+            resourcesManager.addListener(() => {
+                cfnExplorer.refresh()
+            })
             const credentialsService = new AwsCredentialsService(stacksManager, resourcesManager)
 
             // Create diff webview provider
@@ -156,7 +159,7 @@ export async function activate(context: ExtensionContext) {
                 codeLensProvider,
                 stacksManager,
                 window.createTreeView('aws.cloudformation', {
-                    treeDataProvider: cfnPanel,
+                    treeDataProvider: cfnExplorer,
                     showCollapseAll: true,
                     canSelectMany: true,
                 }),
@@ -177,6 +180,7 @@ export async function activate(context: ExtensionContext) {
                 deployTemplateCommand(client, stacksManager, documentManager),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
+                showRegionsCommand(cfnExplorer),
                 rerunLastValidationCommand(),
                 extractToParameterPositionCursorCommand(),
                 credentialsService,
