@@ -26,7 +26,7 @@ export abstract class BaseLspInstaller<T extends ResourcePaths = ResourcePaths, 
 
     constructor(
         protected config: Config,
-        loggerName: Extract<LogTopic, 'amazonqLsp' | 'amazonqWorkspaceLsp'>
+        loggerName: Extract<LogTopic, 'amazonqLsp' | 'amazonqWorkspaceLsp' | 'awsCfnLsp'>
     ) {
         this.logger = getLogger(loggerName)
     }
