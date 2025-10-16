@@ -13,6 +13,7 @@ import { activate as activateCloudWatchLogs } from './awsService/cloudWatchLogs/
 import { activate as activateSchemas } from './eventSchemas/activation'
 import { activate as activateLambda } from './lambda/activation'
 import { activate as activateCloudFormationTemplateRegistry } from './shared/cloudformation/activation'
+import { activate as activateCloudFormation } from './awsService/cloudformation/activation'
 import { AwsContextCommands } from './shared/awsContextCommands'
 import {
     getIdeProperties,
@@ -151,6 +152,14 @@ export async function activate(context: vscode.ExtensionContext) {
         )
 
         await activateCloudFormationTemplateRegistry(context)
+
+        // Feature flag for CloudFormation service activation
+        const enableCloudFormationService = experiments.get('cloudFormationService', false)
+        await setContext('aws.cloudFormation.serviceEnabled', enableCloudFormationService)
+
+        if (enableCloudFormationService) {
+            await activateCloudFormation(context)
+        }
 
         await activateAwsExplorer({
             context: extContext,
