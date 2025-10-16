@@ -4527,6 +4527,18 @@
                 "category": "CloudFormation"
             },
             {
+                "command": "aws.cloudformation.api.deployTemplate",
+                "title": "Deploy Template",
+                "icon": "$(cloud-download)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.validateTemplate",
+                "title": "Deploy Template",
+                "icon": "$(cloud-download)",
+                "category": "CloudFormation"
+            },
+            {
                 "command": "aws.cloudformation.api.copyResourceIdentifier",
                 "title": "Copy Resource Identifier",
                 "category": "CloudFormation"
