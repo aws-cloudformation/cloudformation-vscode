@@ -54,7 +54,18 @@ export const toolkitSettings = {
     "aws.accessAnalyzer.policyChecks.checkNoNewAccessFilePath": {},
     "aws.accessAnalyzer.policyChecks.checkAccessNotGrantedFilePath": {},
     "aws.accessAnalyzer.policyChecks.cloudFormationParameterFilePath": {},
-    "aws.sagemaker.studio.spaces.enableIdentityFiltering": {}
+    "aws.sagemaker.studio.spaces.enableIdentityFiltering": {},
+    "aws.cloudformation.server.trace": {},
+    "aws.cloudformation.telemetry.enabled": {},
+    "aws.cloudformation.telemetry.logLevel": {},
+    "aws.cloudformation.hover.enabled": {},
+    "aws.cloudformation.completion.enabled": {},
+    "aws.cloudformation.diagnostics.cfnLint.enabled": {},
+    "aws.cloudformation.diagnostics.cfnLint.lintOnChange": {},
+    "aws.cloudformation.diagnostics.cfnLint.delayMs": {},
+    "aws.cloudformation.diagnostics.cfnGuard.enabled": {},
+    "aws.cloudformation.diagnostics.cfnGuard.validateOnChange": {},
+    "aws.cloudformation.diagnostics.cfnGuard.delayMs": {}
 }
 
 export default toolkitSettings
