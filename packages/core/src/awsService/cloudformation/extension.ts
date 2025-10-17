@@ -6,10 +6,10 @@
 import { ExtensionContext, window, languages } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import { CloseAction, ErrorAction } from 'vscode-languageclient'
-import { v4 as uuidv4 } from 'uuid'
 import { formatMessage, toString } from './utils'
 import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
+import { getClientId } from 'aws-core-vscode/shared'
 import {
     deployTemplateCommand,
     validateTemplateCommand,
@@ -88,12 +88,15 @@ export async function activate(context: ExtensionContext) {
         outputChannel: globals.outputChannel,
         initializationOptions: {
             handledSchemaProtocols: ['file'],
-            clientInfo: {
-                extension: {
-                    name: ExtensionId,
-                    version: Version,
+            aws: {
+                clientInfo: {
+                    extension: {
+                        name: ExtensionId,
+                        version: Version,
+                    },
+                    clientId: getClientId(globals.globalState),
                 },
-                clientId: uuidv4(),
+                telemetryEnabled: globals.telemetry.telemetryEnabled,
             },
         },
         errorHandler: {
