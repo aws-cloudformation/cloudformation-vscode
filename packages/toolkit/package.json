@@ -46,6 +46,7 @@
         "onLanguage:python",
         "onLanguage:csharp",
         "onLanguage:yaml",
+        "onLanguage:cloudformation",
         "onFileSystem:s3",
         "onFileSystem:s3-readonly"
     ],
@@ -310,6 +311,74 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Enable automatic filtration of spaces based on your AWS identity."
+                },
+                "aws.cloudformation.server.trace": {
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces the communication between VS Code and the language server"
+                },
+                "aws.cloudformation.telemetry.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Configure anonymous telemetry collection (cannot disable unless it is a production release)"
+                },
+                "aws.cloudformation.telemetry.logLevel": {
+                    "type": "string",
+                    "enum": [
+                        "debug",
+                        "info",
+                        "warn",
+                        "error"
+                    ],
+                    "default": "info",
+                    "description": "Configure the client messaging level"
+                },
+                "aws.cloudformation.hover.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable hover information for CloudFormation resources"
+                },
+                "aws.cloudformation.completion.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable auto-completion for CloudFormation templates"
+                },
+                "aws.cloudformation.diagnostics.cfnLint.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable or disable CloudFormation linting"
+                },
+                "aws.cloudformation.diagnostics.cfnLint.lintOnChange": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run cfn-lint when document content changes"
+                },
+                "aws.cloudformation.diagnostics.cfnLint.delayMs": {
+                    "type": "number",
+                    "default": 3000,
+                    "minimum": 0,
+                    "description": "Delay in milliseconds before running cfn-lint after changes"
+                },
+                "aws.cloudformation.diagnostics.cfnGuard.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable or disable CloudFormation Guard validation"
+                },
+                "aws.cloudformation.diagnostics.cfnGuard.validateOnChange": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run cfn-guard when document content changes"
+                },
+                "aws.cloudformation.diagnostics.cfnGuard.delayMs": {
+                    "type": "number",
+                    "default": 1000,
+                    "minimum": 0,
+                    "description": "Delay in milliseconds before running cfn-guard after changes"
                 }
             }
         },
@@ -1355,6 +1424,13 @@
                     "command": "aws.copyLogResource",
                     "when": "resourceScheme == aws-cwl",
                     "group": "1_cutcopypaste@1"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "aws.cloudformation.api.rerunLastValidation",
+                    "when": "resourceExtname == .yaml || resourceExtname == .json || resourceExtname == .yml || resourceExtname == .txt || resourceExtname == .cfn || resourceExtname == .template",
+                    "group": "1_cloudformation@1"
                 }
             ],
             "view/title": [
@@ -4576,6 +4652,31 @@
             {
                 "command": "aws.cloudformation.diff.focus",
                 "title": "Focus CloudFormation Diff View",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.server.attachDebugger",
+                "title": "AWS CloudFormation: Attach Debugger to Server",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.server.restartServer",
+                "title": "AWS CloudFormation: Restart Server",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.validateTemplate",
+                "title": "AWS CloudFormation: Validate Template",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.deployTemplate",
+                "title": "AWS CloudFormation: Deploy Template",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.rerunLastValidation",
+                "title": "AWS CloudFormation: Rerun Last Validation",
                 "category": "CloudFormation"
             }
         ],
