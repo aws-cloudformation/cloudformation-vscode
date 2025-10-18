@@ -42,8 +42,7 @@ import { ResourceSelector } from './ui/resourceSelector'
 import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
 import { CfnLspServerProvider } from './lsp-server/cfnLspServerProvider'
-import { getClientId, TelemetryConfig } from '../../shared/telemetry/util'
-import { isAutomation } from '../../shared/vscode/env'
+import { getClientId } from '../../shared/telemetry/util'
 
 let client: LanguageClient
 
@@ -73,8 +72,6 @@ export async function activate(context: ExtensionContext) {
         },
     }
 
-    const isTelemetryEnabled = isAutomation() ? false : new TelemetryConfig().isEnabled()
-
     const clientOptions: LanguageClientOptions = {
         documentSelector: [
             { scheme: 'file', language: 'plaintext' },
@@ -97,9 +94,9 @@ export async function activate(context: ExtensionContext) {
                         name: ExtensionId,
                         version: Version,
                     },
-                    clientId: getClientId(globals.globalState, isTelemetryEnabled),
+                    clientId: getClientId(globals.globalState, globals.telemetry.telemetryEnabled),
                 },
-                telemetryEnabled: isTelemetryEnabled,
+                telemetryEnabled: globals.telemetry.telemetryEnabled,
             },
         },
         errorHandler: {
