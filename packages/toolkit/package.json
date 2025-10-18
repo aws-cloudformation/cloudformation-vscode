@@ -2548,9 +2548,19 @@
                     "group": "1@1"
                 },
                 {
-                    "command": "aws.cloudformation.api.copyResourceIdentifier",
+                    "command": "aws.cloudformation.api.cloneResourceState",
                     "when": "view == aws.cloudformation && viewItem == resource",
                     "group": "1@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.getStackManagementInfo",
+                    "when": "view == aws.cloudformation && viewItem == resource && !listMultiSelection",
+                    "group": "1@3"
+                },
+                {
+                    "command": "aws.cloudformation.api.copyResourceIdentifier",
+                    "when": "view == aws.cloudformation && viewItem == resource && !listMultiSelection",
+                    "group": "1@4"
                 },
                 {
                     "command": "aws.cloudformation.api.refreshResourceList",
