@@ -3,17 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { v4 as uuidv4 } from 'uuid'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackChange, StackActionState } from './stackActionRequestType'
+import { StackActionPhase, StackActionState } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
-import { setContext } from '../../../../shared/vscode/setContext'
 import { getValidationStatus, validate } from './stackActionApi'
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
-import { StatusBarItem, commands } from 'vscode'
+import { StatusBarItem } from 'vscode'
 import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
 import { createStackActionParams } from './stackActionUtil'
+import { BaseStackAction } from './baseStackAction'
 
 // TODO move this to server side, we should let server handle last validation
 let lastValidation: Validation | undefined = undefined
@@ -26,16 +25,8 @@ export function setLastValidation(validation: Validation | undefined): void {
     lastValidation = validation
 }
 
-export class Validation {
-    private id: string
-    public readonly uri: string
-    public readonly stackName: string
-    public readonly parameters?: Parameter[]
-    private capabilities?: Capability[]
-    private client: LanguageClient
-    private diffProvider: DiffWebviewProvider
+export class Validation extends BaseStackAction {
     private status: StackActionPhase | undefined
-    private changes: StackChange[] | undefined
     private statusBarItem: StatusBarItem | undefined
 
     constructor(
@@ -46,13 +37,7 @@ export class Validation {
         parameters?: Parameter[],
         capabilities?: Capability[]
     ) {
-        this.id = uuidv4()
-        this.uri = uri
-        this.stackName = stackName
-        this.client = client
-        this.diffProvider = diffProvider
-        this.parameters = parameters
-        this.capabilities = capabilities
+        super(uri, stackName, client, diffProvider, parameters, capabilities)
     }
 
     async validate() {
@@ -67,10 +52,6 @@ export class Validation {
         } catch (error) {
             showErrorMessage(`Error validating template: ${error instanceof Error ? error.message : String(error)}`)
         }
-    }
-
-    getChanges(): StackChange[] | undefined {
-        return this.changes
     }
 
     private pollForProgress() {
@@ -115,24 +96,5 @@ export class Validation {
                     clearInterval(interval)
                 })
         }, 1000)
-    }
-
-    private showDiffView() {
-        void setContext('aws.cloudformation.stacks.diffVisible', true)
-        this.diffProvider.updateData(this.stackName, this.changes)
-        void commands.executeCommand('aws.cloudformation.diff.focus')
-    }
-
-    // Test-specific accessors - protected to limit access
-    protected getDiffProvider(): DiffWebviewProvider {
-        return this.diffProvider
-    }
-
-    protected setChanges(changes: StackChange[]): void {
-        this.changes = changes
-    }
-
-    protected showDiffViewForTest(): void {
-        this.showDiffView()
     }
 }

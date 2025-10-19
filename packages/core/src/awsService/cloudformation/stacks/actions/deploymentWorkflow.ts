@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { v4 as uuidv4 } from 'uuid'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackActionState, StackChange } from './stackActionRequestType'
+import { StackActionPhase, StackActionState } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import {
     showDeploymentStarted,
@@ -13,12 +12,12 @@ import {
     showDeploymentFailure,
     showValidationComplete,
 } from '../../ui/message'
-import { setContext } from '../../../../shared/vscode/setContext'
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
-import { StatusBarItem, commands } from 'vscode'
+import { StatusBarItem } from 'vscode'
 import { deploy, getDeploymentStatus } from './stackActionApi'
 import { createStackActionParams } from './stackActionUtil'
 import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
+import { BaseStackAction } from './baseStackAction'
 import { getLogger } from '../../../../shared/logger/logger'
 
 let lastDeployment: Deployment | undefined = undefined
@@ -31,16 +30,8 @@ export function setLastDeployment(deployment: Deployment | undefined): void {
     lastDeployment = deployment
 }
 
-export class Deployment {
-    private readonly id: string
-    private readonly uri: string
-    private readonly stackName: string
-    private readonly parameters?: Parameter[]
-    private readonly capabilities?: Capability[]
-    private readonly client: LanguageClient
-    private readonly diffProvider: DiffWebviewProvider
+export class Deployment extends BaseStackAction {
     private status: StackActionPhase | undefined
-    private changes: StackChange[] | undefined
     private statusBarItem?: StatusBarItem
 
     constructor(
@@ -51,13 +42,7 @@ export class Deployment {
         parameters?: Parameter[],
         capabilities?: Capability[]
     ) {
-        this.id = uuidv4()
-        this.uri = uri
-        this.stackName = stackName
-        this.client = client
-        this.diffProvider = diffProvider
-        this.parameters = parameters
-        this.capabilities = capabilities
+        super(uri, stackName, client, diffProvider, parameters, capabilities)
     }
 
     async deploy() {
@@ -68,10 +53,6 @@ export class Deployment {
         showDeploymentStarted(this.stackName)
         this.statusBarItem = createDeploymentStatusBar()
         this.pollForProgress()
-    }
-
-    getChanges(): StackChange[] | undefined {
-        return this.changes
     }
 
     private pollForProgress() {
@@ -117,24 +98,5 @@ export class Deployment {
                     clearInterval(interval)
                 })
         }, 1000)
-    }
-
-    private showDiffView() {
-        void setContext('aws.cloudformation.stacks.diffVisible', true)
-        this.diffProvider.updateData(this.stackName, this.changes)
-        void commands.executeCommand('aws.cloudformation.diff.focus')
-    }
-
-    // Test-specific accessors - protected to limit access
-    protected getDiffProvider(): DiffWebviewProvider {
-        return this.diffProvider
-    }
-
-    protected setChanges(changes: StackChange[]): void {
-        this.changes = changes
-    }
-
-    protected showDiffViewForTest(): void {
-        this.showDiffView()
     }
 }
