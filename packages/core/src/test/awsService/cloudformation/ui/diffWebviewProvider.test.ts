@@ -21,9 +21,25 @@ describe('DiffWebviewProvider', function () {
         sandbox.restore()
     })
 
+    function createMockWebview() {
+        return {
+            webview: {
+                options: {},
+                html: '',
+                onDidReceiveMessage: sandbox.stub(),
+            },
+        }
+    }
+
+    function setupProviderWithChanges(stackName: string, changes: StackChange[]) {
+        provider.updateData(stackName, changes)
+        const mockWebview = createMockWebview()
+        provider.resolveWebviewView(mockWebview as any)
+        return mockWebview.webview.html
+    }
+
     describe('updateData', function () {
         it('should update stack name and changes', function () {
-            const stackName = 'test-stack'
             const changes: StackChange[] = [
                 {
                     resourceChange: {
@@ -34,18 +50,7 @@ describe('DiffWebviewProvider', function () {
                 },
             ]
 
-            provider.updateData(stackName, changes)
-
-            const mockWebview = {
-                webview: {
-                    options: {},
-                    html: '',
-                    onDidReceiveMessage: sandbox.stub(),
-                },
-            }
-
-            provider.resolveWebviewView(mockWebview as any)
-            const html = mockWebview.webview.html
+            const html = setupProviderWithChanges('test-stack', changes)
 
             // The HTML should contain the resource information (stack name doesn't appear in table HTML)
             assert.ok(html.includes('TestResource'))
@@ -56,31 +61,15 @@ describe('DiffWebviewProvider', function () {
         })
 
         it('should handle empty changes array', function () {
-            provider.updateData('empty-stack', [])
-
-            const mockWebview = {
-                webview: {
-                    options: {},
-                    html: '',
-                    onDidReceiveMessage: sandbox.stub(),
-                },
-            }
-
-            provider.resolveWebviewView(mockWebview as any)
-            assert.ok(mockWebview.webview.html.includes('No changes detected'))
-            assert.ok(mockWebview.webview.html.includes('empty-stack'))
+            const html = setupProviderWithChanges('empty-stack', [])
+            assert.ok(html.includes('No changes detected'))
+            assert.ok(html.includes('empty-stack'))
         })
     })
 
     describe('resolveWebviewView', function () {
         it('should configure webview options and set HTML content', function () {
-            const mockWebview = {
-                webview: {
-                    options: {},
-                    html: '',
-                    onDidReceiveMessage: sandbox.stub(),
-                },
-            }
+            const mockWebview = createMockWebview()
 
             provider.updateData('test-stack', [])
             provider.resolveWebviewView(mockWebview as any)
@@ -119,18 +108,7 @@ describe('DiffWebviewProvider', function () {
                 },
             ]
 
-            provider.updateData('test-stack', changes)
-
-            const mockWebview = {
-                webview: {
-                    options: {},
-                    html: '',
-                    onDidReceiveMessage: sandbox.stub(),
-                },
-            }
-
-            provider.resolveWebviewView(mockWebview as any)
-            const html = mockWebview.webview.html
+            const html = setupProviderWithChanges('test-stack', changes)
 
             // Verify table headers
             assert.ok(html.includes('Action'))
@@ -201,18 +179,7 @@ describe('DiffWebviewProvider', function () {
                 },
             ]
 
-            provider.updateData('test-stack', changes)
-
-            const mockWebview = {
-                webview: {
-                    options: {},
-                    html: '',
-                    onDidReceiveMessage: sandbox.stub(),
-                },
-            }
-
-            provider.resolveWebviewView(mockWebview as any)
-            const html = mockWebview.webview.html
+            const html = setupProviderWithChanges('test-stack', changes)
 
             assert.ok(html.includes('Add'))
             assert.ok(html.includes('NewResource'))
@@ -241,18 +208,7 @@ describe('DiffWebviewProvider', function () {
                 },
             ]
 
-            provider.updateData('test-stack', changes)
-
-            const mockWebview = {
-                webview: {
-                    options: {},
-                    html: '',
-                    onDidReceiveMessage: sandbox.stub(),
-                },
-            }
-
-            provider.resolveWebviewView(mockWebview as any)
-            const html = mockWebview.webview.html
+            const html = setupProviderWithChanges('test-stack', changes)
 
             assert.ok(html.includes('--vscode-gitDecoration-addedResourceForeground'))
             assert.ok(html.includes('--vscode-gitDecoration-deletedResourceForeground'))
