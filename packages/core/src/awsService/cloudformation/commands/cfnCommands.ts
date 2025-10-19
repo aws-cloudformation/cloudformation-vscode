@@ -75,7 +75,12 @@ export function validateTemplateCommand(
     })
 }
 
-export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
+export function deployTemplateCommand(
+    client: LanguageClient,
+    stacks: StacksManager,
+    diffProvider: DiffWebviewProvider,
+    documentManager: DocumentManager
+) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
             templateUri ??= await getTemplatePath(documentManager)
@@ -106,7 +111,7 @@ export function deployTemplateCommand(client: LanguageClient, stacks: StacksMana
                 return
             } // User cancelled
 
-            const deployment = new Deployment(templateUri, stackName, client, parameters, capabilities)
+            const deployment = new Deployment(templateUri, stackName, client, diffProvider, parameters, capabilities)
             setLastDeployment(deployment)
             await deployment.deploy()
             stacks.startPolling()

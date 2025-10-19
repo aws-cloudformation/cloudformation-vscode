@@ -1,12 +1,11 @@
 /*!
-import { getLogger } from '../../../shared/logger'
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { v4 as uuidv4 } from 'uuid'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackActionState } from './stackActionRequestType'
+import { StackActionPhase, StackActionState, StackChange } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import {
     showDeploymentStarted,
@@ -14,10 +13,12 @@ import {
     showDeploymentFailure,
     showValidationComplete,
 } from '../../ui/message'
+import { setContext } from '../../../../shared/vscode/setContext'
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
-import { StatusBarItem } from 'vscode'
+import { StatusBarItem, commands } from 'vscode'
 import { deploy, getDeploymentStatus } from './stackActionApi'
 import { createStackActionParams } from './stackActionUtil'
+import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
 import { getLogger } from '../../../../shared/logger/logger'
 
 let lastDeployment: Deployment | undefined = undefined
@@ -37,13 +38,16 @@ export class Deployment {
     private readonly parameters?: Parameter[]
     private readonly capabilities?: Capability[]
     private readonly client: LanguageClient
+    private readonly diffProvider: DiffWebviewProvider
     private status: StackActionPhase | undefined
+    private changes: StackChange[] | undefined
     private statusBarItem?: StatusBarItem
 
     constructor(
         uri: string,
         stackName: string,
         client: LanguageClient,
+        diffProvider: DiffWebviewProvider,
         parameters?: Parameter[],
         capabilities?: Capability[]
     ) {
@@ -51,6 +55,7 @@ export class Deployment {
         this.uri = uri
         this.stackName = stackName
         this.client = client
+        this.diffProvider = diffProvider
         this.parameters = parameters
         this.capabilities = capabilities
     }
@@ -65,6 +70,10 @@ export class Deployment {
         this.pollForProgress()
     }
 
+    getChanges(): StackChange[] | undefined {
+        return this.changes
+    }
+
     private pollForProgress() {
         const interval = setInterval(() => {
             getDeploymentStatus(this.client, { id: this.id })
@@ -74,15 +83,17 @@ export class Deployment {
                     }
 
                     this.status = deploymentResult.phase
+                    this.changes = deploymentResult.changes
+
                     if (this.statusBarItem) {
                         updateDeploymentStatus(this.statusBarItem, deploymentResult.phase)
                     }
 
                     switch (deploymentResult.phase) {
                         case StackActionPhase.VALIDATION_COMPLETE:
-                            if (deploymentResult.phase === StackActionPhase.VALIDATION_COMPLETE) {
-                                showValidationComplete(this.stackName)
-                            }
+                        case StackActionPhase.DEPLOYMENT_IN_PROGRESS:
+                            showValidationComplete(this.stackName)
+                            this.showDiffView()
                             // Status bar updated above, continue polling
                             break
                         case StackActionPhase.DEPLOYMENT_COMPLETE:
@@ -106,5 +117,24 @@ export class Deployment {
                     clearInterval(interval)
                 })
         }, 1000)
+    }
+
+    private showDiffView() {
+        void setContext('aws.cloudformation.stacks.diffVisible', true)
+        this.diffProvider.updateData(this.stackName, this.changes)
+        void commands.executeCommand('aws.cloudformation.diff.focus')
+    }
+
+    // Test-specific accessors - protected to limit access
+    protected getDiffProvider(): DiffWebviewProvider {
+        return this.diffProvider
+    }
+
+    protected setChanges(changes: StackChange[]): void {
+        this.changes = changes
+    }
+
+    protected showDiffViewForTest(): void {
+        this.showDiffView()
     }
 }

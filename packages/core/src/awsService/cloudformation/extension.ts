@@ -174,7 +174,7 @@ export async function activate(context: ExtensionContext) {
                 focusDiffCommand(),
                 restartCommand(client),
                 validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
-                deployTemplateCommand(client, stacksManager, documentManager),
+                deployTemplateCommand(client, stacksManager, diffProvider, documentManager),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
                 rerunLastValidationCommand(),
