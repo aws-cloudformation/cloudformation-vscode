@@ -29,24 +29,36 @@ describe('DiffViewHelper', function () {
         sandbox.restore()
     })
 
+    function createTestChange(beforeContext?: string, afterContext?: string): StackChange {
+        return {
+            resourceChange: {
+                action: 'Modify',
+                logicalResourceId: 'TestResource',
+                resourceType: 'AWS::S3::Bucket',
+                beforeContext,
+                afterContext,
+            },
+        }
+    }
+
+    async function testDiffGeneration(stackName: string, changes: StackChange[]) {
+        await DiffViewHelper.openDiff(stackName, changes)
+
+        const tmpDir = os.tmpdir()
+        const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+        const afterPath = path.join(tmpDir, `${stackName}-after.json`)
+
+        return { beforePath, afterPath }
+    }
+
     describe('openDiff', function () {
         it('should create diff files and open diff view for Add action', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Add',
-                        logicalResourceId: 'NewResource',
-                        afterContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}',
-                    },
-                },
+                createTestChange(undefined, '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}'),
             ]
 
-            await DiffViewHelper.openDiff(stackName, changes)
-
-            const tmpDir = os.tmpdir()
-            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const afterPath = path.join(tmpDir, `${stackName}-after.json`)
+            const { beforePath, afterPath } = await testDiffGeneration(stackName, changes)
 
             assert.ok(writeFileStub.calledTwice)
             assert.ok(writeFileStub.calledWith(beforePath, '{}'))
@@ -64,20 +76,10 @@ describe('DiffViewHelper', function () {
         it('should create diff files and open diff view for Remove action', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Remove',
-                        logicalResourceId: 'RemovedResource',
-                        beforeContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}',
-                    },
-                },
+                createTestChange('{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}', undefined),
             ]
 
-            await DiffViewHelper.openDiff(stackName, changes)
-
-            const tmpDir = os.tmpdir()
-            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const afterPath = path.join(tmpDir, `${stackName}-after.json`)
+            const { beforePath, afterPath } = await testDiffGeneration(stackName, changes)
 
             assert.ok(writeFileStub.calledTwice)
             assert.ok(writeFileStub.calledWith(beforePath, sinon.match.string))
@@ -95,17 +97,13 @@ describe('DiffViewHelper', function () {
         it('should create diff files for Modify action with beforeContext and afterContext', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Modify',
-                        logicalResourceId: 'ModifiedResource',
-                        beforeContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}',
-                        afterContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}',
-                    },
-                },
+                createTestChange(
+                    '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}',
+                    '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}'
+                ),
             ]
 
-            await DiffViewHelper.openDiff(stackName, changes)
+            await testDiffGeneration(stackName, changes)
 
             assert.ok(writeFileStub.calledTwice)
             const beforeCall = writeFileStub.getCall(0)
@@ -138,7 +136,7 @@ describe('DiffViewHelper', function () {
                 },
             ]
 
-            await DiffViewHelper.openDiff(stackName, changes)
+            await testDiffGeneration(stackName, changes)
 
             assert.ok(writeFileStub.calledTwice)
             const beforeCall = writeFileStub.getCall(0)
@@ -262,7 +260,7 @@ describe('DiffViewHelper', function () {
                 },
             ]
 
-            await DiffViewHelper.openDiff(stackName, changes)
+            await testDiffGeneration(stackName, changes)
 
             assert.ok(writeFileStub.calledTwice)
             const beforeCall = writeFileStub.getCall(0)
