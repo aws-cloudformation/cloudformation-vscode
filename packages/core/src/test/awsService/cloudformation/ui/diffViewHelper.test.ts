@@ -29,18 +29,6 @@ describe('DiffViewHelper', function () {
         sandbox.restore()
     })
 
-    function createTestChange(beforeContext?: string, afterContext?: string): StackChange {
-        return {
-            resourceChange: {
-                action: 'Modify',
-                logicalResourceId: 'TestResource',
-                resourceType: 'AWS::S3::Bucket',
-                beforeContext,
-                afterContext,
-            },
-        }
-    }
-
     async function testDiffGeneration(stackName: string, changes: StackChange[]) {
         await DiffViewHelper.openDiff(stackName, changes)
 
@@ -49,6 +37,17 @@ describe('DiffViewHelper', function () {
         const afterPath = path.join(tmpDir, `${stackName}-after.json`)
 
         return { beforePath, afterPath }
+    }
+
+    function assertFileCallsAndParseData() {
+        assert.ok(writeFileStub.calledTwice)
+        const beforeCall = writeFileStub.getCall(0)
+        const afterCall = writeFileStub.getCall(1)
+
+        const beforeData = JSON.parse(beforeCall.args[1])
+        const afterData = JSON.parse(afterCall.args[1])
+
+        return { beforeData, afterData }
     }
 
     describe('openDiff', function () {
@@ -121,12 +120,7 @@ describe('DiffViewHelper', function () {
 
             await testDiffGeneration(stackName, changes)
 
-            assert.ok(writeFileStub.calledTwice)
-            const beforeCall = writeFileStub.getCall(0)
-            const afterCall = writeFileStub.getCall(1)
-
-            const beforeData = JSON.parse(beforeCall.args[1])
-            const afterData = JSON.parse(afterCall.args[1])
+            const { beforeData, afterData } = assertFileCallsAndParseData()
 
             assert.ok(beforeData.TestResource)
             assert.ok(afterData.TestResource)
@@ -154,12 +148,7 @@ describe('DiffViewHelper', function () {
 
             await testDiffGeneration(stackName, changes)
 
-            assert.ok(writeFileStub.calledTwice)
-            const beforeCall = writeFileStub.getCall(0)
-            const afterCall = writeFileStub.getCall(1)
-
-            const beforeData = JSON.parse(beforeCall.args[1])
-            const afterData = JSON.parse(afterCall.args[1])
+            const { beforeData, afterData } = assertFileCallsAndParseData()
 
             assert.strictEqual(beforeData.ModifiedResource.BucketName, 'old-bucket')
             assert.strictEqual(afterData.ModifiedResource.BucketName, 'new-bucket')
@@ -180,12 +169,7 @@ describe('DiffViewHelper', function () {
 
             await DiffViewHelper.openDiff(stackName, changes)
 
-            assert.ok(writeFileStub.calledTwice)
-            const beforeCall = writeFileStub.getCall(0)
-            const afterCall = writeFileStub.getCall(1)
-
-            const beforeData = JSON.parse(beforeCall.args[1])
-            const afterData = JSON.parse(afterCall.args[1])
+            const { beforeData, afterData } = assertFileCallsAndParseData()
 
             assert.deepStrictEqual(beforeData.InvalidResource, {})
             assert.deepStrictEqual(afterData.InvalidResource, {})
@@ -278,12 +262,7 @@ describe('DiffViewHelper', function () {
 
             await testDiffGeneration(stackName, changes)
 
-            assert.ok(writeFileStub.calledTwice)
-            const beforeCall = writeFileStub.getCall(0)
-            const afterCall = writeFileStub.getCall(1)
-
-            const beforeData = JSON.parse(beforeCall.args[1])
-            const afterData = JSON.parse(afterCall.args[1])
+            const { beforeData, afterData } = assertFileCallsAndParseData()
 
             assert.strictEqual(beforeData.ModifiedResource.Property1, '<UnknownBefore>')
             assert.strictEqual(afterData.ModifiedResource.Property1, '<UnknownAfter>')
