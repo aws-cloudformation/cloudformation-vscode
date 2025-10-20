@@ -55,13 +55,7 @@ describe('DiffViewHelper', function () {
         it('should create diff files and open diff view for Add action', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Add',
-                        logicalResourceId: 'TestResource',
-                        afterContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}',
-                    },
-                },
+                createTestChange(undefined, '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}'),
             ]
 
             const { beforePath, afterPath } = await testDiffGeneration(stackName, changes)
@@ -82,13 +76,7 @@ describe('DiffViewHelper', function () {
         it('should create diff files and open diff view for Remove action', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Remove',
-                        logicalResourceId: 'TestResource',
-                        beforeContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}',
-                    },
-                },
+                createTestChange('{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}', undefined),
             ]
 
             const { beforePath, afterPath } = await testDiffGeneration(stackName, changes)
@@ -109,14 +97,10 @@ describe('DiffViewHelper', function () {
         it('should create diff files for Modify action with beforeContext and afterContext', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Modify',
-                        logicalResourceId: 'TestResource',
-                        beforeContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}',
-                        afterContext: '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}',
-                    },
-                },
+                createTestChange(
+                    '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "old-bucket"}}',
+                    '{"Type": "AWS::S3::Bucket", "Properties": {"BucketName": "new-bucket"}}'
+                ),
             ]
 
             await testDiffGeneration(stackName, changes)
@@ -128,8 +112,8 @@ describe('DiffViewHelper', function () {
             const beforeData = JSON.parse(beforeCall.args[1])
             const afterData = JSON.parse(afterCall.args[1])
 
-            assert.ok(beforeData.TestResource)
-            assert.ok(afterData.TestResource)
+            assert.ok(beforeData.ModifiedResource)
+            assert.ok(afterData.ModifiedResource)
         })
 
         it('should handle Modify action with details when no context provided', async function () {
