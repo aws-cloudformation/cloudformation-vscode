@@ -12,6 +12,7 @@ import {
     CreateStackActionResult,
     GetStackActionStatusResult,
     GetCapabilitiesResult,
+    GetTemplateResourcesResult,
 } from './stackActionRequestType'
 
 export const CreateValidationRequest = new RequestType<CreateStackActionParams, CreateStackActionResult, void>(
@@ -34,4 +35,8 @@ export const GetParametersRequest = new RequestType<TemplateUri, GetParametersRe
 
 export const GetCapabilitiesRequest = new RequestType<TemplateUri, GetCapabilitiesResult, void>(
     'aws/cfn/stack/capabilities'
+)
+
+export const GetTemplateResourcesRequest = new RequestType<TemplateUri, GetTemplateResourcesResult, void>(
+    'aws/cfn/stack/import/resources'
 )

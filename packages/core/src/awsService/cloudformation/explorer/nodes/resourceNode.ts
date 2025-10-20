@@ -3,26 +3,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Command, TreeItem, TreeItemCollapsibleState } from 'vscode'
-import { ResourceList } from '../../cfn/resourceRequestTypes'
+import { TreeItemCollapsibleState } from 'vscode'
+import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
 
-export class ResourceNode extends TreeItem {
-    public readonly resourceType?: string
-    constructor(
-        public override readonly label: string,
-        public override readonly collapsibleState: TreeItemCollapsibleState,
-        public override readonly contextValue: string,
-        public override readonly description?: string,
-        public override readonly tooltip?: string,
-        public readonly resourceList?: ResourceList,
-        public override readonly command?: Command,
-        public readonly resourceIdentifier?: string
+export class ResourceNode extends AWSTreeNodeBase {
+    public constructor(
+        public readonly resource: any,
+        public readonly resourceType?: string,
+        resourceIdentifier?: string
     ) {
-        super(label, collapsibleState)
-        this.tooltip = tooltip ?? `${this.label}${this.description ? ` - ${this.description}` : ''}`
+        super(resource.name || resource.resourceIdentifier || 'Unknown Resource', TreeItemCollapsibleState.None)
+        this.contextValue = 'resource'
+        this.description = resource.typeName || resourceType
+        this.resourceType = resourceType || resource.typeName
+        this.resourceIdentifier = resourceIdentifier || resource.resourceIdentifier || ''
+    }
 
-        if (resourceList?.typeName) {
-            this.resourceType = resourceList?.typeName
-        }
+    // Ensure resourceIdentifier is always a string
+    public readonly resourceIdentifier: string
+
+    // Add resourceList property for backward compatibility
+    public get resourceList() {
+        return this.resource
+    }
+
+    public override async getChildren(): Promise<AWSTreeNodeBase[]> {
+        return []
     }
 }

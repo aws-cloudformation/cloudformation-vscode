@@ -1,5 +1,4 @@
 /*!
-import { getLogger } from '../../../shared/logger'
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -9,13 +8,20 @@ import { commandKey, findParameterDescriptionPosition } from '../utils'
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
 import { Deployment, setLastDeployment } from '../stacks/actions/deploymentWorkflow'
-import { Parameter } from '@aws-sdk/client-cloudformation'
-import { getParameterValues, getStackName, getTemplatePath, confirmCapabilities } from '../ui/inputBox'
+import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
+import {
+    getParameterValues,
+    getStackName,
+    getTemplatePath,
+    confirmCapabilities,
+    shouldImportResources,
+    getResourcesToImport,
+} from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
 import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
-import { getParameters, getCapabilities } from '../stacks/actions/stackActionApi'
-import { TemplateParameter } from '../stacks/actions/stackActionRequestType'
+import { getParameters, getCapabilities, getTemplateResources } from '../stacks/actions/stackActionApi'
+import { TemplateParameter, ResourceToImport } from '../stacks/actions/stackActionRequestType'
 import { StacksManager } from '../stacks/stacksManager'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
@@ -33,35 +39,22 @@ export function validateTemplateCommand(
 ) {
     return commands.registerCommand(commandKey('api.validateTemplate'), async (templateUri?: string) => {
         try {
-            templateUri ??= await getTemplatePath(documentManager)
-            if (!templateUri) {
+            const result = await changeSetSteps(client, documentManager, true, templateUri)
+            if (!result) {
                 return
             }
 
-            await ensureFileIsOpen(templateUri)
+            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
 
-            const stackName = await getStackName(getLastValidation()?.stackName)
-            if (!stackName) {
-                return
-            }
-
-            const paramDefinition = await getTemplateParameters(client, templateUri)
-
-            let parameters: Parameter[] | undefined
-            if (paramDefinition.length > 0) {
-                parameters = await getParameterValues(paramDefinition, getLastValidation()?.parameters)
-            }
-            if (paramDefinition.length > 0 && !parameters) {
-                return
-            }
-
-            const capabilitiesResult = await getCapabilities(client, templateUri)
-            const capabilities = await confirmCapabilities(capabilitiesResult.capabilities)
-            if (capabilities === undefined) {
-                return
-            } // User cancelled
-
-            const validation = new Validation(templateUri, stackName, client, diffProvider, parameters, capabilities)
+            const validation = new Validation(
+                uri,
+                stackName,
+                client,
+                diffProvider,
+                parameters,
+                capabilities,
+                resourcesToImport
+            )
 
             setLastValidation(validation)
 
@@ -78,35 +71,14 @@ export function validateTemplateCommand(
 export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
-            templateUri ??= await getTemplatePath(documentManager)
-            if (!templateUri) {
+            const result = await changeSetSteps(client, documentManager, false, templateUri)
+            if (!result) {
                 return
             }
 
-            await ensureFileIsOpen(templateUri)
+            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
 
-            const stackName = await getStackName()
-            if (!stackName) {
-                return
-            }
-
-            const paramDefinition = await getTemplateParameters(client, templateUri)
-
-            let parameters: Parameter[] | undefined
-            if (paramDefinition.length > 0) {
-                parameters = await getParameterValues(paramDefinition)
-            }
-            if (paramDefinition.length > 0 && !parameters) {
-                return
-            }
-
-            const capabilitiesResult = await getCapabilities(client, templateUri)
-            const capabilities = await confirmCapabilities(capabilitiesResult.capabilities)
-            if (capabilities === undefined) {
-                return
-            } // User cancelled
-
-            const deployment = new Deployment(templateUri, stackName, client, parameters, capabilities)
+            const deployment = new Deployment(uri, stackName, client, parameters, capabilities, resourcesToImport)
             setLastDeployment(deployment)
             await deployment.deploy()
             stacks.startPolling()
@@ -114,6 +86,78 @@ export function deployTemplateCommand(client: LanguageClient, stacks: StacksMana
             showErrorMessage(`Error deploying template: ${error instanceof Error ? error.message : String(error)}`)
         }
     })
+}
+
+async function promptForResourceImport(client: LanguageClient, templateUri: string) {
+    const importMode = await shouldImportResources()
+    let resourcesToImport
+    if (importMode) {
+        const templateResources = await getTemplateResources(client, templateUri)
+        if (!templateResources || templateResources.length === 0) {
+            showErrorMessage('No resources found in template to import')
+            return
+        }
+
+        resourcesToImport = await getResourcesToImport(templateResources)
+        if (!resourcesToImport || resourcesToImport.length === 0) {
+            return
+        }
+    }
+    return resourcesToImport
+}
+
+async function changeSetSteps(
+    client: LanguageClient,
+    documentManager: DocumentManager,
+    isValidation: boolean,
+    templateUri: string | undefined
+): Promise<
+    | {
+          templateUri: string
+          stackName: string
+          parameters: Parameter[] | undefined
+          capabilities: Capability[]
+          resourcesToImport: ResourceToImport[] | undefined
+      }
+    | undefined
+> {
+    templateUri ??= await getTemplatePath(documentManager)
+    if (!templateUri) {
+        return
+    }
+
+    await ensureFileIsOpen(templateUri)
+
+    let stackName
+    if (isValidation) {
+        stackName = await getStackName(getLastValidation()?.stackName)
+    } else {
+        stackName = await getStackName()
+    }
+    if (!stackName) {
+        return
+    }
+
+    const resourcesToImport = await promptForResourceImport(client, templateUri)
+
+    const paramDefinition = await getTemplateParameters(client, templateUri)
+    let parameters: Parameter[] | undefined
+    if (paramDefinition.length > 0) {
+        if (isValidation) {
+            parameters = await getParameterValues(paramDefinition, getLastValidation()?.parameters)
+        } else {
+            parameters = await getParameterValues(paramDefinition)
+        }
+    }
+    if (paramDefinition.length > 0 && !parameters) {
+        return
+    }
+    const capabilitiesResult = await getCapabilities(client, templateUri)
+    const capabilities = await confirmCapabilities(capabilitiesResult.capabilities)
+    if (capabilities === undefined) {
+        return
+    } // User cancelled
+    return { templateUri, stackName, parameters, capabilities, resourcesToImport }
 }
 
 export function rerunLastValidationCommand() {
@@ -178,7 +222,7 @@ export function addResourceTypesCommand(resourcesManager: ResourcesManager) {
 }
 
 export function importResourceStateCommand(resourcesManager: ResourcesManager) {
-    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+    const handler = async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
         const nodes = selectedNodes ?? (node ? [node] : [])
         const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
         await resourcesManager.importResourceStates(resourceNodes)
@@ -186,12 +230,12 @@ export function importResourceStateCommand(resourcesManager: ResourcesManager) {
 
     return [
         commands.registerCommand(commandKey('api.importResourceState'), handler),
-        commands.registerCommand(commandKey('api.importResourceState.palette'), () => handler({} as ResourceNode)),
+        commands.registerCommand(commandKey('api.importResourceState.palette'), () => handler()),
     ]
 }
 
 export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
-    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+    const handler = async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
         const nodes = selectedNodes ?? (node ? [node] : [])
         const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
         await resourcesManager.cloneResourceStates(resourceNodes)
@@ -199,7 +243,7 @@ export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
 
     return [
         commands.registerCommand(commandKey('api.cloneResourceState'), handler),
-        commands.registerCommand(commandKey('api.cloneResourceState.palette'), () => handler({} as ResourceNode)),
+        commands.registerCommand(commandKey('api.cloneResourceState.palette'), () => handler()),
     ]
 }
 
