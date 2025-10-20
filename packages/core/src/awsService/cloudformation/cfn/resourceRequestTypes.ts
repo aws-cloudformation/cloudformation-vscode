@@ -57,6 +57,7 @@ export type ResourceIdentifier = string
 export interface ResourceStateResult extends CodeAction {
     successfulImports: Map<ResourceType, ResourceIdentifier[]>
     failedImports: Map<ResourceType, ResourceIdentifier[]>
+    warning?: string
 }
 
 export const ResourceStateRequest = new RequestType<ResourceStateParams, ResourceStateResult, void>(
