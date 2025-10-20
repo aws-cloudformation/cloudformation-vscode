@@ -3,21 +3,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TreeItem, TreeItemCollapsibleState } from 'vscode'
-import { TreeNode } from '../../../../shared/treeview/resourceTreeDataProvider'
+import { TreeItemCollapsibleState } from 'vscode'
+import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
+import { StackNode } from './stackNode'
 
-export class StacksNode implements TreeNode {
-    public readonly id = 'cloudformation-stacks'
-    public readonly resource = undefined
+import { StacksManager } from '../../stacks/stacksManager'
+import { StackSummary } from '@aws-sdk/client-cloudformation'
 
-    getTreeItem(): TreeItem {
-        const item = new TreeItem('Stacks', TreeItemCollapsibleState.Collapsed)
-        item.contextValue = 'stackSection'
-        return item
+export class StacksNode extends AWSTreeNodeBase {
+    public constructor(private readonly stacksManager: StacksManager) {
+        super('Stacks', TreeItemCollapsibleState.Collapsed)
+        this.contextValue = 'stackSection'
     }
 
-    getChildren(): TreeNode[] {
-        // TODO: Return actual stack nodes
-        return []
+    public override async getChildren(): Promise<AWSTreeNodeBase[]> {
+        const stacks = this.stacksManager.get()
+        return stacks.map((stack: StackSummary) => new StackNode(stack))
     }
 }

@@ -178,7 +178,7 @@ export function addResourceTypesCommand(resourcesManager: ResourcesManager) {
 }
 
 export function importResourceStateCommand(resourcesManager: ResourcesManager) {
-    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+    const handler = async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
         const nodes = selectedNodes ?? (node ? [node] : [])
         const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
         await resourcesManager.importResourceStates(resourceNodes)
@@ -186,12 +186,12 @@ export function importResourceStateCommand(resourcesManager: ResourcesManager) {
 
     return [
         commands.registerCommand(commandKey('api.importResourceState'), handler),
-        commands.registerCommand(commandKey('api.importResourceState.palette'), () => handler({} as ResourceNode)),
+        commands.registerCommand(commandKey('api.importResourceState.palette'), () => handler()),
     ]
 }
 
 export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
-    const handler = async (node: ResourceNode, selectedNodes?: ResourceNode[]) => {
+    const handler = async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
         const nodes = selectedNodes ?? (node ? [node] : [])
         const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
         await resourcesManager.cloneResourceStates(resourceNodes)
@@ -199,7 +199,7 @@ export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
 
     return [
         commands.registerCommand(commandKey('api.cloneResourceState'), handler),
-        commands.registerCommand(commandKey('api.cloneResourceState.palette'), () => handler({} as ResourceNode)),
+        commands.registerCommand(commandKey('api.cloneResourceState.palette'), () => handler()),
     ]
 }
 

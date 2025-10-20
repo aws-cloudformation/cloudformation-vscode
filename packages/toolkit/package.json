@@ -2513,6 +2513,11 @@
                     "group": "inline"
                 },
                 {
+                    "command": "aws.cloudformation.showRegions",
+                    "when": "view == aws.cloudformation && (!viewItem || viewItem == region)",
+                    "group": "navigation@1"
+                },
+                {
                     "command": "aws.cloudformation.api.addResourceTypes",
                     "when": "view == aws.cloudformation && viewItem == resourceSection",
                     "group": "inline@1"
@@ -4687,6 +4692,12 @@
             {
                 "command": "aws.cloudformation.api.rerunLastValidation",
                 "title": "AWS CloudFormation: Rerun Last Validation",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.showRegions",
+                "title": "Show/Hide Regions",
+                "icon": "$(globe)",
                 "category": "CloudFormation"
             }
         ],
