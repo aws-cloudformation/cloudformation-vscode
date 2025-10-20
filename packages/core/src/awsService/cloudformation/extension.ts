@@ -6,7 +6,6 @@
 import { ExtensionContext, window, languages } from 'vscode'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
 import { CloseAction, ErrorAction } from 'vscode-languageclient'
-import { v4 as uuidv4 } from 'uuid'
 import { formatMessage, toString } from './utils'
 import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
@@ -43,6 +42,7 @@ import { ResourceSelector } from './ui/resourceSelector'
 import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
 import { CfnLspServerProvider } from './lsp-server/cfnLspServerProvider'
+import { getClientId } from '../../shared/telemetry/util'
 
 let client: LanguageClient
 
@@ -88,12 +88,15 @@ export async function activate(context: ExtensionContext) {
         outputChannel: globals.outputChannel,
         initializationOptions: {
             handledSchemaProtocols: ['file'],
-            clientInfo: {
-                extension: {
-                    name: ExtensionId,
-                    version: Version,
+            aws: {
+                clientInfo: {
+                    extension: {
+                        name: ExtensionId,
+                        version: Version,
+                    },
+                    clientId: getClientId(globals.globalState, globals.telemetry.telemetryEnabled),
                 },
-                clientId: uuidv4(),
+                telemetryEnabled: globals.telemetry.telemetryEnabled,
             },
         },
         errorHandler: {
