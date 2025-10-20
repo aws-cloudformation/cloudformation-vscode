@@ -11,6 +11,7 @@ import {
     CreateStackActionParams,
     CreateStackActionResult,
     GetStackActionStatusResult,
+    TemplateResource,
 } from './stackActionRequestType'
 import {
     GetParametersRequest,
@@ -19,6 +20,7 @@ import {
     CreateDeploymentRequest,
     GetValidationStatusRequest,
     GetDeploymentStatusRequest,
+    GetTemplateResourcesRequest,
 } from './stackActionProtocol'
 import { Identifiable } from '../../lspTypes'
 
@@ -56,4 +58,9 @@ export async function getParameters(client: LanguageClient, params: TemplateUri)
 
 export async function getCapabilities(client: LanguageClient, params: TemplateUri): Promise<GetCapabilitiesResult> {
     return await client.sendRequest(GetCapabilitiesRequest, params)
+}
+
+export async function getTemplateResources(client: LanguageClient, params: TemplateUri): Promise<TemplateResource[]> {
+    const result = await client.sendRequest(GetTemplateResourcesRequest, params)
+    return result.resources
 }

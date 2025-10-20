@@ -1,12 +1,11 @@
 /*!
-import { getLogger } from '../../../shared/logger'
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { v4 as uuidv4 } from 'uuid'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackActionState } from './stackActionRequestType'
+import { StackActionPhase, StackActionState, ResourceToImport } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import {
     showDeploymentStarted,
@@ -36,6 +35,7 @@ export class Deployment {
     private readonly stackName: string
     private readonly parameters?: Parameter[]
     private readonly capabilities?: Capability[]
+    private readonly resourcesToImport?: ResourceToImport[]
     private readonly client: LanguageClient
     private status: StackActionPhase | undefined
     private statusBarItem?: StatusBarItem
@@ -45,7 +45,8 @@ export class Deployment {
         stackName: string,
         client: LanguageClient,
         parameters?: Parameter[],
-        capabilities?: Capability[]
+        capabilities?: Capability[],
+        resourcesToImport?: ResourceToImport[]
     ) {
         this.id = uuidv4()
         this.uri = uri
@@ -53,12 +54,20 @@ export class Deployment {
         this.client = client
         this.parameters = parameters
         this.capabilities = capabilities
+        this.resourcesToImport = resourcesToImport
     }
 
     async deploy() {
         await deploy(
             this.client,
-            createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities)
+            createStackActionParams(
+                this.id,
+                this.uri,
+                this.stackName,
+                this.parameters,
+                this.capabilities,
+                this.resourcesToImport
+            )
         )
         showDeploymentStarted(this.stackName)
         this.statusBarItem = createDeploymentStatusBar()

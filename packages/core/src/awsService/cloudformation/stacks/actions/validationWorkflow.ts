@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackChange, StackActionState } from './stackActionRequestType'
+import { StackActionPhase, StackChange, StackActionState, ResourceToImport } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
 import { setContext } from '../../../../shared/vscode/setContext'
@@ -32,6 +32,7 @@ export class Validation {
     public readonly stackName: string
     public readonly parameters?: Parameter[]
     private capabilities?: Capability[]
+    private resourcesToImport?: ResourceToImport[]
     private client: LanguageClient
     private diffProvider: DiffWebviewProvider
     private status: StackActionPhase | undefined
@@ -44,7 +45,8 @@ export class Validation {
         client: LanguageClient,
         diffProvider: DiffWebviewProvider,
         parameters?: Parameter[],
-        capabilities?: Capability[]
+        capabilities?: Capability[],
+        resourcesToImport?: ResourceToImport[]
     ) {
         this.id = uuidv4()
         this.uri = uri
@@ -53,6 +55,7 @@ export class Validation {
         this.diffProvider = diffProvider
         this.parameters = parameters
         this.capabilities = capabilities
+        this.resourcesToImport = resourcesToImport
     }
 
     async validate() {
@@ -61,7 +64,14 @@ export class Validation {
             this.statusBarItem = createDeploymentStatusBar()
             await validate(
                 this.client,
-                createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities)
+                createStackActionParams(
+                    this.id,
+                    this.uri,
+                    this.stackName,
+                    this.parameters,
+                    this.capabilities,
+                    this.resourcesToImport
+                )
             )
             this.pollForProgress()
         } catch (error) {
