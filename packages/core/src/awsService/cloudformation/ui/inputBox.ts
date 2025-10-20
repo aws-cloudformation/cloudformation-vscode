@@ -6,7 +6,7 @@
 import { window, workspace, Uri } from 'vscode'
 import { validateStackName, validateParameterValue } from '../stacks/actions/stackActionInputValidation'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { TemplateParameter } from '../stacks/actions/stackActionRequestType'
+import { TemplateParameter, ResourceToImport, TemplateResource } from '../stacks/actions/stackActionRequestType'
 import { DocumentManager } from '../documents/documentManager'
 
 export async function getTemplatePath(documentManager: DocumentManager): Promise<string | undefined> {
@@ -113,4 +113,103 @@ export async function confirmCapabilities(capabilities: Capability[]): Promise<C
     )
 
     return selected ? selected.map((item) => item.label) : undefined
+}
+
+export async function shouldImportResources(): Promise<boolean> {
+    const choice = await window.showQuickPick(['Deploy new/updated resources', 'Import existing resources'], {
+        placeHolder: 'Select deployment mode',
+        ignoreFocusOut: true,
+    })
+
+    return choice === 'Import existing resources'
+}
+
+export async function getResourcesToImport(
+    templateResources: TemplateResource[]
+): Promise<ResourceToImport[] | undefined> {
+    const resourcesToImport: ResourceToImport[] = []
+
+    const selectedResources = await window.showQuickPick(
+        templateResources.map((r) => ({
+            label: r.logicalId,
+            description: r.type,
+            picked: false,
+            resource: r,
+        })),
+        {
+            placeHolder: 'Select resources to import',
+            canPickMany: true,
+            ignoreFocusOut: true,
+        }
+    )
+
+    if (!selectedResources || selectedResources.length === 0) {
+        return undefined
+    }
+
+    for (const selected of selectedResources) {
+        const resourceIdentifier = await getResourceIdentifier(
+            selected.resource.logicalId,
+            selected.resource.type,
+            selected.resource.primaryIdentifierKeys,
+            selected.resource.primaryIdentifier
+        )
+
+        if (!resourceIdentifier) {
+            return undefined
+        }
+
+        resourcesToImport.push({
+            ResourceType: selected.resource.type,
+            LogicalResourceId: selected.resource.logicalId,
+            ResourceIdentifier: resourceIdentifier,
+        })
+    }
+
+    return resourcesToImport
+}
+
+async function getResourceIdentifier(
+    logicalId: string,
+    resourceType: string,
+    primaryIdentifierKeys?: string[],
+    primaryIdentifier?: Record<string, string>
+): Promise<Record<string, string> | undefined> {
+    if (!primaryIdentifierKeys || primaryIdentifierKeys.length === 0) {
+        void window.showErrorMessage(`No primary identifier keys found for ${resourceType}`)
+        return undefined
+    }
+
+    if (primaryIdentifier && Object.keys(primaryIdentifier).length > 0) {
+        const id = Object.values(primaryIdentifier).join('|')
+
+        const usePrimary = await window.showQuickPick([id, 'Enter manually'], {
+            placeHolder: `Select primary identifier for ${logicalId}`,
+            ignoreFocusOut: true,
+        })
+        if (!usePrimary) {
+            return undefined
+        }
+        if (usePrimary === id) {
+            return primaryIdentifier
+        }
+    }
+
+    const identifiers: Record<string, string> = {}
+
+    for (const key of primaryIdentifierKeys) {
+        const value = await window.showInputBox({
+            prompt: `Enter ${key} for ${logicalId} (${resourceType})`,
+            placeHolder: `Physical ${key} of existing resource`,
+            ignoreFocusOut: true,
+        })
+
+        if (!value) {
+            return undefined
+        }
+
+        identifiers[key] = value
+    }
+
+    return identifiers
 }

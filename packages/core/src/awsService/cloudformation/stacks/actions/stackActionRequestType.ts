@@ -6,11 +6,18 @@
 import { Parameter, Capability, ResourceChangeDetail } from '@aws-sdk/client-cloudformation'
 import { Identifiable } from '../../lspTypes'
 
+export type ResourceToImport = {
+    ResourceType: string
+    LogicalResourceId: string
+    ResourceIdentifier: Record<string, string>
+}
+
 export type CreateStackActionParams = Identifiable & {
     uri: string
     stackName: string
     parameters?: Parameter[]
     capabilities?: Capability[]
+    resourcesToImport?: ResourceToImport[]
 }
 
 export type CreateStackActionResult = Identifiable & {
@@ -75,6 +82,17 @@ export type GetParametersResult = {
 
 export type GetCapabilitiesResult = {
     capabilities: Capability[]
+}
+
+export type TemplateResource = {
+    logicalId: string
+    type: string
+    primaryIdentifierKeys?: string[]
+    primaryIdentifier?: Record<string, string>
+}
+
+export type GetTemplateResourcesResult = {
+    resources: TemplateResource[]
 }
 
 export type TemplateParameter = {
