@@ -7,6 +7,10 @@ import { Disposable } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
 import { CloudFormationRegionManager } from '../explorer/regionManager'
 import globals from '../../../shared/extensionGlobals'
+import * as jose from 'jose'
+import * as crypto from 'crypto'
+
+export const encryptionKey = crypto.randomBytes(32)
 
 export class AwsCredentialsService implements Disposable {
     private authChangeListener: Disposable
@@ -36,15 +40,15 @@ export class AwsCredentialsService implements Disposable {
         const profileName = globals.awsContext.getCredentialProfileName()
 
         if (credentials && profileName) {
-            await this.client.sendRequest('aws/credentials/iam/update', {
-                data: {
-                    profile: profileName,
-                    region: this.regionManager.getSelectedRegion(),
-                    accessKeyId: credentials.accessKeyId,
-                    secretAccessKey: credentials.secretAccessKey,
-                    sessionToken: credentials.sessionToken,
-                },
+            const encryptedRequest = await this.createEncryptedCredentialsRequest({
+                profile: profileName,
+                region: this.regionManager.getSelectedRegion(),
+                accessKeyId: credentials.accessKeyId,
+                secretAccessKey: credentials.secretAccessKey,
+                sessionToken: credentials.sessionToken,
             })
+
+            await this.client.sendRequest('aws/credentials/iam/update', encryptedRequest)
         }
 
         void this.stacksManager.reload()
@@ -53,6 +57,19 @@ export class AwsCredentialsService implements Disposable {
 
     async updateRegion(): Promise<void> {
         await this.updateCredentialsFromActiveConnection()
+    }
+
+    private async createEncryptedCredentialsRequest(data: any): Promise<any> {
+        const payload = new TextEncoder().encode(JSON.stringify({ data }))
+
+        const jwt = await new jose.CompactEncrypt(payload)
+            .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+            .encrypt(encryptionKey)
+
+        return {
+            data: jwt,
+            encrypted: true,
+        }
     }
 
     dispose(): void {
