@@ -4,7 +4,7 @@
  */
 
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackActionState } from './stackActionRequestType'
+import { StackActionPhase, StackActionState, ResourceToImport } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import {
     showDeploymentStarted,
@@ -40,15 +40,23 @@ export class Deployment extends BaseStackAction {
         client: LanguageClient,
         diffProvider: DiffWebviewProvider,
         parameters?: Parameter[],
-        capabilities?: Capability[]
+        capabilities?: Capability[],
+        resourcesToImport?: ResourceToImport[]
     ) {
-        super(uri, stackName, client, diffProvider, parameters, capabilities)
+        super(uri, stackName, client, diffProvider, parameters, capabilities, resourcesToImport)
     }
 
     async deploy() {
         await deploy(
             this.client,
-            createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities)
+            createStackActionParams(
+                this.id,
+                this.uri,
+                this.stackName,
+                this.parameters,
+                this.capabilities,
+                this.resourcesToImport
+            )
         )
         showDeploymentStarted(this.stackName)
         this.statusBarItem = createDeploymentStatusBar()

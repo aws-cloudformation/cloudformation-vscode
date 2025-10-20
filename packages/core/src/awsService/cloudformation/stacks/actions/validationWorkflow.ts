@@ -4,7 +4,7 @@
  */
 
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackActionState } from './stackActionRequestType'
+import { StackActionPhase, StackActionState, ResourceToImport } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
 import { getValidationStatus, validate } from './stackActionApi'
@@ -35,9 +35,10 @@ export class Validation extends BaseStackAction {
         client: LanguageClient,
         diffProvider: DiffWebviewProvider,
         parameters?: Parameter[],
-        capabilities?: Capability[]
+        capabilities?: Capability[],
+        resourcesToImport?: ResourceToImport[]
     ) {
-        super(uri, stackName, client, diffProvider, parameters, capabilities)
+        super(uri, stackName, client, diffProvider, parameters, capabilities, resourcesToImport)
     }
 
     async validate() {
@@ -46,7 +47,14 @@ export class Validation extends BaseStackAction {
             this.statusBarItem = createDeploymentStatusBar()
             await validate(
                 this.client,
-                createStackActionParams(this.id, this.uri, this.stackName, this.parameters, this.capabilities)
+                createStackActionParams(
+                    this.id,
+                    this.uri,
+                    this.stackName,
+                    this.parameters,
+                    this.capabilities,
+                    this.resourcesToImport
+                )
             )
             this.pollForProgress()
         } catch (error) {

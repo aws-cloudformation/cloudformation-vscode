@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackChange } from './stackActionRequestType'
+import { StackChange, ResourceToImport } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import { setContext } from '../../../../shared/vscode/setContext'
 import { commands } from 'vscode'
@@ -17,6 +17,7 @@ export abstract class BaseStackAction {
     public readonly stackName: string
     public readonly parameters?: Parameter[]
     protected capabilities?: Capability[]
+    protected resourcesToImport?: ResourceToImport[]
     protected client: LanguageClient
     protected diffProvider: DiffWebviewProvider
     protected changes: StackChange[] | undefined
@@ -27,7 +28,8 @@ export abstract class BaseStackAction {
         client: LanguageClient,
         diffProvider: DiffWebviewProvider,
         parameters?: Parameter[],
-        capabilities?: Capability[]
+        capabilities?: Capability[],
+        resourcesToImport?: ResourceToImport[]
     ) {
         this.id = uuidv4()
         this.uri = uri
@@ -36,6 +38,7 @@ export abstract class BaseStackAction {
         this.diffProvider = diffProvider
         this.parameters = parameters
         this.capabilities = capabilities
+        this.resourcesToImport = resourcesToImport
     }
 
     getChanges(): StackChange[] | undefined {
