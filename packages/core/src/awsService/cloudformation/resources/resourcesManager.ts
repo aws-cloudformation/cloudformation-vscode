@@ -5,6 +5,7 @@ import { getLogger } from '../../../shared/logger'
  */
 
 import { ResourceSelectionResult, ResourceSelector } from '../ui/resourceSelector'
+import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { LanguageClient } from 'vscode-languageclient'
 import {
     ListResourcesRequest,
@@ -18,7 +19,7 @@ import {
     StackMgmtInfoRequest,
     ResourceStackManagementResult,
 } from '../cfn/resourceRequestTypes'
-import { ResourceNode } from '../explorer/nodes/resourceNode'
+
 import { showErrorMessage } from '../ui/message'
 import {
     Position,
@@ -33,13 +34,14 @@ import {
     env,
 } from 'vscode'
 import { getLogger } from '../../../shared/logger/logger'
+import globals from '../../../shared/extensionGlobals'
 
 type ResourcesChangeListener = (resources: ResourceList[]) => void
 
 export class ResourcesManager {
     private resources: Map<string, ResourceList> = new Map()
-    private selectedResourceTypes: string[] = []
     private readonly listeners: ResourcesChangeListener[] = []
+    private static readonly resourceTypesKey = 'aws.cloudformation.selectedResourceTypes'
 
     private readonly CopyStackName = 'Copy Stack Name'
     private readonly CopyStackArn = 'Copy Stack Arn'
@@ -48,6 +50,18 @@ export class ResourcesManager {
         private readonly client: LanguageClient,
         private readonly resourceSelector: ResourceSelector
     ) {}
+
+    private get selectedResourceTypes(): string[] {
+        return globals.globalState.tryGet<string[]>(ResourcesManager.resourceTypesKey, Object, [])
+    }
+
+    private async setSelectedResourceTypes(types: string[]): Promise<void> {
+        await globals.globalState.update(ResourcesManager.resourceTypesKey, types)
+    }
+
+    get(): ResourceList[] {
+        return Array.from(this.resources.values())
+    }
 
     addListener(listener: ResourcesChangeListener) {
         this.listeners.push(listener)
@@ -131,7 +145,7 @@ export class ResourcesManager {
     async selectResourceTypes(): Promise<void> {
         const selectedTypes = await this.resourceSelector.selectResourceTypes(this.selectedResourceTypes)
         if (selectedTypes !== undefined) {
-            this.selectedResourceTypes = selectedTypes
+            await this.setSelectedResourceTypes(selectedTypes)
             await this.loadResources()
         }
     }
@@ -282,11 +296,11 @@ export class ResourcesManager {
             selections = resourceNodes
                 .filter(
                     (node): node is ResourceNode & { resourceType: string } =>
-                        !!node.resourceList && !!node.resourceType
+                        !!node.resourceList && !!node.resourceType && !!node.resourceIdentifier
                 )
                 .map((node) => ({
                     resourceType: node.resourceType,
-                    resourceIdentifier: node.label,
+                    resourceIdentifier: node.resourceIdentifier,
                 }))
         } else {
             selections = await this.resourceSelector.selectResources()
