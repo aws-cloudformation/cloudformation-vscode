@@ -160,11 +160,11 @@ describe('DiffWebviewProvider', function () {
                         details: [
                             {
                                 Target: { Name: 'Property1' },
-                                ChangeSource: 'DirectModification',
+                                ChangeSource: 'Source1',
                             },
                             {
                                 Target: { Name: 'Property2' },
-                                ChangeSource: 'ParameterReference',
+                                ChangeSource: 'Source2',
                             },
                         ],
                     },
