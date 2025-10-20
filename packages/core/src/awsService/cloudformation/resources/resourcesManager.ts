@@ -183,9 +183,15 @@ export class ResourcesManager {
                     cancellable: false,
                 },
                 async () => {
-                    const result = await this.client.sendRequest(ResourceStateRequest.method, params)
-                    await this.applyCodeActionEdits(result as ResourceStateResult)
-                    const [successCount, failureCount] = this.getSuccessAndFailureCount(result as ResourceStateResult)
+                    const result = (await this.client.sendRequest(
+                        ResourceStateRequest.method,
+                        params
+                    )) as ResourceStateResult
+                    if (result.warning) {
+                        void window.showWarningMessage(result.warning)
+                    }
+                    await this.applyCodeActionEdits(result)
+                    const [successCount, failureCount] = this.getSuccessAndFailureCount(result)
                     this.renderResultMessage(successCount, failureCount, purpose)
                 }
             )
