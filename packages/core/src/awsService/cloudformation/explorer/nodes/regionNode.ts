@@ -23,7 +23,7 @@ export class RegionNode extends AWSTreeNodeBase {
         super(region.name, TreeItemCollapsibleState.Collapsed)
         this.contextValue = 'region'
         this.description = region.id
-        this.stacksSection = new StacksNode(stacksManager)
+        this.stacksSection = new StacksNode(stacksManager, region.id)
         this.resourcesSection = new ResourcesNode(resourcesManager)
     }
 

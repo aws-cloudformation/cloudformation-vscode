@@ -8,7 +8,10 @@ import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBa
 import { StackSummary } from '@aws-sdk/client-cloudformation'
 
 export class StackNode extends AWSTreeNodeBase {
-    public constructor(public readonly stack: StackSummary) {
+    public constructor(
+        public readonly stack: StackSummary,
+        private readonly region: string
+    ) {
         super(stack.StackName ?? 'Unknown Stack', TreeItemCollapsibleState.Collapsed)
         this.contextValue = 'stack'
         this.tooltip = `${stack.StackName} [${stack.StackStatus}]`
@@ -32,7 +35,12 @@ export class StackNode extends AWSTreeNodeBase {
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
-        // TODO: Return stack details like the original (StackId, etc.)
-        return []
+        const stackName = this.stack.StackName ?? ''
+        return [
+            new StackOverviewNode(stackName, this.region),
+            new StackEventsNode(stackName, this.region),
+            new StackResourcesNode(stackName, this.region),
+            new StackChangeSetsNode(stackName, this.region),
+        ]
     }
 }
