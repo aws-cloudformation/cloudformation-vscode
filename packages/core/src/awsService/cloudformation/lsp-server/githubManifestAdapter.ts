@@ -4,34 +4,44 @@
  */
 
 import { Manifest, LspVersion, Target } from '../../../shared/lsp/types'
-
-interface GitHubRelease {
-    tagName: string
-    assets: GitHubAsset[]
-    prerelease: boolean
-}
-
-interface GitHubAsset {
-    name: string
-    browserDownloadUrl: string
-    size: number
-}
+import { CfnLspName, CfnLspServerEnvType } from './LspServerConfig'
+import { addWindows, dedupeAndGetLatestVersions } from './remote/Utils'
 
 export class GitHubManifestAdapter {
     constructor(
         private readonly repoOwner: string,
-        private readonly repoName: string
+        private readonly repoName: string,
+        private readonly environment: CfnLspServerEnvType
     ) {}
 
     async getManifest(): Promise<Manifest> {
         const releases = await this.fetchGitHubReleases()
+        const filteredReleases = this.filterByEnvironment(releases)
+
+        filteredReleases.sort((a, b) => {
+            return b.tag_name.localeCompare(a.tag_name)
+        })
+
         return {
             manifestSchemaVersion: '1.0',
-            artifactId: 'cloudformation-lsp',
-            artifactDescription: 'CloudFormation Language Server',
+            artifactId: CfnLspName,
+            artifactDescription: 'GitHub CloudFormation Language Server',
             isManifestDeprecated: false,
-            versions: releases.map((release) => this.convertRelease(release)),
+            versions: dedupeAndGetLatestVersions(filteredReleases.map((release) => this.convertRelease(release))),
         }
+    }
+
+    private filterByEnvironment(releases: GitHubRelease[]): GitHubRelease[] {
+        return releases.filter((release) => {
+            const tag = release.tag_name
+            if (this.environment === 'alpha') {
+                return release.prerelease && tag.endsWith('-alpha')
+            } else if (this.environment === 'beta') {
+                return release.prerelease && tag.endsWith('-beta')
+            } else {
+                return !release.prerelease
+            }
+        })
     }
 
     private async fetchGitHubReleases(): Promise<GitHubRelease[]> {
@@ -44,80 +54,74 @@ export class GitHubManifestAdapter {
 
     private convertRelease(release: GitHubRelease): LspVersion {
         return {
-            serverVersion: release.tagName.replace(/^v/, ''),
-            isDelisted: release.prerelease,
-            targets: this.extractTargets(release.assets),
+            serverVersion: release.tag_name,
+            isDelisted: false,
+            targets: addWindows(this.extractTargets(release.assets)),
         }
     }
 
     private extractTargets(assets: GitHubAsset[]): Target[] {
-        const platformMap: Record<string, string> = {
-            linux: 'linux',
-            darwin: 'darwin',
-            win: 'windows',
-            windows: 'windows',
-        }
+        return assets.map((asset) => {
+            const { arch, platform } = this.extractPlatformArch(asset.name)
 
-        const archMap: Record<string, string> = {
-            x64: 'x64',
-            arm64: 'arm64',
-            amd64: 'x64',
-        }
-
-        const targets: Target[] = []
-        const grouped = new Map<string, GitHubAsset[]>()
-
-        for (const asset of assets.filter((a) => a.name.endsWith('.zip'))) {
-            const key = this.extractPlatformArch(asset.name, platformMap, archMap)
-            if (key) {
-                if (!grouped.has(key)) {
-                    grouped.set(key, [])
-                }
-                grouped.get(key)!.push(asset)
-            }
-        }
-
-        for (const [key, assets] of grouped) {
-            const [platform, arch] = key.split('-')
-            targets.push({
+            return {
                 platform,
                 arch,
-                contents: assets.map((asset) => ({
-                    filename: asset.name,
-                    url: asset.browserDownloadUrl,
-                    hashes: [],
-                    bytes: asset.size,
-                })),
-            })
-        }
-
-        return targets
+                contents: [
+                    {
+                        filename: asset.name,
+                        url: asset.browser_download_url,
+                        hashes: [],
+                        bytes: asset.size,
+                    },
+                ],
+            }
+        })
     }
 
-    private extractPlatformArch(
-        filename: string,
-        platformMap: Record<string, string>,
-        archMap: Record<string, string>
-    ): string | undefined {
-        const lower = filename.toLowerCase()
+    private extractPlatformArch(filename: string): {
+        arch: string
+        platform: string
+    } {
+        const lower = filename.toLowerCase().replaceAll('.zip', '')
+        const splits = lower.split('-')
 
-        let platform = ''
-        let arch = ''
-
-        for (const [key, value] of Object.entries(platformMap)) {
-            if (lower.includes(key)) {
-                platform = value
-                break
-            }
-        }
-
-        for (const [key, value] of Object.entries(archMap)) {
-            if (lower.includes(key)) {
-                arch = value
-                break
-            }
-        }
-
-        return platform && arch ? `${platform}-${arch}` : undefined
+        return { arch: splits[splits.length - 1], platform: splits[splits.length - 2] }
     }
+}
+
+/* eslint-disable @typescript-eslint/naming-convention */
+export interface GitHubAsset {
+    url: string
+    browser_download_url: string
+    id: number
+    node_id: string
+    name: string
+    label: string | null
+    state: string
+    content_type: string
+    size: number
+    download_count: number
+    created_at: string
+    updated_at: string
+}
+
+export interface GitHubRelease {
+    url: string
+    html_url: string
+    assets_url: string
+    upload_url: string
+    tarball_url: string | null
+    zipball_url: string | null
+    id: number
+    node_id: string
+    tag_name: string
+    target_commitish: string
+    name: string | null
+    body: string | null
+    draft: boolean
+    prerelease: boolean
+    created_at: string // ISO 8601 date string
+    published_at: string | null // ISO 8601 date string
+    assets: GitHubAsset[]
 }

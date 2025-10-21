@@ -41,14 +41,23 @@ import { ResourceSelector } from './ui/resourceSelector'
 
 import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
-import { CfnLspServerProvider } from './lsp-server/cfnLspServerProvider'
 import { getClientId } from '../../shared/telemetry/util'
+import { CfnSettingsLspServerProvider } from './lsp-server/CfnSettingsLspServerProvider'
+import { CfnDevLspServerProvider } from './lsp-server/CfnDevLspServerProvider'
+import { CfnRemoteLspServerProvider } from './lsp-server/CfnRemoteLspServerProvider'
+import { LspServerResolver } from './lsp-server/LspServerProvider'
+import { getLogger } from '../../shared/logger/logger'
 
 let client: LanguageClient
 
 export async function activate(context: ExtensionContext) {
-    const serverProvider = new CfnLspServerProvider()
+    const serverProvider = new LspServerResolver([
+        new CfnDevLspServerProvider(context),
+        new CfnSettingsLspServerProvider(),
+        new CfnRemoteLspServerProvider(),
+    ])
     const serverFile = await serverProvider.serverExecutable()
+    getLogger().info(`Found CloudFormation LSP executable: ${serverFile}`)
 
     const envOptions = {
         NODE_OPTIONS: '--enable-source-maps',
@@ -85,7 +94,6 @@ export async function activate(context: ExtensionContext) {
             { scheme: 'file', pattern: '**/*.json' },
             { scheme: 'file', pattern: '**/*.yaml' },
         ],
-        outputChannel: globals.outputChannel,
         initializationOptions: {
             handledSchemaProtocols: ['file'],
             aws: {
