@@ -4,12 +4,12 @@
  */
 
 import { dirname, join } from 'path'
-import { LspServerProviderI } from './LspServerProvider'
+import { LspServerProviderI } from './lspServerProvider'
 import { DevSettings } from '../../../shared/settings'
 import { getServiceEnvVarConfig, isDebugInstance } from '../../../shared/vscode/env'
-import { CfnLspServerFile } from './LspServerConfig'
+import { CfnLspServerFile } from './lspServerConfig'
 
-export class CfnSettingsLspServerProvider implements LspServerProviderI {
+export class SettingsLspServerProvider implements LspServerProviderI {
     private readonly path?: string
 
     constructor() {

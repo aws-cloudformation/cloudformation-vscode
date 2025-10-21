@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LspVersion, Target } from '../../../../shared/lsp/types'
+import { LspVersion, Target } from '../../../shared/lsp/types'
 
 export function addWindows(targets: Target[]) {
     const allWindowsTargets = targets.filter((target) => {
-        return target.platform === 'win32' || target.platform === 'windows' || target.platform === 'win64'
+        return target.platform === 'win32' || target.platform === 'windows'
     })
 
     const hasDirectWindows = allWindowsTargets.find((target) => {

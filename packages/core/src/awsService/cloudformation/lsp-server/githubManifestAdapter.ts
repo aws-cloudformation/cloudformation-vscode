@@ -4,8 +4,8 @@
  */
 
 import { Manifest, LspVersion, Target } from '../../../shared/lsp/types'
-import { CfnLspName, CfnLspServerEnvType } from './LspServerConfig'
-import { addWindows, dedupeAndGetLatestVersions } from './remote/Utils'
+import { CfnLspName, CfnLspServerEnvType } from './lspServerConfig'
+import { addWindows, dedupeAndGetLatestVersions } from './utils'
 
 export class GitHubManifestAdapter {
     constructor(

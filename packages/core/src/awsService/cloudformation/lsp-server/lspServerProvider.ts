@@ -15,7 +15,7 @@ export interface LspServerProviderI extends LspServerResolverI {
     canProvide(): boolean
 }
 
-export class LspServerResolver implements LspServerResolverI, Disposable {
+export class LspServerProvider implements LspServerResolverI, Disposable {
     private readonly matchedProviders: LspServerProviderI[]
     private _serverExecutable?: string
     private _serverRootDir?: string

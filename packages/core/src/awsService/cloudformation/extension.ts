@@ -42,19 +42,19 @@ import { ResourceSelector } from './ui/resourceSelector'
 import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
 import { getClientId } from '../../shared/telemetry/util'
-import { CfnSettingsLspServerProvider } from './lsp-server/CfnSettingsLspServerProvider'
-import { CfnDevLspServerProvider } from './lsp-server/CfnDevLspServerProvider'
-import { CfnRemoteLspServerProvider } from './lsp-server/CfnRemoteLspServerProvider'
-import { LspServerResolver } from './lsp-server/LspServerProvider'
+import { SettingsLspServerProvider } from './lsp-server/settingsLspServerProvider'
+import { DevLspServerProvider } from './lsp-server/devLspServerProvider'
+import { RemoteLspServerProvider } from './lsp-server/remoteLspServerProvider'
+import { LspServerProvider } from './lsp-server/lspServerProvider'
 import { getLogger } from '../../shared/logger/logger'
 
 let client: LanguageClient
 
 export async function activate(context: ExtensionContext) {
-    const serverProvider = new LspServerResolver([
-        new CfnDevLspServerProvider(context),
-        new CfnSettingsLspServerProvider(),
-        new CfnRemoteLspServerProvider(),
+    const serverProvider = new LspServerProvider([
+        new DevLspServerProvider(context),
+        new SettingsLspServerProvider(),
+        new RemoteLspServerProvider(),
     ])
     const serverFile = await serverProvider.serverExecutable()
     getLogger().info(`Found CloudFormation LSP executable: ${serverFile}`)

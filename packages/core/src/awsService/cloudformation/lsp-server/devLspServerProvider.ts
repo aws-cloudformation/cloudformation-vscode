@@ -5,13 +5,13 @@
 
 import { dirname, join } from 'path'
 import { ExtensionContext } from 'vscode'
-import { LspServerProviderI } from './LspServerProvider'
-import { CfnLspServerFile } from './LspServerConfig'
+import { LspServerProviderI } from './lspServerProvider'
+import { CfnLspServerFile } from './lspServerConfig'
 import { existsSync, readdirSync } from 'fs' // eslint-disable-line no-restricted-imports
 import { isDebugInstance } from '../../../shared/vscode/env'
 import { getLogger } from '../../../shared/logger/logger'
 
-export class CfnDevLspServerProvider implements LspServerProviderI {
+export class DevLspServerProvider implements LspServerProviderI {
     private readonly devServerLocation?: string
 
     constructor(context: ExtensionContext) {

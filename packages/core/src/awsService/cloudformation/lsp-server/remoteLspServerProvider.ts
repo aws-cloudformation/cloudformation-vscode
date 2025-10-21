@@ -4,10 +4,10 @@
  */
 
 import { dirname } from 'path'
-import { LspServerProviderI } from './LspServerProvider'
-import { CfnLspInstaller } from './cfnLspInstaller'
+import { LspServerProviderI } from './lspServerProvider'
+import { CfnLspInstaller } from './lspInstaller'
 
-export class CfnRemoteLspServerProvider implements LspServerProviderI {
+export class RemoteLspServerProvider implements LspServerProviderI {
     private installer = new CfnLspInstaller()
     private serverPath?: string
 
