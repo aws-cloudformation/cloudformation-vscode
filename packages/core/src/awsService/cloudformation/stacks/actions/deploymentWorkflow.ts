@@ -34,18 +34,6 @@ export class Deployment extends BaseStackAction {
     private status: StackActionPhase | undefined
     private statusBarItem?: StatusBarItem
 
-    constructor(
-        uri: string,
-        stackName: string,
-        client: LanguageClient,
-        diffProvider: DiffWebviewProvider,
-        parameters?: Parameter[],
-        capabilities?: Capability[],
-        resourcesToImport?: ResourceToImport[]
-    ) {
-        super(uri, stackName, client, diffProvider, parameters, capabilities, resourcesToImport)
-    }
-
     async deploy() {
         await deploy(
             this.client,

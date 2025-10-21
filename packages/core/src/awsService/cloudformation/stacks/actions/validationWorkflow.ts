@@ -29,18 +29,6 @@ export class Validation extends BaseStackAction {
     private status: StackActionPhase | undefined
     private statusBarItem: StatusBarItem | undefined
 
-    constructor(
-        uri: string,
-        stackName: string,
-        client: LanguageClient,
-        diffProvider: DiffWebviewProvider,
-        parameters?: Parameter[],
-        capabilities?: Capability[],
-        resourcesToImport?: ResourceToImport[]
-    ) {
-        super(uri, stackName, client, diffProvider, parameters, capabilities, resourcesToImport)
-    }
-
     async validate() {
         try {
             showValidationStarted(this.stackName)
