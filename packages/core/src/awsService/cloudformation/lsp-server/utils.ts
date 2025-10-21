@@ -1,0 +1,75 @@
+/*!
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { LspVersion, Target } from '../../../shared/lsp/types'
+
+export function addWindows(targets: Target[]) {
+    const allWindowsTargets = targets.filter((target) => {
+        return target.platform === 'win32' || target.platform === 'windows'
+    })
+
+    const hasDirectWindows = allWindowsTargets.find((target) => {
+        return target.platform === 'windows'
+    })
+
+    if (hasDirectWindows) {
+        return targets
+    }
+
+    return targets.flatMap((target) => {
+        return [
+            target,
+            {
+                ...target,
+                platform: 'windows',
+            },
+        ]
+    })
+}
+
+export function dedupeAndGetLatestVersions(versions: LspVersion[]): LspVersion[] {
+    const grouped: Record<string, LspVersion[]> = {}
+
+    // Group by normalized version
+    for (const version of versions) {
+        const normalizedV = normalizeVersion(version.serverVersion)
+        if (!grouped[normalizedV]) {
+            grouped[normalizedV] = []
+        }
+        grouped[normalizedV].push(version)
+    }
+
+    // Sort each group by version descending and pick the first (latest)
+    return Object.values(grouped).map((group) => {
+        group.sort((a, b) => compareVersionsDesc(a.serverVersion, b.serverVersion))
+        const latest = group[0]
+        latest.serverVersion = `${latest.serverVersion.replace('v', '')}`
+
+        return latest // take the highest version
+    })
+}
+
+function compareVersionsDesc(v1: string, v2: string) {
+    const a = normalizeVersion(v1).split('.').map(Number)
+    const b = normalizeVersion(v2).split('.').map(Number)
+
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const partA = a[i] || 0
+        const partB = b[i] || 0
+
+        if (partA > partB) {
+            return -1
+        }
+        if (partA < partB) {
+            return 1
+        }
+    }
+    return 0
+}
+
+// Strip out -alpha, -beta postfixes, 'v'
+function normalizeVersion(version: string): string {
+    return version.replaceAll('-beta', '').replaceAll('-alpha', '').replaceAll('-', '').replaceAll('v', '')
+}

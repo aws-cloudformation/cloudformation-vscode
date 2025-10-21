@@ -4,19 +4,8 @@
  */
 
 import { Manifest, LspVersion, Target } from '../../../shared/lsp/types'
-
-interface CloudFrontManifest {
-    description: string
-    environments: {
-        [env: string]: {
-            versions: string[]
-            latest: string | null
-            targets: {
-                [version: string]: CloudFrontTarget[]
-            }
-        }
-    }
-}
+import { CfnLspName, CfnLspServerEnvType } from './lspServerConfig'
+import { addWindows, dedupeAndGetLatestVersions } from './utils'
 
 interface CloudFrontTarget {
     version: string
@@ -26,66 +15,75 @@ interface CloudFrontTarget {
     path: string
 }
 
+interface EnvironmentType {
+    versions: string[]
+    latest?: string
+    targets: {
+        [key: string]: CloudFrontTarget[]
+    }
+}
+
+interface CloudFrontManifest {
+    description: string
+    environments: {
+        alpha: EnvironmentType
+        beta: EnvironmentType
+        prod: EnvironmentType
+    }
+}
+
+const baseUrl = 'https://d2485r7obgomg5.cloudfront.net'
+
 export class CloudFrontManifestAdapter {
-    constructor(
-        private readonly manifestUrl: string,
-        private readonly environment: string = 'alpha'
-    ) {}
+    constructor(private readonly environment: CfnLspServerEnvType) {}
 
     async getManifest(): Promise<Manifest> {
-        const response = await fetch(this.manifestUrl)
+        const response = await fetch(`${baseUrl}/manifest.json`)
         if (!response.ok) {
             throw new Error(`CloudFront manifest error: ${response.status}`)
         }
 
         const cfManifest: CloudFrontManifest = await response.json()
-
-        // Use specified environment
         const env = cfManifest.environments[this.environment]
+
         if (!env || env.versions.length === 0) {
             throw new Error(`No ${this.environment} versions available`)
         }
 
+        const allVersions = Object.keys(env.targets).sort((a, b) => b.localeCompare(a))
+
         return {
             manifestSchemaVersion: '1.0',
-            artifactId: 'cloudformation-lsp',
-            artifactDescription: 'CloudFormation Language Server',
+            artifactId: CfnLspName,
+            artifactDescription: `CloudFront ${cfManifest.description}`,
             isManifestDeprecated: false,
-            versions: env.versions.map((version) => this.convertVersion(version, env.targets[version])),
+            versions: dedupeAndGetLatestVersions(
+                allVersions.map((version) => this.convertVersion(version, env.targets[version] || []))
+            ),
         }
     }
 
     private convertVersion(version: string, targets: CloudFrontTarget[]): LspVersion {
-        const groupedTargets = new Map<string, CloudFrontTarget[]>()
-
-        // Group by platform-arch
-        for (const target of targets) {
-            const key = `${target.platform}-${target.arch}`
-            if (!groupedTargets.has(key)) {
-                groupedTargets.set(key, [])
-            }
-            groupedTargets.get(key)!.push(target)
-        }
-
         const lspTargets: Target[] = []
-        for (const [key, targets] of groupedTargets) {
-            const [platform, arch] = key.split('-')
+        for (const target of targets) {
             lspTargets.push({
-                platform,
-                arch,
-                contents: targets.map((target) => ({
-                    filename: target.filename,
-                    url: `https://d2485r7obgomg5.cloudfront.net${target.path}`,
-                    hashes: [],
-                    bytes: 19033213, // Use the actual size we saw from curl
-                })),
+                platform: target.platform,
+                arch: target.arch,
+                contents: [
+                    {
+                        filename: target.filename,
+                        url: `${baseUrl}${target.path}`,
+                        hashes: [],
+                        bytes: 19033213, // Use the actual size we saw from curl
+                    },
+                ],
             })
         }
 
         return {
-            serverVersion: version.replace(/^v/, ''),
+            serverVersion: version,
             isDelisted: false,
-            targets: lspTargets,
+            targets: addWindows(lspTargets),
         }
     }
 }
