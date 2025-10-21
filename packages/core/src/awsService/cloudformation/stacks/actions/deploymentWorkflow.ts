@@ -3,9 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackActionState, ResourceToImport } from './stackActionRequestType'
-import { LanguageClient } from 'vscode-languageclient'
+import { StackActionPhase, StackActionState } from './stackActionRequestType'
 import {
     showDeploymentStarted,
     showDeploymentSuccess,
@@ -16,7 +14,6 @@ import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/stat
 import { StatusBarItem } from 'vscode'
 import { deploy, getDeploymentStatus } from './stackActionApi'
 import { createStackActionParams } from './stackActionUtil'
-import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
 import { BaseStackAction } from './baseStackAction'
 import { getLogger } from '../../../../shared/logger/logger'
 
