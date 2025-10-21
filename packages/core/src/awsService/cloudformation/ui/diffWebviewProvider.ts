@@ -67,17 +67,16 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">ResourceType</th>
                     <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Replacement</th>
                     <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Scope</th>
-                    <th colspan="7" style="text-align: center; width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Details</th>
+                    <th colspan="6" style="text-align: center; width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Details</th>
                 </tr>
                 <tr>
                     <th colspan="6" style="border: 1px solid var(--vscode-panel-border); background-color: var(--vscode-editor-background);"></th>
+                    <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Attribute</th>
                     <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Name</th>
                     <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">RequiresRecreation</th>
                     <th style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">BeforeValue</th>
                     <th style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">AfterValue</th>
                     <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">AttributeChangeType</th>
-                    <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">ChangeSource</th>
-                    <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">CausingEntity</th>
                 </tr>`
 
         for (const change of changes) {
@@ -86,51 +85,50 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 continue
             }
 
-            const borderColor =
+            const bgColor =
                 rc.action === 'Add'
-                    ? 'var(--vscode-gitDecoration-addedResourceForeground)'
+                    ? 'rgba(0, 255, 0, 0.8)'
                     : rc.action === 'Remove'
-                      ? 'var(--vscode-gitDecoration-deletedResourceForeground)'
+                      ? 'rgba(255, 0, 0, 0.8)'
                       : rc.action === 'Modify'
-                        ? 'var(--vscode-gitDecoration-modifiedResourceForeground)'
+                        ? 'rgba(255, 165, 0, 0.8)'
                         : 'transparent'
 
-            const detailCount = rc.details?.length || 1
-            tableHtml += `<tr style="border-left: 4px solid ${borderColor}; color: var(--vscode-foreground);">
-                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; font-weight: bold; vertical-align: middle;">${rc.action ?? 'Unknown'}</td>
-                <td rowspan="${detailCount}" style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;"><a href="#" onclick="openDiffToResource('${rc.logicalResourceId}'); return false;" style="color: var(--vscode-textLink-foreground); cursor: pointer; font-weight: bold; text-decoration: underline;">${rc.logicalResourceId ?? 'Unknown'}</a></td>
-                <td rowspan="${detailCount}" style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.physicalResourceId ?? ' '}</td>
-                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.resourceType ?? 'Unknown'}</td>
-                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.replacement ?? 'N/LA'}</td>
-                <td rowspan="${detailCount}" style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.scope?.join(', ') ?? ' '}</td>`
+            tableHtml += `<tr style="background-color: ${bgColor};">
+                <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; font-weight: bold;">${rc.action ?? 'Unknown'}</td>
+                <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"><a href="#" onclick="openDiffToResource('${rc.logicalResourceId}'); return false;" style="color: #0066ff; cursor: pointer; font-weight: bold; text-decoration: underline;">${rc.logicalResourceId ?? 'Unknown'}</a></td>
+                <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${rc.physicalResourceId ?? ' '}</td>
+                <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${rc.resourceType ?? 'Unknown'}</td>
+                <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${rc.replacement ?? 'N/LA'}</td>
+                <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${rc.scope?.join(', ') ?? ' '}</td>`
 
             if (rc.details && rc.details.length > 0) {
                 for (const [index, detail] of rc.details.entries()) {
                     const target = detail.Target
                     if (index > 0) {
-                        tableHtml += `<tr style="border-left: 4px solid ${borderColor}; color: var(--vscode-foreground);">`
+                        tableHtml += `<tr style="background-color: ${bgColor};"><td colspan="6" style="border: 1px solid var(--vscode-panel-border);"></td>`
                     }
                     tableHtml += `
+                        <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.Attribute ?? 'Unknown'}</td>
                         <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.Name ?? ' '}</td>
                         <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.RequiresRecreation ?? 'Unknown'}</td>
                         <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.BeforeValue ?? ' '}</td>
                         <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.AfterValue ?? ' '}</td>
-                        <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.AttributeChangeType ?? ' '}</td>
-                        <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${detail?.ChangeSource ?? ' '}</td>
-                        <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${detail?.CausingEntity ?? ' '}</td>`
-                    tableHtml += `</tr>`
+                        <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.AttributeChangeType ?? ' '}</td>`
+                    if (index > 0) {
+                        tableHtml += `</tr>`
+                    }
                 }
             } else {
                 tableHtml += `
                     <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
                     <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
+                    <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
                     <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
                     <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                </tr>`
+                    <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>`
             }
+            tableHtml += `</tr>`
         }
 
         tableHtml += `</table>`
