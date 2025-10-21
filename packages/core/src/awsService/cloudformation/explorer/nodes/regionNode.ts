@@ -10,6 +10,8 @@ import { StacksManager } from '../../stacks/stacksManager'
 import { ResourcesManager } from '../../resources/resourcesManager'
 import { StacksNode } from './stacksNode'
 import { ResourcesNode } from './resourcesNode'
+import { ChangeSetsManager } from '../../stacks/changeSetsManager'
+import { LanguageClient } from 'vscode-languageclient'
 
 export class RegionNode extends AWSTreeNodeBase {
     private readonly stacksSection: StacksNode
@@ -18,12 +20,14 @@ export class RegionNode extends AWSTreeNodeBase {
     public constructor(
         public readonly region: Region,
         stacksManager: StacksManager,
-        resourcesManager: ResourcesManager
+        resourcesManager: ResourcesManager,
+        client: LanguageClient
     ) {
         super(region.name, TreeItemCollapsibleState.Collapsed)
         this.contextValue = 'region'
         this.description = region.id
-        this.stacksSection = new StacksNode(stacksManager, region.id)
+        const changeSetsManager = new ChangeSetsManager(client)
+        this.stacksSection = new StacksNode(stacksManager, region.id, changeSetsManager)
         this.resourcesSection = new ResourcesNode(resourcesManager)
     }
 

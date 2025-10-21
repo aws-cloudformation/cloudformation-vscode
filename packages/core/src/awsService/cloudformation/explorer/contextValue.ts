@@ -8,6 +8,7 @@ export const ResourceTypeContextValue = 'resourceType'
 export const ResourceContextValue = 'resource'
 
 // Stack sub-node context values
+export const StackStatusContextValue = 'stackStatus'
 export const StackOverviewContextValue = 'stackOverview'
 export const StackEventsContextValue = 'stackEvents'
 export const StackResourcesContextValue = 'stackResources'

@@ -5,6 +5,7 @@
 
 import { TreeItemCollapsibleState, ThemeIcon } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
+import { getLogger } from '../../../../shared/logger/logger'
 
 export class StackOverviewNode extends AWSTreeNodeBase {
     public constructor(
@@ -14,9 +15,11 @@ export class StackOverviewNode extends AWSTreeNodeBase {
         super('Overview', TreeItemCollapsibleState.None)
         this.contextValue = 'stackOverview'
         this.iconPath = new ThemeIcon('info')
+        getLogger().info(`StackOverview: ${stackName} in ${region}`)
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
+        getLogger().info(`StackOverview getChildren: ${this.stackName} in ${this.region}`)
         return []
     }
 }

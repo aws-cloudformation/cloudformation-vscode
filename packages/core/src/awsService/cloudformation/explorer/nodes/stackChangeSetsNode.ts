@@ -5,12 +5,13 @@
 
 import { TreeItemCollapsibleState, ThemeIcon } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
-import { ChangeSetSummary } from '@aws-sdk/client-cloudformation'
+import { ChangeSetsManager, ChangeSetInfo } from '../../stacks/changeSetsManager'
 
 export class StackChangeSetsNode extends AWSTreeNodeBase {
     public constructor(
         private readonly stackName: string,
-        private readonly region: string
+        private readonly region: string,
+        private readonly changeSetsManager: ChangeSetsManager
     ) {
         super('Change Sets', TreeItemCollapsibleState.Collapsed)
         this.contextValue = 'stackChangeSets'
@@ -18,16 +19,16 @@ export class StackChangeSetsNode extends AWSTreeNodeBase {
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
-        // TODO: Call CloudFormation list-change-sets API with stackName and region
-        return []
+        const changeSets = await this.changeSetsManager.getChangeSets(this.stackName, this.region)
+        return changeSets.map((changeSet) => new ChangeSetNode(changeSet))
     }
 }
 
 export class ChangeSetNode extends AWSTreeNodeBase {
-    public constructor(public readonly changeSet: ChangeSetSummary) {
-        super(changeSet.ChangeSetName ?? 'Unknown Change Set', TreeItemCollapsibleState.None)
+    public constructor(public readonly changeSet: ChangeSetInfo) {
+        super(changeSet.changeSetName, TreeItemCollapsibleState.None)
         this.contextValue = 'changeSet'
-        this.tooltip = `${changeSet.ChangeSetName} [${changeSet.Status}]`
+        this.tooltip = `${changeSet.changeSetName} [${changeSet.status}]`
         this.iconPath = new ThemeIcon('git-commit')
     }
 
