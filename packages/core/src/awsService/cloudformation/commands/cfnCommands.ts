@@ -327,3 +327,17 @@ export function getStackManagementInfoCommandPalette(resourcesManager: Resources
         await resourcesManager.getStackManagementInfo()
     })
 }
+
+export function loadMoreResourcesCommand(explorer: any) {
+    return commands.registerCommand(commandKey('api.loadMoreResources'), async (node: any) => {
+        node.loadMoreResources()
+        explorer.refresh(node)
+    })
+}
+
+export function loadMoreStacksCommand(explorer: any) {
+    return commands.registerCommand(commandKey('api.loadMoreStacks'), async (node: any) => {
+        node.loadMoreStacks()
+        explorer.refresh(node)
+    })
+}

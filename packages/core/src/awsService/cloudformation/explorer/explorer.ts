@@ -74,7 +74,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
         }
     }
 
-    public refresh(): void {
-        this._onDidChangeTreeData.fire(undefined)
+    public refresh(node?: AWSTreeNodeBase): void {
+        this._onDidChangeTreeData.fire(node)
     }
 }
