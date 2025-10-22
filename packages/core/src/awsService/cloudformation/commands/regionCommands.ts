@@ -5,9 +5,10 @@
 
 import * as vscode from 'vscode'
 import { CloudFormationExplorer } from '../explorer/explorer'
+import { commandKey } from '../utils'
 
 export function selectRegionCommand(explorer: CloudFormationExplorer): vscode.Disposable {
-    return vscode.commands.registerCommand('aws.cloudformation.selectRegion', async () => {
+    return vscode.commands.registerCommand(commandKey('selectRegion'), async () => {
         await explorer.selectRegion()
     })
 }
