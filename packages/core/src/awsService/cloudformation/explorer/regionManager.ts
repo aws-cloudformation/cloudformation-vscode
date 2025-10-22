@@ -18,8 +18,13 @@ export class CloudFormationRegionManager {
     public getSelectedRegion(): string {
         const cfnRegion = globals.globalState.tryGet<string>(CloudFormationRegionManager.storageKey, String)
 
-        // If no CloudFormation region selected, use AWS explorer region as default
+        // If no CloudFormation region selected, use credential default region, then AWS explorer region as fallback
         if (!cfnRegion) {
+            const credentialDefaultRegion = globals.awsContext.getCredentialDefaultRegion()
+            if (credentialDefaultRegion) {
+                return credentialDefaultRegion
+            }
+
             const awsExplorerRegions = globals.globalState.tryGet<string[]>('region', Object, [])
             return awsExplorerRegions.length > 0 ? awsExplorerRegions[0] : 'us-east-1'
         }

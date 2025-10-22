@@ -4,10 +4,8 @@
  */
 
 import { Disposable } from 'vscode'
-import { Auth } from '../../../auth/auth'
-import { isIamConnection } from '../../../auth/connection'
 import { LanguageClient } from 'vscode-languageclient'
-import { CloudFormationRegionManager } from '../explorer/regionManager'
+import globals from '../../../shared/extensionGlobals'
 
 export class AwsCredentialsService implements Disposable {
     private authChangeListener: Disposable
@@ -15,10 +13,9 @@ export class AwsCredentialsService implements Disposable {
 
     constructor(
         private stacksManager: any,
-        private resourcesManager: any,
-        private regionManager: CloudFormationRegionManager
+        private resourcesManager: any
     ) {
-        this.authChangeListener = Auth.instance.onDidChangeActiveConnection(() => {
+        this.authChangeListener = globals.awsContext.onDidChangeContext(() => {
             void this.updateCredentialsFromActiveConnection()
         })
     }
@@ -29,24 +26,27 @@ export class AwsCredentialsService implements Disposable {
     }
 
     private async updateCredentialsFromActiveConnection(): Promise<void> {
-        const connection = Auth.instance.activeConnection
+        if (!this.client) {
+            return
+        }
 
-        if (this.client && connection && isIamConnection(connection)) {
-            const credentials = await connection.getCredentials()
+        const credentials = await globals.awsContext.getCredentials()
+        const profileName = globals.awsContext.getCredentialProfileName()
 
+        if (credentials && profileName) {
             await this.client.sendRequest('aws/credentials/iam/update', {
                 data: {
-                    profile: connection.label.replace('profile:', ''),
-                    region: this.regionManager.getSelectedRegion(),
+                    profile: profileName,
+                    region: globals.awsContext.getCredentialDefaultRegion(),
                     accessKeyId: credentials.accessKeyId,
                     secretAccessKey: credentials.secretAccessKey,
                     sessionToken: credentials.sessionToken,
                 },
             })
-
-            void this.stacksManager.reload()
-            void this.resourcesManager.reload()
         }
+
+        void this.stacksManager.reload()
+        void this.resourcesManager.reload()
     }
 
     async updateRegion(): Promise<void> {

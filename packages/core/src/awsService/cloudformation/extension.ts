@@ -151,11 +151,7 @@ export async function activate(context: ExtensionContext) {
                 cfnExplorer.refresh()
             })
 
-            const credentialsService = new AwsCredentialsService(
-                stacksManager,
-                resourcesManager,
-                cfnExplorer.regionManager
-            )
+            const credentialsService = new AwsCredentialsService(stacksManager, resourcesManager)
             cfnExplorer.setCredentialsService(credentialsService)
 
             // Create diff webview provider

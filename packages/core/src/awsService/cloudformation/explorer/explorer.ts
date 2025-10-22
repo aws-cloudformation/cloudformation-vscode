@@ -6,6 +6,7 @@
 import * as vscode from 'vscode'
 import { RegionProvider } from '../../../shared/regions/regionProvider'
 import { AWSTreeNodeBase } from '../../../shared/treeview/nodes/awsTreeNodeBase'
+import { PlaceholderNode } from '../../../shared/treeview/nodes/placeholderNode'
 import { RefreshableAwsTreeProvider } from '../../../shared/treeview/awsTreeProvider'
 import { CloudFormationRegionManager } from './regionManager'
 import { DocumentsNode } from './nodes/documentsNode'
@@ -14,6 +15,8 @@ import { ResourcesNode } from './nodes/resourcesNode'
 import { RegionSelectorNode } from './nodes/regionSelectorNode'
 import { AwsCredentialsService } from '../auth/credentials'
 import { getLogger } from '../../../shared/logger/logger'
+import { getIcon } from '../../../shared/icons'
+import globals from '../../../shared/extensionGlobals'
 
 import { StacksManager } from '../stacks/stacksManager'
 import { ResourcesManager } from '../resources/resourcesManager'
@@ -68,6 +71,17 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
 
     private getRootChildren(): AWSTreeNodeBase[] {
         try {
+            // Show sign-in message when not authenticated
+            if (!globals.awsContext.getCredentialProfileName()) {
+                const signInNode = new PlaceholderNode(this as any, 'Sign in to get started')
+                signInNode.iconPath = getIcon('vscode-account')
+                signInNode.command = {
+                    command: 'aws.auth.signIn',
+                    title: 'Sign in',
+                }
+                return [signInNode]
+            }
+
             const children: AWSTreeNodeBase[] = [
                 new RegionSelectorNode(this.regionManager),
                 this.documentsNode,
