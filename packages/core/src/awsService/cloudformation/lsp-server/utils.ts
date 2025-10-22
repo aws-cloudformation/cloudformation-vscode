@@ -34,15 +34,21 @@ export function dedupeAndGetLatestVersions(versions: LspVersion[]): LspVersion[]
 
     // Group by normalized version
     for (const version of versions) {
-        const normalizedV = normalizeVersion(version.serverVersion)
+        const normalizedV = getMajorMinorPatchVersion(version.serverVersion)
         if (!grouped[normalizedV]) {
             grouped[normalizedV] = []
         }
         grouped[normalizedV].push(version)
     }
 
+    const groupedAndSorted: Record<string, LspVersion[]> = Object.fromEntries(
+        Object.entries(grouped).sort(([v1], [v2]) => {
+            return compareVersionsDesc(v1, v2)
+        })
+    )
+
     // Sort each group by version descending and pick the first (latest)
-    return Object.values(grouped).map((group) => {
+    return Object.values(groupedAndSorted).map((group) => {
         group.sort((a, b) => compareVersionsDesc(a.serverVersion, b.serverVersion))
         const latest = group[0]
         latest.serverVersion = `${latest.serverVersion.replace('v', '')}`
@@ -52,8 +58,8 @@ export function dedupeAndGetLatestVersions(versions: LspVersion[]): LspVersion[]
 }
 
 function compareVersionsDesc(v1: string, v2: string) {
-    const a = normalizeVersion(v1).split('.').map(Number)
-    const b = normalizeVersion(v2).split('.').map(Number)
+    const a = convertVersionToNumbers(v1)
+    const b = convertVersionToNumbers(v2)
 
     for (let i = 0; i < Math.max(a.length, b.length); i++) {
         const partA = a[i] || 0
@@ -69,7 +75,14 @@ function compareVersionsDesc(v1: string, v2: string) {
     return 0
 }
 
-// Strip out -alpha, -beta postfixes, 'v'
-function normalizeVersion(version: string): string {
-    return version.replaceAll('-beta', '').replaceAll('-alpha', '').replaceAll('-', '').replaceAll('v', '')
+function removeWordsFromVersion(version: string): string {
+    return version.replaceAll('-beta', '').replaceAll('-alpha', '').replaceAll('-prod', '').replaceAll('v', '')
+}
+
+function convertVersionToNumbers(version: string): number[] {
+    return removeWordsFromVersion(version).replaceAll('-', '.').split('.').map(Number)
+}
+
+function getMajorMinorPatchVersion(version: string): string {
+    return removeWordsFromVersion(version).split('-')[0]
 }
