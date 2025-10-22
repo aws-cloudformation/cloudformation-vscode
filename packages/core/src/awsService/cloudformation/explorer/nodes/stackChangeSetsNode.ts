@@ -5,7 +5,8 @@
 
 import { TreeItemCollapsibleState, ThemeIcon } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
-import { ChangeSetsManager, ChangeSetInfo } from '../../stacks/changeSetsManager'
+import { ChangeSetsManager } from '../../stacks/changeSetsManager'
+import { ChangeSetInfo } from '../../stacks/actions/stackActionRequestType'
 
 export class StackChangeSetsNode extends AWSTreeNodeBase {
     public constructor(

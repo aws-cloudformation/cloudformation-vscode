@@ -3,26 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RequestType } from 'vscode-languageserver-protocol'
 import { LanguageClient } from 'vscode-languageclient'
-
-interface ChangeSetInfo {
-    changeSetName: string
-    status: string
-    creationTime?: string
-    description?: string
-}
-
-type ListChangeSetsParams = {
-    stackName: string
-    region: string
-}
-
-type ListChangeSetsResult = {
-    changeSets: ChangeSetInfo[]
-}
-
-const ListChangeSetsRequest = new RequestType<ListChangeSetsParams, ListChangeSetsResult, void>('aws/cfn/changeSets')
+import { ListChangeSetsRequest } from './actions/stackActionProtocol'
+import { ChangeSetInfo } from './actions/stackActionRequestType'
 
 export class ChangeSetsManager {
     constructor(private readonly client: LanguageClient) {}
@@ -31,7 +14,6 @@ export class ChangeSetsManager {
         try {
             const response = await this.client.sendRequest(ListChangeSetsRequest, {
                 stackName,
-                region,
             })
             return response.changeSets
         } catch (error) {
@@ -39,5 +21,3 @@ export class ChangeSetsManager {
         }
     }
 }
-
-export type { ChangeSetInfo }

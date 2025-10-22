@@ -109,3 +109,18 @@ export type TemplateParameter = {
 }
 
 export type TemplateUri = string
+
+export type ChangeSetInfo = {
+    changeSetName: string
+    status: string
+    creationTime?: string
+    description?: string
+}
+
+export type ListChangeSetsParams = {
+    stackName: string
+}
+
+export type ListChangeSetsResult = {
+    changeSets: ChangeSetInfo[]
+}
