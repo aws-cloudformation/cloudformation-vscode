@@ -7,6 +7,7 @@ import { Disposable } from 'vscode'
 import { Auth } from '../../../auth/auth'
 import { isIamConnection } from '../../../auth/connection'
 import { LanguageClient } from 'vscode-languageclient'
+import { CloudFormationRegionManager } from '../explorer/regionManager'
 
 export class AwsCredentialsService implements Disposable {
     private authChangeListener: Disposable
@@ -14,9 +15,9 @@ export class AwsCredentialsService implements Disposable {
 
     constructor(
         private stacksManager: any,
-        private resourcesManager: any
+        private resourcesManager: any,
+        private regionManager: CloudFormationRegionManager
     ) {
-        // Listen for AWS Toolkit auth changes
         this.authChangeListener = Auth.instance.onDidChangeActiveConnection(() => {
             void this.updateCredentialsFromActiveConnection()
         })
@@ -24,7 +25,6 @@ export class AwsCredentialsService implements Disposable {
 
     async initialize(client: LanguageClient): Promise<void> {
         this.client = client
-
         await this.updateCredentialsFromActiveConnection()
     }
 
@@ -37,7 +37,7 @@ export class AwsCredentialsService implements Disposable {
             await this.client.sendRequest('aws/credentials/iam/update', {
                 data: {
                     profile: connection.label.replace('profile:', ''),
-                    region: 'us-east-1', // TODO: Get actual region from settings or connection,
+                    region: this.regionManager.getSelectedRegion(),
                     accessKeyId: credentials.accessKeyId,
                     secretAccessKey: credentials.secretAccessKey,
                     sessionToken: credentials.sessionToken,
@@ -47,6 +47,10 @@ export class AwsCredentialsService implements Disposable {
             void this.stacksManager.reload()
             void this.resourcesManager.reload()
         }
+    }
+
+    async updateRegion(): Promise<void> {
+        await this.updateCredentialsFromActiveConnection()
     }
 
     dispose(): void {

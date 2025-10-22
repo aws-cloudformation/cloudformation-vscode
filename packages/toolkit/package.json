@@ -2593,9 +2593,9 @@
                     "group": "1@2"
                 },
                 {
-                    "command": "aws.cloudformation.showRegions",
-                    "when": "view == aws.cloudformation && (!viewItem || viewItem == region)",
-                    "group": "navigation@1"
+                    "command": "aws.cloudformation.selectRegion",
+                    "when": "view == aws.cloudformation && viewItem == regionSelector",
+                    "group": "inline"
                 },
                 {
                     "command": "aws.cloudformation.api.addResourceTypes",
@@ -4813,9 +4813,9 @@
                 "category": "CloudFormation"
             },
             {
-                "command": "aws.cloudformation.showRegions",
-                "title": "Show/Hide Regions",
-                "icon": "$(globe)",
+                "command": "aws.cloudformation.selectRegion",
+                "title": "Select Region",
+                "icon": "$(gear)",
                 "category": "CloudFormation"
             }
         ],

@@ -14,7 +14,8 @@ describe('AwsCredentialsService', function () {
     beforeEach(function () {
         sandbox = sinon.createSandbox()
         const mockStacksManager = {}
-        credentialsService = new AwsCredentialsService(mockStacksManager, mockStacksManager)
+        const mockRegionManager = { getSelectedRegion: () => 'us-east-1' }
+        credentialsService = new AwsCredentialsService(mockStacksManager, mockStacksManager, mockRegionManager as any)
     })
 
     afterEach(function () {

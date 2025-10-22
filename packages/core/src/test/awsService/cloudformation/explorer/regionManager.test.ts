@@ -28,17 +28,17 @@ describe('CloudFormationRegionManager', function () {
         sandbox.restore()
     })
 
-    describe('getSelectedRegions', function () {
-        it('should return array of regions', function () {
-            const regions = regionManager.getSelectedRegions()
-            assert(Array.isArray(regions))
+    describe('getSelectedRegion', function () {
+        it('should return a region string', function () {
+            const region = regionManager.getSelectedRegion()
+            assert(typeof region === 'string')
         })
     })
 
-    describe('updateSelectedRegions', function () {
-        it('should accept array of region strings', async function () {
-            const testRegions = ['us-east-1', 'us-west-2']
-            await regionManager.updateSelectedRegions(testRegions)
+    describe('updateSelectedRegion', function () {
+        it('should accept a region string', async function () {
+            const testRegion = 'us-east-1'
+            await regionManager.updateSelectedRegion(testRegion)
             // Test passes if no error thrown
             assert(true)
         })
