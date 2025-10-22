@@ -46,8 +46,8 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                         body {
                             font-family: var(--vscode-font-family);
                             margin: 8px;
-                            background-color: var(--vscode-panel-background);
-                            color: var(--vscode-panel-foreground);
+                            background-color: var(--vscode-editor-background);
+                            color: var(--vscode-foreground);
                         }
                     </style>
                 </head>
