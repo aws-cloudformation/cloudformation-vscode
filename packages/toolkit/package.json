@@ -2,7 +2,7 @@
     "name": "aws-toolkit-vscode",
     "displayName": "AWS Toolkit",
     "description": "Including CodeCatalyst, Infrastructure Composer, and support for Lambda, S3, CloudWatch Logs, CloudFormation, and many other services.",
-    "version": "3.79.0-SNAPSHOT",
+    "version": "3.81.0-SNAPSHOT",
     "extensionKind": [
         "workspace"
     ],
@@ -364,6 +364,11 @@
                     "minimum": 0,
                     "description": "Delay in milliseconds before running cfn-lint after changes"
                 },
+                "aws.cloudformation.diagnostics.cfnLint.path": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to locally installed cfn-lint executable. If empty, uses bundled version."
+                },
                 "aws.cloudformation.diagnostics.cfnGuard.enabled": {
                     "type": "boolean",
                     "default": true,
@@ -374,11 +379,71 @@
                     "default": true,
                     "description": "Run cfn-guard when document content changes"
                 },
-                "aws.cloudformation.diagnostics.cfnGuard.delayMs": {
-                    "type": "number",
-                    "default": 1000,
-                    "minimum": 0,
-                    "description": "Delay in milliseconds before running cfn-guard after changes"
+                "aws.cloudformation.diagnostics.cfnGuard.enabledRulePacks": {
+                    "type": "array",
+                    "default": [
+                        "wa-Security-Pillar"
+                    ],
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "ABS-CCIGv2-Material",
+                            "ABS-CCIGv2-Standard",
+                            "acsc-essential-8",
+                            "acsc-ism",
+                            "apra-cpg-234",
+                            "bnm-rmit",
+                            "cis-aws-benchmark-level-1",
+                            "cis-aws-benchmark-level-2",
+                            "cis-critical-security-controls-v8-ig1",
+                            "cis-critical-security-controls-v8-ig2",
+                            "cis-critical-security-controls-v8-ig3",
+                            "cis-top-20",
+                            "cisa-ce",
+                            "cmmc-level-1",
+                            "cmmc-level-2",
+                            "cmmc-level-3",
+                            "cmmc-level-4",
+                            "cmmc-level-5",
+                            "enisa-cybersecurity-guide-for-smes",
+                            "ens-high",
+                            "ens-low",
+                            "ens-medium",
+                            "FDA-21CFR-Part-11",
+                            "FedRAMP-Low",
+                            "FedRAMP-Moderate",
+                            "ffiec",
+                            "hipaa-security",
+                            "K-ISMS",
+                            "mas-notice-655",
+                            "mas-trmg",
+                            "nbc-trmg",
+                            "ncsc-cafv3",
+                            "ncsc",
+                            "nerc",
+                            "nist-1800-25",
+                            "nist-800-171",
+                            "nist-800-172",
+                            "nist-800-181",
+                            "nist-csf",
+                            "nist-privacy-framework",
+                            "NIST800-53Rev4",
+                            "NIST800-53Rev5",
+                            "nzism",
+                            "PCI-DSS-3-2-1",
+                            "rbi-bcsf-ucb",
+                            "rbi-md-itf",
+                            "us-nydfs",
+                            "wa-Reliability-Pillar",
+                            "wa-Security-Pillar"
+                        ]
+                    },
+                    "description": "Cfn-guard enabled rule packs"
+                },
+                "aws.cloudformation.diagnostics.cfnGuard.rulesFile": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to custom cfn-guard rules file. If empty, uses default rule packs."
                 }
             }
         },

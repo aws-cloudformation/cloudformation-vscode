@@ -63,9 +63,11 @@ export const toolkitSettings = {
     "aws.cloudformation.diagnostics.cfnLint.enabled": {},
     "aws.cloudformation.diagnostics.cfnLint.lintOnChange": {},
     "aws.cloudformation.diagnostics.cfnLint.delayMs": {},
+    "aws.cloudformation.diagnostics.cfnLint.path": {},
     "aws.cloudformation.diagnostics.cfnGuard.enabled": {},
     "aws.cloudformation.diagnostics.cfnGuard.validateOnChange": {},
-    "aws.cloudformation.diagnostics.cfnGuard.delayMs": {}
+    "aws.cloudformation.diagnostics.cfnGuard.enabledRulePacks": {},
+    "aws.cloudformation.diagnostics.cfnGuard.rulesFile": {}
 }
 
 export default toolkitSettings
