@@ -8,18 +8,15 @@ import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBa
 import { getLogger } from '../../../../shared/logger/logger'
 
 export class StackOverviewNode extends AWSTreeNodeBase {
-    public constructor(
-        private readonly stackName: string,
-        private readonly region: string
-    ) {
+    public constructor(private readonly stackName: string) {
         super('Overview', TreeItemCollapsibleState.None)
         this.contextValue = 'stackOverview'
         this.iconPath = new ThemeIcon('info')
-        getLogger().info(`StackOverview: ${stackName} in ${region}`)
+        getLogger().info(`StackOverview: ${stackName}`)
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
-        getLogger().info(`StackOverview getChildren: ${this.stackName} in ${this.region}`)
+        getLogger().info(`StackOverview getChildren: ${this.stackName}`)
         return []
     }
 }

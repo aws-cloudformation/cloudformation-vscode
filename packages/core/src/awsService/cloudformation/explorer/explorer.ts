@@ -6,36 +6,57 @@
 import * as vscode from 'vscode'
 import { RegionProvider } from '../../../shared/regions/regionProvider'
 import { AWSTreeNodeBase } from '../../../shared/treeview/nodes/awsTreeNodeBase'
+import { PlaceholderNode } from '../../../shared/treeview/nodes/placeholderNode'
 import { RefreshableAwsTreeProvider } from '../../../shared/treeview/awsTreeProvider'
-import { RegionNode } from './nodes/regionNode'
 import { CloudFormationRegionManager } from './regionManager'
 import { DocumentsNode } from './nodes/documentsNode'
+import { StacksNode } from './nodes/stacksNode'
+import { ResourcesNode } from './nodes/resourcesNode'
+import { RegionSelectorNode } from './nodes/regionSelectorNode'
+import { AwsCredentialsService } from '../auth/credentials'
 import { getLogger } from '../../../shared/logger/logger'
+import { getIcon } from '../../../shared/icons'
+import globals from '../../../shared/extensionGlobals'
 
 import { StacksManager } from '../stacks/stacksManager'
 import { ResourcesManager } from '../resources/resourcesManager'
 
 import { DocumentManager } from '../documents/documentManager'
-import { LanguageClient } from 'vscode-languageclient'
+import { ChangeSetsManager } from '../stacks/changeSetsManager'
 
 export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNodeBase>, RefreshableAwsTreeProvider {
     public viewProviderId: string = 'aws.cloudformation'
     public readonly onDidChangeTreeData: vscode.Event<AWSTreeNodeBase | undefined>
     private readonly _onDidChangeTreeData: vscode.EventEmitter<AWSTreeNodeBase | undefined>
-    private readonly regionManager: CloudFormationRegionManager
+    public readonly regionManager: CloudFormationRegionManager
     private readonly documentsNode: DocumentsNode
+    private credentialsService: AwsCredentialsService | undefined
 
     public constructor(
-        private readonly regionProvider: RegionProvider,
         private readonly stacksManager: StacksManager,
         private readonly resourcesManager: ResourcesManager,
+        private readonly changeSetsManager: ChangeSetsManager,
         documentManager: DocumentManager,
-        private readonly client: LanguageClient
+        regionProvider: RegionProvider
     ) {
         this._onDidChangeTreeData = new vscode.EventEmitter<AWSTreeNodeBase | undefined>()
         this.onDidChangeTreeData = this._onDidChangeTreeData.event
         this.regionManager = new CloudFormationRegionManager(regionProvider)
         this.documentsNode = new DocumentsNode(documentManager)
+    }
+
+    public setCredentialsService(credentialsService: AwsCredentialsService): void {
+        this.credentialsService = credentialsService
+    }
+
+    public async selectRegion(): Promise<void> {
+        const changed = await this.regionManager.showRegionSelector()
+        if (changed) {
+            this.refresh()
+            if (this.credentialsService) {
+                await this.credentialsService.updateRegion()
+            }
+        }
     }
 
     public getTreeItem(element: AWSTreeNodeBase): vscode.TreeItem {
@@ -51,23 +72,23 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
 
     private getRootChildren(): AWSTreeNodeBase[] {
         try {
-            const children: AWSTreeNodeBase[] = [this.documentsNode]
-
-            let selectedRegions = this.regionManager.getSelectedRegions()
-
-            // If no regions are selected, default to us-east-1
-            if (selectedRegions.length === 0) {
-                selectedRegions = ['us-east-1']
-            }
-
-            const allRegions = this.regionProvider.getRegions()
-
-            for (const regionId of selectedRegions) {
-                const region = allRegions.find((r) => r.id === regionId)
-                if (region) {
-                    children.push(new RegionNode(region, this.stacksManager, this.resourcesManager, this.client))
+            // Show sign-in message when not authenticated
+            if (!globals.awsContext.getCredentialProfileName()) {
+                const signInNode = new PlaceholderNode(this as any, 'Sign in to get started')
+                signInNode.iconPath = getIcon('vscode-account')
+                signInNode.command = {
+                    command: 'aws.auth.signIn',
+                    title: 'Sign in',
                 }
+                return [signInNode]
             }
+
+            const children: AWSTreeNodeBase[] = [
+                new RegionSelectorNode(this.regionManager),
+                this.documentsNode,
+                new StacksNode(this.stacksManager, this.changeSetsManager),
+                new ResourcesNode(this.resourcesManager),
+            ]
 
             return children
         } catch (error) {

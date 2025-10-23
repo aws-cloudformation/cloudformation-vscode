@@ -26,7 +26,6 @@ class LoadMoreStacksNode extends AWSTreeNodeBase {
 export class StacksNode extends AWSTreeNodeBase {
     public constructor(
         private readonly stacksManager: StacksManager,
-        private readonly region: string,
         private readonly changeSetsManager: ChangeSetsManager
     ) {
         super('Stacks', TreeItemCollapsibleState.Collapsed)
@@ -36,7 +35,7 @@ export class StacksNode extends AWSTreeNodeBase {
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
         this.updateNode()
         const stacks = this.stacksManager.get()
-        const nodes = stacks.map((stack: StackSummary) => new StackNode(stack, this.region, this.changeSetsManager))
+        const nodes = stacks.map((stack: StackSummary) => new StackNode(stack, this.changeSetsManager))
         return this.stacksManager.hasMore() ? [...nodes, new LoadMoreStacksNode(this)] : nodes
     }
 

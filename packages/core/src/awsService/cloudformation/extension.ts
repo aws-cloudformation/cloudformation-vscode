@@ -30,7 +30,7 @@ import {
     searchResourceCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
-import { showRegionsCommand } from './commands/regionCommands'
+import { selectRegionCommand } from './commands/regionCommands'
 import { AwsCredentialsService } from './auth/credentials'
 import { ExtensionId, ExtensionName, Version } from './extensionConfig'
 import { CloudFormationExplorer } from './explorer/explorer'
@@ -50,6 +50,7 @@ import { DevLspServerProvider } from './lsp-server/devLspServerProvider'
 import { RemoteLspServerProvider } from './lsp-server/remoteLspServerProvider'
 import { LspServerProvider } from './lsp-server/lspServerProvider'
 import { getLogger } from '../../shared/logger/logger'
+import { ChangeSetsManager } from './stacks/changeSetsManager'
 
 let client: LanguageClient
 
@@ -134,13 +135,14 @@ export async function activate(context: ExtensionContext) {
 
             const resourceSelector = new ResourceSelector(client)
             const resourcesManager = new ResourcesManager(client, resourceSelector)
+            const changeSetManager = new ChangeSetsManager(client)
 
             const cfnExplorer = new CloudFormationExplorer(
-                globals.regionProvider,
                 stacksManager,
                 resourcesManager,
+                changeSetManager,
                 documentManager,
-                client
+                globals.regionProvider
             )
 
             // Add listener to refresh explorer when resources change
@@ -152,7 +154,12 @@ export async function activate(context: ExtensionContext) {
                 cfnExplorer.refresh()
             })
 
-            const credentialsService = new AwsCredentialsService(stacksManager, resourcesManager)
+            const credentialsService = new AwsCredentialsService(
+                stacksManager,
+                resourcesManager,
+                cfnExplorer.regionManager
+            )
+            cfnExplorer.setCredentialsService(credentialsService)
 
             // Create diff webview provider
             const diffProvider = new DiffWebviewProvider()
@@ -203,7 +210,7 @@ export async function activate(context: ExtensionContext) {
                 deployTemplateCommand(client, stacksManager, documentManager),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
-                showRegionsCommand(cfnExplorer),
+                selectRegionCommand(cfnExplorer),
                 rerunLastValidationCommand(),
                 extractToParameterPositionCursorCommand(),
                 credentialsService,
