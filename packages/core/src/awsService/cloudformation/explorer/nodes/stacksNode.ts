@@ -30,7 +30,7 @@ export class StacksNode extends AWSTreeNodeBase {
         private readonly changeSetsManager: ChangeSetsManager
     ) {
         super('Stacks', TreeItemCollapsibleState.Collapsed)
-        this.contextValue = 'stackSection'
+        this.updateNode()
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
