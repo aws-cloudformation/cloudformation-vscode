@@ -136,7 +136,8 @@ export async function activate(context: ExtensionContext) {
                 globals.regionProvider,
                 stacksManager,
                 resourcesManager,
-                documentManager
+                documentManager,
+                client
             )
 
             // Add listener to refresh explorer when resources change
