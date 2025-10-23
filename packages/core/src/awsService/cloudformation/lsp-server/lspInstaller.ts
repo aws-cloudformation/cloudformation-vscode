@@ -49,7 +49,7 @@ export class CfnLspInstaller extends BaseLspInstaller {
                         )
                         return await githubAdapter.getManifest()
                     } catch (error) {
-                        this.log.warn(`Failed to resolve from GitHub`, error)
+                        this.log.warn(`Failed to resolve from GitHub (${(error as Error).message})`)
                     }
 
                     // Fallback to CloudFront
