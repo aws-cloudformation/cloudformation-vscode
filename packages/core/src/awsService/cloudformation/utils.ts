@@ -28,11 +28,11 @@ export function commandKey(key: string): string {
 
 export function extractErrorMessage(error: unknown) {
     if (error instanceof Error) {
-        const prefix = error.name === 'Error' ? '' : `${error.name}: `;
-        return `${prefix}${error.message}`;
+        const prefix = error.name === 'Error' ? '' : `${error.name}: `
+        return `${prefix}${error.message}`
     }
 
-    return toString(error);
+    return toString(error)
 }
 
 /**

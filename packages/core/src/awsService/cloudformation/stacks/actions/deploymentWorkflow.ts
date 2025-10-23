@@ -6,12 +6,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { StackActionPhase, StackActionState } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
-import {
-    showDeploymentStarted,
-    showDeploymentSuccess,
-    showDeploymentFailure,
-    showErrorMessage,
-} from '../../ui/message'
+import { showDeploymentStarted, showDeploymentSuccess, showDeploymentFailure, showErrorMessage } from '../../ui/message'
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
 import { StatusBarItem } from 'vscode'
 import { deploy, describeDeploymentStatus, getDeploymentStatus } from './stackActionApi'
@@ -37,11 +32,7 @@ export class Deployment {
     private status: StackActionPhase | undefined
     private statusBarItem?: StatusBarItem
 
-    constructor(
-        stackName: string,
-        changeSetName: string,
-        client: LanguageClient,
-    ) {
+    constructor(stackName: string, changeSetName: string, client: LanguageClient) {
         this.id = uuidv4()
         this.stackName = stackName
         this.changeSetName = changeSetName
@@ -49,14 +40,7 @@ export class Deployment {
     }
 
     async deploy() {
-        await deploy(
-            this.client,
-            createDeploymentParams(
-                this.id,
-                this.stackName,
-                this.changeSetName,
-            )
-        )
+        await deploy(this.client, createDeploymentParams(this.id, this.stackName, this.changeSetName))
         showDeploymentStarted(this.stackName)
         this.statusBarItem = createDeploymentStatusBar()
         this.pollForProgress()
@@ -82,24 +66,33 @@ export class Deployment {
                             if (deploymentResult.state === StackActionState.SUCCESSFUL) {
                                 showDeploymentSuccess(this.stackName)
                             } else {
-                                const describeDeplomentStatusResult = await describeDeploymentStatus(this.client, { id: this.id })
-                                showDeploymentFailure(this.stackName, describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN')
+                                const describeDeplomentStatusResult = await describeDeploymentStatus(this.client, {
+                                    id: this.id,
+                                })
+                                showDeploymentFailure(
+                                    this.stackName,
+                                    describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN'
+                                )
                             }
                             clearInterval(interval)
                             break
                         case StackActionPhase.DEPLOYMENT_FAILED:
-                        case StackActionPhase.VALIDATION_FAILED:
-                            const describeDeplomentStatusResult = await describeDeploymentStatus(this.client, { id: this.id })
-                            showDeploymentFailure(this.stackName, describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN')
+                        case StackActionPhase.VALIDATION_FAILED: {
+                            const describeDeplomentStatusResult = await describeDeploymentStatus(this.client, {
+                                id: this.id,
+                            })
+                            showDeploymentFailure(
+                                this.stackName,
+                                describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN'
+                            )
                             clearInterval(interval)
                             break
+                        }
                     }
                 })
                 .catch(async (error) => {
                     getLogger().error(`Error polling for deployment status: ${error}`)
-                    showErrorMessage(
-                        `Error polling for deployment status: ${extractErrorMessage(error)}`
-                    )
+                    showErrorMessage(`Error polling for deployment status: ${extractErrorMessage(error)}`)
                     clearInterval(interval)
                 })
         }, 1000)

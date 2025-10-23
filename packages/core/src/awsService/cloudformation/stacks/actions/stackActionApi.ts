@@ -36,10 +36,7 @@ export async function validate(
     return await client.sendRequest(CreateValidationRequest, params)
 }
 
-export async function deploy(
-    client: LanguageClient,
-    params: CreateDeploymentParams
-): Promise<CreateStackActionResult> {
+export async function deploy(client: LanguageClient, params: CreateDeploymentParams): Promise<CreateStackActionResult> {
     return await client.sendRequest(CreateDeploymentRequest, params)
 }
 

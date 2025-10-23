@@ -15,7 +15,7 @@ import { StatusBarItem, commands } from 'vscode'
 import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
 import { createValidationParams } from './stackActionUtil'
 import { extractErrorMessage } from '../../utils'
-import { getLogger } from '../../../../shared'
+import { getLogger } from '../../../../shared/logger/logger'
 
 // TODO move this to server side, we should let server handle last validation
 let lastValidation: Validation | undefined = undefined
@@ -68,7 +68,7 @@ export class Validation {
         try {
             showValidationStarted(this.stackName)
             this.statusBarItem = createDeploymentStatusBar()
-            
+
             // Capture the result to get changeSetName
             const result = await validate(
                 this.client,
@@ -79,13 +79,13 @@ export class Validation {
                     this.parameters,
                     this.capabilities,
                     this.resourcesToImport,
-                    this.shouldEnableDeployment,
+                    this.shouldEnableDeployment
                 )
             )
-            
+
             // Store changeSetName from validation result
             this.changeSetName = result.changeSetName
-            
+
             this.pollForProgress()
         } catch (error) {
             showErrorMessage(`Error validating template: ${error instanceof Error ? error.message : String(error)}`)
@@ -121,23 +121,32 @@ export class Validation {
 
                                 this.showDiffView()
                             } else {
-                                const describeValidationStatusResult = await describeValidationStatus(this.client, { id: this.id })
-                                showValidationFailure(this.stackName, describeValidationStatusResult.FailureReason ?? 'UNKNOWN')
+                                const describeValidationStatusResult = await describeValidationStatus(this.client, {
+                                    id: this.id,
+                                })
+                                showValidationFailure(
+                                    this.stackName,
+                                    describeValidationStatusResult.FailureReason ?? 'UNKNOWN'
+                                )
                             }
                             clearInterval(interval)
                             break
-                        case StackActionPhase.VALIDATION_FAILED:
-                            const describeValidationStatusResult = await describeValidationStatus(this.client, { id: this.id })
-                            showValidationFailure(this.stackName, describeValidationStatusResult.FailureReason ?? 'UNKNOWN')
+                        case StackActionPhase.VALIDATION_FAILED: {
+                            const describeValidationStatusResult = await describeValidationStatus(this.client, {
+                                id: this.id,
+                            })
+                            showValidationFailure(
+                                this.stackName,
+                                describeValidationStatusResult.FailureReason ?? 'UNKNOWN'
+                            )
                             clearInterval(interval)
                             break
+                        }
                     }
                 })
                 .catch((error) => {
                     getLogger().error(`Error polling for deployment status: ${error}`)
-                    showErrorMessage(
-                        `Error polling for validation status: ${extractErrorMessage(error)}`
-                    )
+                    showErrorMessage(`Error polling for validation status: ${extractErrorMessage(error)}`)
                     clearInterval(interval)
                 })
         }, 1000)
@@ -145,7 +154,7 @@ export class Validation {
 
     private showDiffView() {
         void setContext('aws.cloudformation.stacks.diffVisible', true)
-        
+
         this.diffProvider.updateData(this.stackName, this.changes, this.changeSetName, this.shouldEnableDeployment)
         void commands.executeCommand('aws.cloudformation.diff.focus')
     }

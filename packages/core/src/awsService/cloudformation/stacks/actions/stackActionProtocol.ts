@@ -37,12 +37,12 @@ export const GetDeploymentStatusRequest = new RequestType<Identifiable, GetStack
 )
 
 export const DescribeValidationStatusRequest = new RequestType<Identifiable, DescribeValidationStatusResult, void>(
-    'aws/cfn/stack/validation/status/describe',
-);
+    'aws/cfn/stack/validation/status/describe'
+)
 
 export const DescribeDeploymentStatusRequest = new RequestType<Identifiable, DescribeDeploymentStatusResult, void>(
-    'aws/cfn/stack/deployment/status/describe',
-);
+    'aws/cfn/stack/deployment/status/describe'
+)
 
 export const GetParametersRequest = new RequestType<TemplateUri, GetParametersResult, void>('aws/cfn/stack/parameters')
 

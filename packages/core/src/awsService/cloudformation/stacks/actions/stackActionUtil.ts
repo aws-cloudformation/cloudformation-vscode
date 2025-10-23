@@ -18,10 +18,6 @@ export function createValidationParams(
     return { id, uri, stackName, parameters, capabilities, resourcesToImport, keepChangeSet }
 }
 
-export function createDeploymentParams(
-    id: string,
-    stackName: string,
-    changeSetName: string,
-): CreateDeploymentParams {
+export function createDeploymentParams(id: string, stackName: string, changeSetName: string): CreateDeploymentParams {
     return { id, stackName, changeSetName }
 }

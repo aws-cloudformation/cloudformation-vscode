@@ -36,7 +36,11 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 void DiffViewHelper.openDiff(this.stackName, this.changes, message.resourceId)
             } else if (message.command === 'confirmDeploy') {
                 if (this.changeSetName) {
-                    void commands.executeCommand('aws.cloudformation.api.executeChangeSet', this.stackName, this.changeSetName)
+                    void commands.executeCommand(
+                        'aws.cloudformation.api.executeChangeSet',
+                        this.stackName,
+                        this.changeSetName
+                    )
                     this.changeSetName = undefined
                     this.enableDeployments = false
                     this._view!.webview.html = this.getHtmlContent()
@@ -162,9 +166,11 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     border-radius: 2px;
                 ">View Side-by-Side Diff</button>
             </div>
-        `;
+        `
 
-        const deploymentButtons = this.changeSetName && this.enableDeployments ? `
+        const deploymentButtons =
+            this.changeSetName && this.enableDeployments
+                ? `
             <div class="deployment-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
                 <button id="confirmDeploy" onclick="confirmDeploy()" style="
                     background-color: var(--vscode-button-background);
@@ -185,7 +191,8 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     border-radius: 2px;
                 ">Cancel</button>
             </div>
-        ` : '';
+        `
+                : ''
 
         return `
             <!DOCTYPE html>
