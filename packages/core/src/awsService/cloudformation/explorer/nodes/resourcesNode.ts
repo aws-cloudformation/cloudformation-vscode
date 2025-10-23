@@ -16,6 +16,6 @@ export class ResourcesNode extends AWSTreeNodeBase {
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
         const resourceLists = this.resourcesManager.get()
-        return resourceLists.map((resourceList) => new ResourceTypeNode(resourceList))
+        return resourceLists.map((resourceList) => new ResourceTypeNode(resourceList, this.resourcesManager))
     }
 }

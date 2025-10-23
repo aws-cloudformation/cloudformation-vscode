@@ -19,7 +19,7 @@ describe('RegionNode', function () {
             id: 'us-east-1',
             name: 'US East (N. Virginia)',
         }
-        mockStacksManager = { get: () => [] }
+        mockStacksManager = { get: () => [], hasMore: () => false }
         mockResourcesManager = { get: () => [] }
 
         regionNode = new RegionNode(mockRegion, mockStacksManager, mockResourcesManager, {} as any)

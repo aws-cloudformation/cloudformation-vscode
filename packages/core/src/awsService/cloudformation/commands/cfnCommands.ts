@@ -22,7 +22,6 @@ import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
 import { getParameters, getCapabilities, getTemplateResources } from '../stacks/actions/stackActionApi'
 import { TemplateParameter, ResourceToImport } from '../stacks/actions/stackActionRequestType'
-import { StacksManager } from '../stacks/stacksManager'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
 import { DocumentManager } from '../documents/documentManager'
@@ -30,6 +29,10 @@ import { DocumentManager } from '../documents/documentManager'
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
 import { ResourceContextValue } from '../explorer/contextValue'
 import { getLogger } from '../../../shared/logger/logger'
+import { CloudFormationExplorer } from '../explorer/explorer'
+import { StacksNode } from '../explorer/nodes/stacksNode'
+import { ResourceTypeNode } from '../explorer/nodes/resourceTypeNode'
+import { StacksManager } from '../stacks/stacksManager'
 
 export function validateTemplateCommand(
     client: LanguageClient,
@@ -325,5 +328,41 @@ export function extractToParameterPositionCursorCommand() {
 export function getStackManagementInfoCommandPalette(resourcesManager: ResourcesManager) {
     return commands.registerCommand(commandKey('api.getStackManagementInfo.palette'), async () => {
         await resourcesManager.getStackManagementInfo()
+    })
+}
+
+export function loadMoreResourcesCommand(explorer: CloudFormationExplorer) {
+    return commands.registerCommand(commandKey('api.loadMoreResources'), async (node: ResourceTypeNode) => {
+        await node.loadMoreResources()
+        explorer.refresh(node)
+    })
+}
+
+export function loadMoreStacksCommand(explorer: CloudFormationExplorer) {
+    return commands.registerCommand(commandKey('api.loadMoreStacks'), async (node: StacksNode) => {
+        await node.loadMoreStacks()
+        explorer.refresh(node)
+    })
+}
+
+export function searchResourceCommand(explorer: CloudFormationExplorer, resourcesManager: ResourcesManager) {
+    return commands.registerCommand(commandKey('api.searchResource'), async (node: ResourceTypeNode) => {
+        const identifier = await window.showInputBox({
+            prompt: `Enter ${node.label} identifier to search`,
+            placeHolder: 'Resource identifier',
+        })
+
+        if (!identifier) {
+            return
+        }
+
+        const result = await resourcesManager.searchResource(node.label as string, identifier)
+
+        if (result.found) {
+            void window.showInformationMessage(`Resource found: ${identifier}`)
+            explorer.refresh(node)
+        } else {
+            void window.showErrorMessage(`Resource not found: ${identifier}`)
+        }
     })
 }

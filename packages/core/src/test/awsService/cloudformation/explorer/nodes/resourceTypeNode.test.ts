@@ -7,10 +7,12 @@ import assert from 'assert'
 import { TreeItemCollapsibleState } from 'vscode'
 import { ResourceTypeNode } from '../../../../../awsService/cloudformation/explorer/nodes/resourceTypeNode'
 import { ResourceList } from '../../../../../awsService/cloudformation/cfn/resourceRequestTypes'
+import { ResourcesManager } from '../../../../../awsService/cloudformation/resources/resourcesManager'
 
 describe('ResourceTypeNode', function () {
     let mockResourceList: ResourceList
     let resourceTypeNode: ResourceTypeNode
+    let mockResourcesManager: ResourcesManager
 
     beforeEach(function () {
         mockResourceList = {
@@ -18,7 +20,9 @@ describe('ResourceTypeNode', function () {
             resourceIdentifiers: ['bucket-1', 'bucket-2', 'bucket-3'],
         }
 
-        resourceTypeNode = new ResourceTypeNode(mockResourceList)
+        mockResourcesManager = {} as ResourcesManager
+
+        resourceTypeNode = new ResourceTypeNode(mockResourceList, mockResourcesManager)
     })
 
     describe('constructor', function () {
@@ -49,7 +53,7 @@ describe('ResourceTypeNode', function () {
                 resourceIdentifiers: [],
             }
 
-            const emptyNode = new ResourceTypeNode(emptyResourceList)
+            const emptyNode = new ResourceTypeNode(emptyResourceList, mockResourcesManager)
             assert.strictEqual(emptyNode.description, '(0)')
 
             const children = await emptyNode.getChildren()
