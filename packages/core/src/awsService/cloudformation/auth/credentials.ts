@@ -5,6 +5,7 @@
 
 import { Disposable } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
+import { CloudFormationRegionManager } from '../explorer/regionManager'
 import globals from '../../../shared/extensionGlobals'
 
 export class AwsCredentialsService implements Disposable {
@@ -13,7 +14,8 @@ export class AwsCredentialsService implements Disposable {
 
     constructor(
         private stacksManager: any,
-        private resourcesManager: any
+        private resourcesManager: any,
+        private regionManager: CloudFormationRegionManager
     ) {
         this.authChangeListener = globals.awsContext.onDidChangeContext(() => {
             void this.updateCredentialsFromActiveConnection()
@@ -37,7 +39,7 @@ export class AwsCredentialsService implements Disposable {
             await this.client.sendRequest('aws/credentials/iam/update', {
                 data: {
                     profile: profileName,
-                    region: globals.awsContext.getCredentialDefaultRegion(),
+                    region: this.regionManager.getSelectedRegion(),
                     accessKeyId: credentials.accessKeyId,
                     secretAccessKey: credentials.secretAccessKey,
                     sessionToken: credentials.sessionToken,
