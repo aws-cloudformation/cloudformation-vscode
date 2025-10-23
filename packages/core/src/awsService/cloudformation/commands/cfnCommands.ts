@@ -62,57 +62,55 @@ export function validateTemplateCommand(
             await validation.validate()
             stacks.startPolling()
         } catch (error) {
-            showErrorMessage(
-                `Error validating template: ${extractErrorMessage(error)}`
-            )
+            showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
         }
     })
 }
 
 export function executeChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
-    return commands.registerCommand(commandKey('api.executeChangeSet'), async (stackName: string, changeSetName: string) => {
-        try {
-            const deployment = new Deployment(
-                stackName,
-                changeSetName,
-                client
-            )
-            setLastDeployment(deployment)
-            await deployment.deploy()
-            stacks.startPolling()
-        } catch (error) {
-            showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
+    return commands.registerCommand(
+        commandKey('api.executeChangeSet'),
+        async (stackName: string, changeSetName: string) => {
+            try {
+                const deployment = new Deployment(stackName, changeSetName, client)
+                setLastDeployment(deployment)
+                await deployment.deploy()
+                stacks.startPolling()
+            } catch (error) {
+                showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
+            }
         }
-    })
+    )
 }
 
 export function deployTemplateCommand(
-    client: LanguageClient, 
+    client: LanguageClient,
     stacks: StacksManager,
     diffProvider: DiffWebviewProvider,
-    documentManager: DocumentManager,
+    documentManager: DocumentManager
 ) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
             const result = await changeSetSteps(client, documentManager, false, templateUri)
-            if (!result) return
+            if (!result) {
+                return
+            }
 
             const validation = new Validation(
-                result.templateUri, 
-                result.stackName, 
-                client, 
-                diffProvider, 
-                result.parameters, 
-                result.capabilities, 
+                result.templateUri,
+                result.stackName,
+                client,
+                diffProvider,
+                result.parameters,
+                result.capabilities,
                 result.resourcesToImport,
-                true, // Confirm deployment following successful validation
+                true // Confirm deployment following successful validation
             )
 
             setLastValidation(validation)
 
             await validation.validate()
             stacks.startPolling()
-            
         } catch (error) {
             showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
         }
