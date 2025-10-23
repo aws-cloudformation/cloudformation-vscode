@@ -2574,7 +2574,7 @@
                 },
                 {
                     "command": "aws.cloudformation.api.loadMoreStacks",
-                    "when": "view == aws.cloudformation && viewItem == stackSectionWithMore",
+                    "when": "view == aws.cloudformation && viewItem == stackSectionWithMore && !aws.cloudformation.loadingStacks",
                     "group": "inline@2"
                 },
                 {
@@ -2584,7 +2584,7 @@
                 },
                 {
                     "command": "aws.cloudformation.api.loadMoreStacks",
-                    "when": "view == aws.cloudformation && viewItem == stackSectionWithMore",
+                    "when": "view == aws.cloudformation && viewItem == stackSectionWithMore && !aws.cloudformation.loadingStacks",
                     "group": "1@1"
                 },
                 {
@@ -2609,7 +2609,7 @@
                 },
                 {
                     "command": "aws.cloudformation.api.loadMoreResources",
-                    "when": "view == aws.cloudformation && viewItem == resourceTypeWithMore",
+                    "when": "view == aws.cloudformation && viewItem == resourceTypeWithMore && !aws.cloudformation.loadingResources",
                     "group": "inline@3"
                 },
                 {
@@ -2664,7 +2664,7 @@
                 },
                 {
                     "command": "aws.cloudformation.api.loadMoreResources",
-                    "when": "view == aws.cloudformation && viewItem == resourceTypeWithMore",
+                    "when": "view == aws.cloudformation && viewItem == resourceTypeWithMore && !aws.cloudformation.loadingResources",
                     "group": "1@2"
                 },
                 {

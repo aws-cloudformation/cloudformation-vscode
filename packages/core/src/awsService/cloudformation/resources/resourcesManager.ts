@@ -37,6 +37,7 @@ import {
 } from 'vscode'
 import { getLogger } from '../../../shared/logger/logger'
 import globals from '../../../shared/extensionGlobals'
+import { setContext } from '../../../shared/vscode/setContext'
 
 type ResourcesChangeListener = (resources: ResourceList[]) => void
 
@@ -94,6 +95,7 @@ export class ResourcesManager {
     }
 
     async loadMoreResources(resourceType: string, nextToken: string): Promise<void> {
+        await setContext('aws.cloudformation.loadingResources', true)
         try {
             const response = await this.client.sendRequest(ListResourcesRequest, {
                 resources: [{ resourceType, nextToken }],
@@ -106,6 +108,11 @@ export class ResourcesManager {
             this.notifyAllListeners()
         } catch (error) {
             getLogger().error(`Failed to load more resources: ${error}`)
+            void window.showErrorMessage(
+                `Failed to load more resources: ${error instanceof Error ? error.message : String(error)}`
+            )
+        } finally {
+            await setContext('aws.cloudformation.loadingResources', false)
         }
     }
 

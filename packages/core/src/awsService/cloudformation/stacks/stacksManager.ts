@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { commands, Disposable } from 'vscode'
+import { commands, Disposable, window } from 'vscode'
 import { StackStatus, StackSummary } from '@aws-sdk/client-cloudformation'
 import { RequestType } from 'vscode-languageserver-protocol'
 import { LanguageClient } from 'vscode-languageclient'
 import { commandKey } from '../utils'
+import { setContext } from '../../../shared/vscode/setContext'
 
 type ListStacksParams = {
     statusToInclude?: StackStatus[]
@@ -54,6 +55,7 @@ export class StacksManager implements Disposable {
             return
         }
 
+        await setContext('aws.cloudformation.loadingStacks', true)
         try {
             const response = await this.client.sendRequest(ListStacksRequest, {
                 statusToExclude: ['DELETE_COMPLETE'],
@@ -62,8 +64,11 @@ export class StacksManager implements Disposable {
             this.stacks = response.stacks
             this.nextToken = response.nextToken
         } catch (error) {
-            // Keep existing stacks on error
+            void window.showErrorMessage(
+                `Failed to load more stacks: ${error instanceof Error ? error.message : String(error)}`
+            )
         } finally {
+            await setContext('aws.cloudformation.loadingStacks', false)
             this.notifyListeners()
         }
     }
