@@ -22,7 +22,7 @@ describe('RegionNode', function () {
         mockStacksManager = { get: () => [] }
         mockResourcesManager = { get: () => [] }
 
-        regionNode = new RegionNode(mockRegion, mockStacksManager, mockResourcesManager)
+        regionNode = new RegionNode(mockRegion, mockStacksManager, mockResourcesManager, {} as any)
     })
 
     describe('constructor', function () {

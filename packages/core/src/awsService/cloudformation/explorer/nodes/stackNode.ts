@@ -6,9 +6,19 @@
 import { TreeItemCollapsibleState, ThemeIcon, ThemeColor } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
 import { StackSummary } from '@aws-sdk/client-cloudformation'
+import { StackStatusNode } from './stackStatusNode'
+import { StackOverviewNode } from './stackOverviewNode'
+import { StackEventsNode } from './stackEventsNode'
+import { StackResourcesNode } from './stackResourcesNode'
+import { StackChangeSetsNode } from './stackChangeSetsNode'
+import { ChangeSetsManager } from '../../stacks/changeSetsManager'
 
 export class StackNode extends AWSTreeNodeBase {
-    public constructor(public readonly stack: StackSummary) {
+    public constructor(
+        public readonly stack: StackSummary,
+        private readonly region: string,
+        private readonly changeSetsManager: ChangeSetsManager
+    ) {
         super(stack.StackName ?? 'Unknown Stack', TreeItemCollapsibleState.Collapsed)
         this.contextValue = 'stack'
         this.tooltip = `${stack.StackName} [${stack.StackStatus}]`
@@ -32,7 +42,14 @@ export class StackNode extends AWSTreeNodeBase {
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
-        // TODO: Return stack details like the original (StackId, etc.)
-        return []
+        const stackName = this.stack.StackName ?? ''
+        const stackStatus = this.stack.StackStatus ?? 'UNKNOWN'
+        return [
+            new StackStatusNode(stackStatus),
+            new StackOverviewNode(stackName, this.region),
+            new StackEventsNode(stackName, this.region),
+            new StackResourcesNode(stackName, this.region),
+            new StackChangeSetsNode(stackName, this.region, this.changeSetsManager),
+        ]
     }
 }

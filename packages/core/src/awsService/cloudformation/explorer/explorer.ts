@@ -16,6 +16,7 @@ import { StacksManager } from '../stacks/stacksManager'
 import { ResourcesManager } from '../resources/resourcesManager'
 
 import { DocumentManager } from '../documents/documentManager'
+import { LanguageClient } from 'vscode-languageclient'
 
 export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNodeBase>, RefreshableAwsTreeProvider {
     public viewProviderId: string = 'aws.cloudformation'
@@ -28,7 +29,8 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
         private readonly regionProvider: RegionProvider,
         private readonly stacksManager: StacksManager,
         private readonly resourcesManager: ResourcesManager,
-        documentManager: DocumentManager
+        documentManager: DocumentManager,
+        private readonly client: LanguageClient
     ) {
         this._onDidChangeTreeData = new vscode.EventEmitter<AWSTreeNodeBase | undefined>()
         this.onDidChangeTreeData = this._onDidChangeTreeData.event
@@ -63,7 +65,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
             for (const regionId of selectedRegions) {
                 const region = allRegions.find((r) => r.id === regionId)
                 if (region) {
-                    children.push(new RegionNode(region, this.stacksManager, this.resourcesManager))
+                    children.push(new RegionNode(region, this.stacksManager, this.resourcesManager, this.client))
                 }
             }
 
