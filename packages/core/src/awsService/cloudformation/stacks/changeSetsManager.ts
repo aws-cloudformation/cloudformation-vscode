@@ -10,7 +10,7 @@ import { ChangeSetInfo } from './actions/stackActionRequestType'
 export class ChangeSetsManager {
     constructor(private readonly client: LanguageClient) {}
 
-    async getChangeSets(stackName: string, region: string): Promise<ChangeSetInfo[]> {
+    async getChangeSets(stackName: string): Promise<ChangeSetInfo[]> {
         try {
             const response = await this.client.sendRequest(ListChangeSetsRequest, {
                 stackName,

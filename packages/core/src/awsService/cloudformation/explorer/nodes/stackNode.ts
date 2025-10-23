@@ -16,7 +16,6 @@ import { ChangeSetsManager } from '../../stacks/changeSetsManager'
 export class StackNode extends AWSTreeNodeBase {
     public constructor(
         public readonly stack: StackSummary,
-        private readonly region: string,
         private readonly changeSetsManager: ChangeSetsManager
     ) {
         super(stack.StackName ?? 'Unknown Stack', TreeItemCollapsibleState.Collapsed)
@@ -46,10 +45,10 @@ export class StackNode extends AWSTreeNodeBase {
         const stackStatus = this.stack.StackStatus ?? 'UNKNOWN'
         return [
             new StackStatusNode(stackStatus),
-            new StackOverviewNode(stackName, this.region),
-            new StackEventsNode(stackName, this.region),
-            new StackResourcesNode(stackName, this.region),
-            new StackChangeSetsNode(stackName, this.region, this.changeSetsManager),
+            new StackOverviewNode(stackName),
+            new StackEventsNode(stackName),
+            new StackResourcesNode(stackName),
+            new StackChangeSetsNode(stackName, this.changeSetsManager),
         ]
     }
 }

@@ -6,60 +6,62 @@
 import * as vscode from 'vscode'
 import * as nls from 'vscode-nls'
 import { RegionProvider } from '../../../shared/regions/regionProvider'
-import { isNonNullable } from '../../../shared/utilities/tsUtils'
 import globals from '../../../shared/extensionGlobals'
 
 const localize = nls.loadMessageBundle()
 
 export class CloudFormationRegionManager {
-    private static readonly storageKey = 'aws.cloudformation.regions'
+    private static readonly storageKey = 'aws.cloudformation.region'
 
     constructor(private readonly regionProvider: RegionProvider) {}
 
-    public getSelectedRegions(): string[] {
-        const cfnRegions = globals.globalState.tryGet<string[]>(CloudFormationRegionManager.storageKey, Object, [])
+    public getSelectedRegion(): string {
+        const cfnRegion = globals.globalState.tryGet<string>(CloudFormationRegionManager.storageKey, String)
 
-        // If no CloudFormation regions selected, use AWS explorer regions as default
-        if (cfnRegions.length === 0) {
+        // If no CloudFormation region selected, use credential default region, then AWS explorer region as fallback
+        if (!cfnRegion) {
+            const credentialDefaultRegion = globals.awsContext.getCredentialDefaultRegion()
+            if (credentialDefaultRegion) {
+                return credentialDefaultRegion
+            }
+
             const awsExplorerRegions = globals.globalState.tryGet<string[]>('region', Object, [])
-            return awsExplorerRegions.length > 0 ? awsExplorerRegions : ['us-east-1']
+            return awsExplorerRegions.length > 0 ? awsExplorerRegions[0] : 'us-east-1'
         }
 
-        return cfnRegions
+        return cfnRegion
     }
 
-    public async updateSelectedRegions(regions: string[]): Promise<void> {
-        await globals.globalState.update(CloudFormationRegionManager.storageKey, Array.from(new Set(regions)))
+    public async updateSelectedRegion(region: string): Promise<void> {
+        await globals.globalState.update(CloudFormationRegionManager.storageKey, region)
     }
 
     public async showRegionSelector(): Promise<boolean> {
-        const currentRegions = new Set(this.getSelectedRegions())
+        const currentRegion = this.getSelectedRegion()
         const allRegions = this.regionProvider.getRegions()
 
         const items: vscode.QuickPickItem[] = allRegions.map((r) => ({
             label: r.name,
             detail: r.id,
-            picked: currentRegions.has(r.id),
         }))
 
         const placeholder = localize(
             'cloudformation.showHideRegionPlaceholder',
-            'Select regions to show in CloudFormation panel (unselect to hide)'
+            'Select region for CloudFormation panel'
         )
 
         const result = await vscode.window.showQuickPick(items, {
             placeHolder: placeholder,
-            canPickMany: true,
+            canPickMany: false,
             matchOnDetail: true,
         })
 
-        if (!result) {
+        if (!result || !result.detail) {
             return false
         }
 
-        const selected = result.map((res) => res.detail).filter(isNonNullable)
-        if (selected.length !== currentRegions.size || selected.some((r) => !currentRegions.has(r))) {
-            await this.updateSelectedRegions(selected)
+        if (result.detail !== currentRegion) {
+            await this.updateSelectedRegion(result.detail)
             return true
         }
 

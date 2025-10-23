@@ -4,18 +4,11 @@
  */
 
 import * as vscode from 'vscode'
-import { CloudFormationRegionManager } from '../explorer/regionManager'
-import globals from '../../../shared/extensionGlobals'
-
 import { CloudFormationExplorer } from '../explorer/explorer'
+import { commandKey } from '../utils'
 
-export function showRegionsCommand(explorer: CloudFormationExplorer): vscode.Disposable {
-    return vscode.commands.registerCommand('aws.cloudformation.showRegions', async () => {
-        const regionManager = new CloudFormationRegionManager(globals.regionProvider)
-        const changed = await regionManager.showRegionSelector()
-
-        if (changed) {
-            explorer.refresh()
-        }
+export function selectRegionCommand(explorer: CloudFormationExplorer): vscode.Disposable {
+    return vscode.commands.registerCommand(commandKey('selectRegion'), async () => {
+        await explorer.selectRegion()
     })
 }
