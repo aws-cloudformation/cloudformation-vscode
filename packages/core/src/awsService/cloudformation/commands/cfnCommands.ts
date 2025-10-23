@@ -47,16 +47,14 @@ export function validateTemplateCommand(
                 return
             }
 
-            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
-
             const validation = new Validation(
-                uri,
-                stackName,
+                result.templateUri,
+                result.stackName,
                 client,
                 diffProvider,
-                parameters,
-                capabilities,
-                resourcesToImport
+                result.parameters,
+                result.capabilities,
+                result.resourcesToImport
             )
 
             setLastValidation(validation)
@@ -99,16 +97,14 @@ export function deployTemplateCommand(
             const result = await changeSetSteps(client, documentManager, false, templateUri)
             if (!result) return
 
-            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
-
             const validation = new Validation(
-                uri, 
-                stackName, 
+                result.templateUri, 
+                result.stackName, 
                 client, 
                 diffProvider, 
-                parameters, 
-                capabilities, 
-                resourcesToImport,
+                result.parameters, 
+                result.capabilities, 
+                result.resourcesToImport,
                 true, // Confirm deployment following successful validation
             )
 
@@ -141,21 +137,20 @@ async function promptForResourceImport(client: LanguageClient, templateUri: stri
     return resourcesToImport
 }
 
+type UserInputtedTemplateParameters = {
+    templateUri: string
+    stackName: string
+    parameters: Parameter[] | undefined
+    capabilities: Capability[]
+    resourcesToImport: ResourceToImport[] | undefined
+}
+
 async function changeSetSteps(
     client: LanguageClient,
     documentManager: DocumentManager,
     isValidation: boolean,
     templateUri: string | undefined
-): Promise<
-    | {
-          templateUri: string
-          stackName: string
-          parameters: Parameter[] | undefined
-          capabilities: Capability[]
-          resourcesToImport: ResourceToImport[] | undefined
-      }
-    | undefined
-> {
+): Promise<UserInputtedTemplateParameters | undefined> {
     templateUri ??= await getTemplatePath(documentManager)
     if (!templateUri) {
         return
