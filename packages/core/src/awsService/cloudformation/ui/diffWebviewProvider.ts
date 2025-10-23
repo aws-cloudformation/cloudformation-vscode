@@ -150,8 +150,22 @@ export class DiffWebviewProvider implements WebviewViewProvider {
 
         tableHtml += `</table>`
 
+        const viewDiffButton = `
+            <div class="view-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
+                <button onclick="openDiff()" style="
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 8px 16px;
+                    margin: 0 5px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                ">View Side-by-Side Diff</button>
+            </div>
+        `;
+
         const deploymentButtons = this.changeSetName && this.enableDeployments ? `
-            <div class="deployment-actions" style="margin: 10px 0; text-align: center;">
+            <div class="deployment-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
                 <button id="confirmDeploy" onclick="confirmDeploy()" style="
                     background-color: var(--vscode-button-background);
                     color: var(--vscode-button-foreground);
@@ -195,9 +209,8 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 </style>
             </head>
             <body>
-                <p><a href="#" onclick="openDiff(); return false;">View Side-by-Side Diff</a></p>
+                ${viewDiffButton}${deploymentButtons}
                 ${tableHtml}
-                ${deploymentButtons}
                 <script>
                     const vscode = acquireVsCodeApi();
                     function openDiff() {
