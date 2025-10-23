@@ -4,7 +4,7 @@
  */
 
 import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType } from 'vscode'
-import { commandKey, findParameterDescriptionPosition } from '../utils'
+import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
 import { Deployment, setLastDeployment } from '../stacks/actions/deploymentWorkflow'
@@ -65,28 +65,60 @@ export function validateTemplateCommand(
             stacks.startPolling()
         } catch (error) {
             showErrorMessage(
-                `Client: Error validating template: ${error instanceof Error ? error.message : String(error)}`
+                `Error validating template: ${extractErrorMessage(error)}`
             )
         }
     })
 }
 
-export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
-    return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
+export function executeChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
+    return commands.registerCommand(commandKey('api.executeChangeSet'), async (stackName: string, changeSetName: string) => {
         try {
-            const result = await changeSetSteps(client, documentManager, false, templateUri)
-            if (!result) {
-                return
-            }
-
-            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
-
-            const deployment = new Deployment(uri, stackName, client, parameters, capabilities, resourcesToImport)
+            const deployment = new Deployment(
+                stackName,
+                changeSetName,
+                client
+            )
             setLastDeployment(deployment)
             await deployment.deploy()
             stacks.startPolling()
         } catch (error) {
-            showErrorMessage(`Error deploying template: ${error instanceof Error ? error.message : String(error)}`)
+            showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
+        }
+    })
+}
+
+export function deployTemplateCommand(
+    client: LanguageClient, 
+    stacks: StacksManager,
+    diffProvider: DiffWebviewProvider,
+    documentManager: DocumentManager,
+) {
+    return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
+        try {
+            const result = await changeSetSteps(client, documentManager, false, templateUri)
+            if (!result) return
+
+            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
+
+            const validation = new Validation(
+                uri, 
+                stackName, 
+                client, 
+                diffProvider, 
+                parameters, 
+                capabilities, 
+                resourcesToImport,
+                true, // Confirm deployment following successful validation
+            )
+
+            setLastValidation(validation)
+
+            await validation.validate()
+            stacks.startPolling()
+            
+        } catch (error) {
+            showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
         }
     })
 }

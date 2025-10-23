@@ -26,6 +26,15 @@ export function commandKey(key: string): string {
     return `${ExtensionConfigKey}.${key}`
 }
 
+export function extractErrorMessage(error: unknown) {
+    if (error instanceof Error) {
+        const prefix = error.name === 'Error' ? '' : `${error.name}: `;
+        return `${prefix}${error.message}`;
+    }
+
+    return toString(error);
+}
+
 /**
  * Finds the position of the parameter description value where the cursor should be placed.
  * Returns the position between the quotes of the Description property.

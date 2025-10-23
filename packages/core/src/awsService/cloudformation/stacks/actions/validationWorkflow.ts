@@ -9,11 +9,13 @@ import { StackActionPhase, StackChange, StackActionState, ResourceToImport } fro
 import { LanguageClient } from 'vscode-languageclient'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
 import { setContext } from '../../../../shared/vscode/setContext'
-import { getValidationStatus, validate } from './stackActionApi'
+import { describeValidationStatus, getValidationStatus, validate } from './stackActionApi'
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
 import { StatusBarItem, commands } from 'vscode'
 import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
-import { createStackActionParams } from './stackActionUtil'
+import { createValidationParams } from './stackActionUtil'
+import { extractErrorMessage } from '../../utils'
+import { getLogger } from '../../../../shared'
 
 // TODO move this to server side, we should let server handle last validation
 let lastValidation: Validation | undefined = undefined
@@ -38,6 +40,8 @@ export class Validation {
     private status: StackActionPhase | undefined
     private changes: StackChange[] | undefined
     private statusBarItem: StatusBarItem | undefined
+    private shouldEnableDeployment: boolean
+    private changeSetName?: string
 
     constructor(
         uri: string,
@@ -46,7 +50,8 @@ export class Validation {
         diffProvider: DiffWebviewProvider,
         parameters?: Parameter[],
         capabilities?: Capability[],
-        resourcesToImport?: ResourceToImport[]
+        resourcesToImport?: ResourceToImport[],
+        shouldEnableDeployment: boolean = false
     ) {
         this.id = uuidv4()
         this.uri = uri
@@ -56,23 +61,31 @@ export class Validation {
         this.parameters = parameters
         this.capabilities = capabilities
         this.resourcesToImport = resourcesToImport
+        this.shouldEnableDeployment = shouldEnableDeployment
     }
 
     async validate() {
         try {
             showValidationStarted(this.stackName)
             this.statusBarItem = createDeploymentStatusBar()
-            await validate(
+            
+            // Capture the result to get changeSetName
+            const result = await validate(
                 this.client,
-                createStackActionParams(
+                createValidationParams(
                     this.id,
                     this.uri,
                     this.stackName,
                     this.parameters,
                     this.capabilities,
-                    this.resourcesToImport
+                    this.resourcesToImport,
+                    this.shouldEnableDeployment,
                 )
             )
+            
+            // Store changeSetName from validation result
+            this.changeSetName = result.changeSetName
+            
             this.pollForProgress()
         } catch (error) {
             showErrorMessage(`Error validating template: ${error instanceof Error ? error.message : String(error)}`)
@@ -86,7 +99,7 @@ export class Validation {
     private pollForProgress() {
         const interval = setInterval(() => {
             getValidationStatus(this.client, { id: this.id })
-                .then((validationResult) => {
+                .then(async (validationResult) => {
                     if (validationResult.phase === this.status) {
                         return
                     }
@@ -108,19 +121,22 @@ export class Validation {
 
                                 this.showDiffView()
                             } else {
-                                showValidationFailure(this.stackName)
+                                const describeValidationStatusResult = await describeValidationStatus(this.client, { id: this.id })
+                                showValidationFailure(this.stackName, describeValidationStatusResult.FailureReason ?? 'UNKNOWN')
                             }
                             clearInterval(interval)
                             break
                         case StackActionPhase.VALIDATION_FAILED:
-                            showValidationFailure(this.stackName)
+                            const describeValidationStatusResult = await describeValidationStatus(this.client, { id: this.id })
+                            showValidationFailure(this.stackName, describeValidationStatusResult.FailureReason ?? 'UNKNOWN')
                             clearInterval(interval)
                             break
                     }
                 })
                 .catch((error) => {
+                    getLogger().error(`Error polling for deployment status: ${error}`)
                     showErrorMessage(
-                        `Error polling for validation status: ${error instanceof Error ? error.message : String(error)}`
+                        `Error polling for validation status: ${extractErrorMessage(error)}`
                     )
                     clearInterval(interval)
                 })
@@ -129,7 +145,8 @@ export class Validation {
 
     private showDiffView() {
         void setContext('aws.cloudformation.stacks.diffVisible', true)
-        this.diffProvider.updateData(this.stackName, this.changes)
+        
+        this.diffProvider.updateData(this.stackName, this.changes, this.changeSetName, this.shouldEnableDeployment)
         void commands.executeCommand('aws.cloudformation.diff.focus')
     }
 

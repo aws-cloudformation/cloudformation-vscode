@@ -39,8 +39,8 @@ export function showDeploymentSuccess(stackName: string) {
     void window.showInformationMessage(`Deployment completed successfully for stack: ${stackName}`)
 }
 
-export function showDeploymentFailure(stackName: string) {
-    void window.showErrorMessage(`Deployment failed for stack: ${stackName}`)
+export function showDeploymentFailure(stackName: string, failureReason: string) {
+    void window.showErrorMessage(`Deployment failed for stack: ${stackName} with reason: ${failureReason}`)
 }
 
 export function showValidationComplete(stackName: string) {
@@ -55,8 +55,8 @@ export function showValidationSuccess(stackName: string) {
     void window.showInformationMessage(`Validation completed successfully for stack: ${stackName}`)
 }
 
-export function showValidationFailure(stackName: string) {
-    void window.showErrorMessage(`Validation failed for stack: ${stackName}`)
+export function showValidationFailure(stackName: string, failureReason: string) {
+    void window.showErrorMessage(`Validation failed for stack: ${stackName} with reason: ${failureReason}`)
 }
 
 export function showDeploymentStarted(stackName: string) {
