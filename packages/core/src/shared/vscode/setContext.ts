@@ -29,6 +29,8 @@ export type contextKey =
     | 'aws.toolkit.amazonqInstall.dismissed'
     | 'aws.stepFunctions.isWorkflowStudioFocused'
     | 'aws.cloudformation.stacks.diffVisible'
+    | 'aws.cloudformation.loadingStacks'
+    | 'aws.cloudformation.loadingResources'
     | 'aws.toolkit.notifications.show'
     | 'aws.amazonq.editSuggestionActive'
     | 'aws.smus.connected'

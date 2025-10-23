@@ -5,8 +5,13 @@
 
 import { RequestType, CodeAction, CodeActionParams } from 'vscode-languageserver-protocol'
 
+export interface ResourceRequest {
+    resourceType: string
+    nextToken?: string
+}
+
 export interface ListResourcesParams {
-    resourceTypes?: string[]
+    resources?: ResourceRequest[]
 }
 
 export interface ResourceTypesParams {}
@@ -18,6 +23,7 @@ export interface ResourceTypesResult {
 export interface ResourceList {
     typeName: string
     resourceIdentifiers: string[]
+    nextToken?: string
 }
 
 export interface ListResourcesResult {
@@ -74,4 +80,18 @@ export type ResourceStackManagementResult = {
 
 export const StackMgmtInfoRequest = new RequestType<ResourceIdentifier, ResourceStackManagementResult, void>(
     'aws/cfn/resources/stackMgmtInfo'
+)
+
+export type SearchResourceParams = {
+    resourceType: string
+    identifier: string
+}
+
+export type SearchResourceResult = {
+    found: boolean
+    resource?: ResourceList
+}
+
+export const SearchResourceRequest = new RequestType<SearchResourceParams, SearchResourceResult, void>(
+    'aws/cfn/resources/search'
 )
