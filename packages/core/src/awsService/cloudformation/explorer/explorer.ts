@@ -22,7 +22,7 @@ import { StacksManager } from '../stacks/stacksManager'
 import { ResourcesManager } from '../resources/resourcesManager'
 
 import { DocumentManager } from '../documents/documentManager'
-import { LanguageClient } from 'vscode-languageclient'
+import { ChangeSetsManager } from '../stacks/changeSetsManager'
 
 export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNodeBase>, RefreshableAwsTreeProvider {
     public viewProviderId: string = 'aws.cloudformation'
@@ -35,6 +35,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
     public constructor(
         private readonly stacksManager: StacksManager,
         private readonly resourcesManager: ResourcesManager,
+        private readonly changeSetsManager: ChangeSetsManager,
         documentManager: DocumentManager,
         regionProvider: RegionProvider
     ) {
@@ -85,7 +86,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
             const children: AWSTreeNodeBase[] = [
                 new RegionSelectorNode(this.regionManager),
                 this.documentsNode,
-                new StacksNode(this.stacksManager),
+                new StacksNode(this.stacksManager, this.changeSetsManager),
                 new ResourcesNode(this.resourcesManager),
             ]
 

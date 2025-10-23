@@ -11,7 +11,6 @@ import { ChangeSetInfo } from '../../stacks/actions/stackActionRequestType'
 export class StackChangeSetsNode extends AWSTreeNodeBase {
     public constructor(
         private readonly stackName: string,
-        private readonly region: string,
         private readonly changeSetsManager: ChangeSetsManager
     ) {
         super('Change Sets', TreeItemCollapsibleState.Collapsed)
@@ -20,7 +19,7 @@ export class StackChangeSetsNode extends AWSTreeNodeBase {
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
-        const changeSets = await this.changeSetsManager.getChangeSets(this.stackName, this.region)
+        const changeSets = await this.changeSetsManager.getChangeSets(this.stackName)
         return changeSets.map((changeSet) => new ChangeSetNode(changeSet))
     }
 }

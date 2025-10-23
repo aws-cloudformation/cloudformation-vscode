@@ -50,6 +50,7 @@ import { DevLspServerProvider } from './lsp-server/devLspServerProvider'
 import { RemoteLspServerProvider } from './lsp-server/remoteLspServerProvider'
 import { LspServerProvider } from './lsp-server/lspServerProvider'
 import { getLogger } from '../../shared/logger/logger'
+import { ChangeSetsManager } from './stacks/changeSetsManager'
 
 let client: LanguageClient
 
@@ -134,10 +135,12 @@ export async function activate(context: ExtensionContext) {
 
             const resourceSelector = new ResourceSelector(client)
             const resourcesManager = new ResourcesManager(client, resourceSelector)
+            const changeSetManager = new ChangeSetsManager(client)
 
             const cfnExplorer = new CloudFormationExplorer(
                 stacksManager,
                 resourcesManager,
+                changeSetManager,
                 documentManager,
                 globals.regionProvider
             )
