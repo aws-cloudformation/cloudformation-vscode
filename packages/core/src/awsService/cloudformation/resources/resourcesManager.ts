@@ -18,6 +18,8 @@ import {
     ResourceStateResult,
     StackMgmtInfoRequest,
     ResourceStackManagementResult,
+    SearchResourceRequest,
+    SearchResourceResult,
 } from '../cfn/resourceRequestTypes'
 
 import { showErrorMessage } from '../ui/message'
@@ -74,10 +76,12 @@ export class ResourcesManager {
                 return
             }
 
-            const response = await this.client.sendRequest(ListResourcesRequest, {
-                resourceTypes: this.selectedResourceTypes,
-            })
             this.resources.clear()
+
+            const response = await this.client.sendRequest(ListResourcesRequest, {
+                resources: this.selectedResourceTypes.map((resourceType) => ({ resourceType })),
+            })
+
             for (const resource of response.resources) {
                 this.resources.set(resource.typeName, resource)
             }
@@ -86,6 +90,22 @@ export class ResourcesManager {
             this.resources.clear()
         } finally {
             this.notifyAllListeners()
+        }
+    }
+
+    async loadMoreResources(resourceType: string, nextToken: string): Promise<void> {
+        try {
+            const response = await this.client.sendRequest(ListResourcesRequest, {
+                resources: [{ resourceType, nextToken }],
+            })
+
+            if (response.resources.length > 0) {
+                this.resources.set(resourceType, response.resources[0])
+            }
+
+            this.notifyAllListeners()
+        } catch (error) {
+            getLogger().error(`Failed to load more resources: ${error}`)
         }
     }
 
@@ -102,7 +122,7 @@ export class ResourcesManager {
                     }
 
                     const response = await this.client.sendRequest(RefreshResourcesRequest, {
-                        resourceTypes: this.selectedResourceTypes,
+                        resources: this.selectedResourceTypes.map((resourceType) => ({ resourceType })),
                     })
                     this.resources.clear()
                     for (const resource of response.resources) {
@@ -126,7 +146,7 @@ export class ResourcesManager {
             async () => {
                 try {
                     const response = await this.client.sendRequest(RefreshResourcesRequest, {
-                        resourceTypes: [resourceType],
+                        resources: [{ resourceType }],
                     })
 
                     const updatedResource = response.resources.find((r) => r.typeName === resourceType)
@@ -140,6 +160,25 @@ export class ResourcesManager {
                 }
             }
         )
+    }
+
+    async searchResource(resourceType: string, identifier: string): Promise<SearchResourceResult> {
+        try {
+            const response = await this.client.sendRequest(SearchResourceRequest, {
+                resourceType,
+                identifier,
+            })
+
+            if (response.found && response.resource) {
+                this.resources.set(resourceType, response.resource)
+                this.notifyAllListeners()
+            }
+
+            return response
+        } catch (error) {
+            getLogger().error(`Failed to search resource: ${error}`)
+            return { found: false }
+        }
     }
 
     async selectResourceTypes(): Promise<void> {

@@ -12,10 +12,12 @@ import { commandKey } from '../utils'
 type ListStacksParams = {
     statusToInclude?: StackStatus[]
     statusToExclude?: StackStatus[]
+    loadMore?: boolean
 }
 
 type ListStacksResult = {
     stacks: StackSummary[]
+    nextToken?: string
 }
 
 const ListStacksRequest = new RequestType<ListStacksParams, ListStacksResult, void>('aws/cfn/stacks')
@@ -25,6 +27,7 @@ type StacksChangeListener = (stacks: StackSummary[]) => void
 
 export class StacksManager implements Disposable {
     private stacks: StackSummary[] = []
+    private nextToken?: string
     private readonly listeners: StacksChangeListener[] = []
     private poller?: NodeJS.Timeout
 
@@ -38,8 +41,31 @@ export class StacksManager implements Disposable {
         return [...this.stacks]
     }
 
+    hasMore(): boolean {
+        return this.nextToken !== undefined
+    }
+
     reload() {
         void this.loadStacks()
+    }
+
+    async loadMoreStacks() {
+        if (!this.nextToken) {
+            return
+        }
+
+        try {
+            const response = await this.client.sendRequest(ListStacksRequest, {
+                statusToExclude: ['DELETE_COMPLETE'],
+                loadMore: true,
+            })
+            this.stacks = response.stacks
+            this.nextToken = response.nextToken
+        } catch (error) {
+            // Keep existing stacks on error
+        } finally {
+            this.notifyListeners()
+        }
     }
 
     startPolling() {
@@ -63,17 +89,24 @@ export class StacksManager implements Disposable {
         try {
             const response = await this.client.sendRequest(ListStacksRequest, {
                 statusToExclude: ['DELETE_COMPLETE'],
+                loadMore: false,
             })
             this.stacks = response.stacks
+            this.nextToken = response.nextToken
         } catch (error) {
             this.stacks = []
+            this.nextToken = undefined
         } finally {
-            for (const listener of this.listeners) {
-                listener(this.stacks)
-            }
+            this.notifyListeners()
             if (this.stacks.length === 0) {
                 this.stopPolling()
             }
+        }
+    }
+
+    private notifyListeners() {
+        for (const listener of this.listeners) {
+            listener(this.stacks)
         }
     }
 }

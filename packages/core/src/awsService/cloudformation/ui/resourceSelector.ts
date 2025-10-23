@@ -109,7 +109,7 @@ export class ResourceSelector {
         // If not cached, fetch from server
         try {
             const resourcesResponse = await this.client.sendRequest(ListResourcesRequest, {
-                resourceTypes: [resourceType],
+                resources: [{ resourceType }],
             })
 
             const resources = resourcesResponse.resources.find((r) => r.typeName === resourceType)

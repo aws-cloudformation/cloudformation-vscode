@@ -25,6 +25,9 @@ import {
     getStackManagementInfoCommand,
     extractToParameterPositionCursorCommand,
     getStackManagementInfoCommandPalette,
+    loadMoreResourcesCommand,
+    loadMoreStacksCommand,
+    searchResourceCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { showRegionsCommand } from './commands/regionCommands'
@@ -180,6 +183,9 @@ export async function activate(context: ExtensionContext) {
                     showCollapseAll: true,
                     canSelectMany: true,
                 }),
+                loadMoreResourcesCommand(cfnExplorer),
+                loadMoreStacksCommand(cfnExplorer),
+                searchResourceCommand(cfnExplorer, resourcesManager),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager),
