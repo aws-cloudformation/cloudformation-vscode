@@ -7,7 +7,7 @@ import { commands, env, Uri, window, workspace, Range, Selection, TextEditorReve
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
-import { Deployment, setLastDeployment } from '../stacks/actions/deploymentWorkflow'
+import { Deployment } from '../stacks/actions/deploymentWorkflow'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
 import {
     getParameterValues,
@@ -73,7 +73,7 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
         async (stackName: string, changeSetName: string) => {
             try {
                 const deployment = new Deployment(stackName, changeSetName, client)
-                setLastDeployment(deployment)
+
                 await deployment.deploy()
                 stacks.startPolling()
             } catch (error) {

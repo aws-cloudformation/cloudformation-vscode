@@ -14,16 +14,6 @@ import { createDeploymentParams } from './stackActionUtil'
 import { getLogger } from '../../../../shared/logger/logger'
 import { extractErrorMessage } from '../../utils'
 
-let lastDeployment: Deployment | undefined = undefined
-
-export function getLastDeployment(): Deployment | undefined {
-    return lastDeployment
-}
-
-export function setLastDeployment(deployment: Deployment | undefined): void {
-    lastDeployment = deployment
-}
-
 export class Deployment {
     private readonly id: string
     private readonly stackName: string
