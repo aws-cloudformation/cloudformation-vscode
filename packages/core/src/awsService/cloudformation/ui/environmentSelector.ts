@@ -10,7 +10,7 @@ import { formatMessage } from '../utils'
 export class EnvironmentSelector {
     public async selectEnvironment(environmentLookup: EnvironmentLookup): Promise<string | undefined> {
         if (Object.keys(environmentLookup).length === 0) {
-            window.showWarningMessage(formatMessage('No environments found. Initialize a CFN project first.'))
+            void window.showWarningMessage(formatMessage('No environments found. Initialize a CFN project first.'))
             return
         }
 
