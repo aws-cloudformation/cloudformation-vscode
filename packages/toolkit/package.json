@@ -2681,6 +2681,26 @@
                     "command": "aws.cloudformation.api.refreshAllResources",
                     "when": "view == aws.cloudformation && viewItem == resourceSection && !aws.cloudformation.refreshingAllResources",
                     "group": "1@2"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.viewChangeSet",
+                    "when": "view == aws.cloudformation && viewItem == changeSet",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.deleteChangeSet",
+                    "when": "view == aws.cloudformation && viewItem == changeSet",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.refreshChangeSets",
+                    "when": "view == aws.cloudformation && (viewItem == stackChangeSets || viewItem == stackChangeSetsWithMore)",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.loadMoreChangeSets",
+                    "when": "view == aws.cloudformation && viewItem == stackChangeSetsWithMore",
+                    "group": "inline@2"
                 }
             ],
             "aws.toolkit.auth": [
@@ -4816,6 +4836,30 @@
                 "command": "aws.cloudformation.selectRegion",
                 "title": "Select Region",
                 "icon": "$(gear)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.stacks.viewChangeSet",
+                "title": "View Change Set",
+                "icon": "$(search)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.stacks.deleteChangeSet",
+                "title": "Delete Change Set",
+                "icon": "$(close)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.stacks.refreshChangeSets",
+                "title": "Refresh Change Sets",
+                "icon": "$(refresh)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.loadMoreChangeSets",
+                "title": "Load More Change Sets",
+                "icon": "$(surround-with)",
                 "category": "CloudFormation"
             }
         ],

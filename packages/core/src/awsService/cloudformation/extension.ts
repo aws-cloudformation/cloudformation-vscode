@@ -29,6 +29,8 @@ import {
     loadMoreStacksCommand,
     searchResourceCommand,
     executeChangeSetCommand,
+    refreshChangeSetsCommand,
+    loadMoreChangeSetsCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -198,6 +200,8 @@ export async function activate(context: ExtensionContext) {
                 loadMoreResourcesCommand(cfnExplorer),
                 loadMoreStacksCommand(cfnExplorer),
                 searchResourceCommand(cfnExplorer, resourcesManager),
+                refreshChangeSetsCommand(cfnExplorer),
+                loadMoreChangeSetsCommand(cfnExplorer),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager),
