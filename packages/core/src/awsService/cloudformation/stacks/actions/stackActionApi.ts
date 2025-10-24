@@ -8,10 +8,13 @@ import {
     TemplateUri,
     GetParametersResult,
     GetCapabilitiesResult,
-    CreateStackActionParams,
     CreateStackActionResult,
     GetStackActionStatusResult,
     TemplateResource,
+    CreateValidationParams,
+    CreateDeploymentParams,
+    DescribeValidationStatusResult,
+    DescribeDeploymentStatusResult,
 } from './stackActionRequestType'
 import {
     GetParametersRequest,
@@ -21,20 +24,19 @@ import {
     GetValidationStatusRequest,
     GetDeploymentStatusRequest,
     GetTemplateResourcesRequest,
+    DescribeValidationStatusRequest,
+    DescribeDeploymentStatusRequest,
 } from './stackActionProtocol'
 import { Identifiable } from '../../lspTypes'
 
 export async function validate(
     client: LanguageClient,
-    params: CreateStackActionParams
+    params: CreateValidationParams
 ): Promise<CreateStackActionResult> {
     return await client.sendRequest(CreateValidationRequest, params)
 }
 
-export async function deploy(
-    client: LanguageClient,
-    params: CreateStackActionParams
-): Promise<CreateStackActionResult> {
+export async function deploy(client: LanguageClient, params: CreateDeploymentParams): Promise<CreateStackActionResult> {
     return await client.sendRequest(CreateDeploymentRequest, params)
 }
 
@@ -50,6 +52,20 @@ export async function getDeploymentStatus(
     params: Identifiable
 ): Promise<GetStackActionStatusResult> {
     return await client.sendRequest(GetDeploymentStatusRequest, params)
+}
+
+export async function describeValidationStatus(
+    client: LanguageClient,
+    params: Identifiable
+): Promise<DescribeValidationStatusResult> {
+    return await client.sendRequest(DescribeValidationStatusRequest, params)
+}
+
+export async function describeDeploymentStatus(
+    client: LanguageClient,
+    params: Identifiable
+): Promise<DescribeDeploymentStatusResult> {
+    return await client.sendRequest(DescribeDeploymentStatusRequest, params)
 }
 
 export async function getParameters(client: LanguageClient, params: TemplateUri): Promise<GetParametersResult> {

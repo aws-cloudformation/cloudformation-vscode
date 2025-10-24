@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WebviewView, WebviewViewProvider } from 'vscode'
+import { WebviewView, WebviewViewProvider, commands } from 'vscode'
 import { StackChange } from '../stacks/actions/stackActionRequestType'
 import { DiffViewHelper } from './diffViewHelper'
 
@@ -13,10 +13,14 @@ export class DiffWebviewProvider implements WebviewViewProvider {
     private _view?: WebviewView
     private stackName = ''
     private changes: StackChange[] = []
+    private changeSetName?: string
+    private enableDeployments: boolean = false
 
-    updateData(stackName: string, changes: StackChange[] = []) {
+    updateData(stackName: string, changes: StackChange[] = [], changeSetName?: string, enableDeployments = false) {
         this.stackName = stackName
         this.changes = changes
+        this.changeSetName = changeSetName
+        this.enableDeployments = enableDeployments
         if (this._view) {
             this._view.webview.html = this.getHtmlContent()
         }
@@ -30,6 +34,21 @@ export class DiffWebviewProvider implements WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage((message: { command: string; resourceId?: string }) => {
             if (message.command === webviewCommandOpenDiff) {
                 void DiffViewHelper.openDiff(this.stackName, this.changes, message.resourceId)
+            } else if (message.command === 'confirmDeploy') {
+                if (this.changeSetName) {
+                    void commands.executeCommand(
+                        'aws.cloudformation.api.executeChangeSet',
+                        this.stackName,
+                        this.changeSetName
+                    )
+                    this.changeSetName = undefined
+                    this.enableDeployments = false
+                    this._view!.webview.html = this.getHtmlContent()
+                }
+            } else if (message.command === 'cancelDeploy') {
+                this.changeSetName = undefined
+                this.enableDeployments = false
+                this._view!.webview.html = this.getHtmlContent()
             }
         })
     }
@@ -135,6 +154,46 @@ export class DiffWebviewProvider implements WebviewViewProvider {
 
         tableHtml += `</table>`
 
+        const viewDiffButton = `
+            <div class="view-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
+                <button onclick="openDiff()" style="
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 8px 16px;
+                    margin: 0 5px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                ">View Side-by-Side Diff</button>
+            </div>
+        `
+
+        const deploymentButtons =
+            this.changeSetName && this.enableDeployments
+                ? `
+            <div class="deployment-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
+                <button id="confirmDeploy" onclick="confirmDeploy()" style="
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 8px 16px;
+                    margin: 0 5px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                ">Deploy Changes</button>
+                <button id="cancelDeploy" onclick="cancelDeploy()" style="
+                    background-color: var(--vscode-button-secondaryBackground);
+                    color: var(--vscode-button-secondaryForeground);
+                    border: none;
+                    padding: 8px 16px;
+                    margin: 0 5px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                ">Cancel</button>
+            </div>
+        `
+                : ''
+
         return `
             <!DOCTYPE html>
             <html>
@@ -157,7 +216,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 </style>
             </head>
             <body>
-                <p><a href="#" onclick="openDiff(); return false;">View Side-by-Side Diff</a></p>
+                ${viewDiffButton}${deploymentButtons}
                 ${tableHtml}
                 <script>
                     const vscode = acquireVsCodeApi();
@@ -166,6 +225,12 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     }
                     function openDiffToResource(resourceId) {
                         vscode.postMessage({ command: '${webviewCommandOpenDiff}', resourceId: resourceId });
+                    }
+                    function confirmDeploy() {
+                        vscode.postMessage({ command: 'confirmDeploy' });
+                    }
+                    function cancelDeploy() {
+                        vscode.postMessage({ command: 'cancelDeploy' });
                     }
                 </script>
             </body>

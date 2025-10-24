@@ -4,71 +4,33 @@
  */
 
 import { v4 as uuidv4 } from 'uuid'
-import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackActionState, ResourceToImport } from './stackActionRequestType'
+import { StackActionPhase, StackActionState } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
-import {
-    showDeploymentStarted,
-    showDeploymentSuccess,
-    showDeploymentFailure,
-    showValidationComplete,
-} from '../../ui/message'
+import { showDeploymentStarted, showDeploymentSuccess, showDeploymentFailure, showErrorMessage } from '../../ui/message'
 import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
 import { StatusBarItem } from 'vscode'
-import { deploy, getDeploymentStatus } from './stackActionApi'
-import { createStackActionParams } from './stackActionUtil'
+import { deploy, describeDeploymentStatus, getDeploymentStatus } from './stackActionApi'
+import { createDeploymentParams } from './stackActionUtil'
 import { getLogger } from '../../../../shared/logger/logger'
-
-let lastDeployment: Deployment | undefined = undefined
-
-export function getLastDeployment(): Deployment | undefined {
-    return lastDeployment
-}
-
-export function setLastDeployment(deployment: Deployment | undefined): void {
-    lastDeployment = deployment
-}
+import { extractErrorMessage } from '../../utils'
 
 export class Deployment {
     private readonly id: string
-    private readonly uri: string
     private readonly stackName: string
-    private readonly parameters?: Parameter[]
-    private readonly capabilities?: Capability[]
-    private readonly resourcesToImport?: ResourceToImport[]
+    private readonly changeSetName: string
     private readonly client: LanguageClient
     private status: StackActionPhase | undefined
     private statusBarItem?: StatusBarItem
 
-    constructor(
-        uri: string,
-        stackName: string,
-        client: LanguageClient,
-        parameters?: Parameter[],
-        capabilities?: Capability[],
-        resourcesToImport?: ResourceToImport[]
-    ) {
+    constructor(stackName: string, changeSetName: string, client: LanguageClient) {
         this.id = uuidv4()
-        this.uri = uri
         this.stackName = stackName
+        this.changeSetName = changeSetName
         this.client = client
-        this.parameters = parameters
-        this.capabilities = capabilities
-        this.resourcesToImport = resourcesToImport
     }
 
     async deploy() {
-        await deploy(
-            this.client,
-            createStackActionParams(
-                this.id,
-                this.uri,
-                this.stackName,
-                this.parameters,
-                this.capabilities,
-                this.resourcesToImport
-            )
-        )
+        await deploy(this.client, createDeploymentParams(this.id, this.stackName, this.changeSetName))
         showDeploymentStarted(this.stackName)
         this.statusBarItem = createDeploymentStatusBar()
         this.pollForProgress()
@@ -77,7 +39,7 @@ export class Deployment {
     private pollForProgress() {
         const interval = setInterval(() => {
             getDeploymentStatus(this.client, { id: this.id })
-                .then((deploymentResult) => {
+                .then(async (deploymentResult) => {
                     if (deploymentResult.phase === this.status) {
                         return
                     }
@@ -88,30 +50,39 @@ export class Deployment {
                     }
 
                     switch (deploymentResult.phase) {
-                        case StackActionPhase.VALIDATION_COMPLETE:
-                            if (deploymentResult.phase === StackActionPhase.VALIDATION_COMPLETE) {
-                                showValidationComplete(this.stackName)
-                            }
-                            // Status bar updated above, continue polling
+                        case StackActionPhase.DEPLOYMENT_IN_PROGRESS:
                             break
                         case StackActionPhase.DEPLOYMENT_COMPLETE:
                             if (deploymentResult.state === StackActionState.SUCCESSFUL) {
                                 showDeploymentSuccess(this.stackName)
                             } else {
-                                showDeploymentFailure(this.stackName)
+                                const describeDeplomentStatusResult = await describeDeploymentStatus(this.client, {
+                                    id: this.id,
+                                })
+                                showDeploymentFailure(
+                                    this.stackName,
+                                    describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN'
+                                )
                             }
                             clearInterval(interval)
                             break
                         case StackActionPhase.DEPLOYMENT_FAILED:
-                        case StackActionPhase.VALIDATION_FAILED:
-                            showDeploymentFailure(this.stackName)
+                        case StackActionPhase.VALIDATION_FAILED: {
+                            const describeDeplomentStatusResult = await describeDeploymentStatus(this.client, {
+                                id: this.id,
+                            })
+                            showDeploymentFailure(
+                                this.stackName,
+                                describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN'
+                            )
                             clearInterval(interval)
                             break
+                        }
                     }
                 })
-                .catch((error) => {
+                .catch(async (error) => {
                     getLogger().error(`Error polling for deployment status: ${error}`)
-                    showDeploymentFailure(this.stackName)
+                    showErrorMessage(`Error polling for deployment status: ${extractErrorMessage(error)}`)
                     clearInterval(interval)
                 })
         }, 1000)
