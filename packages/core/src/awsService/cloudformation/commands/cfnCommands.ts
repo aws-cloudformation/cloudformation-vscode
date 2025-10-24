@@ -32,6 +32,7 @@ import { getLogger } from '../../../shared/logger/logger'
 import { CloudFormationExplorer } from '../explorer/explorer'
 import { StacksNode } from '../explorer/nodes/stacksNode'
 import { ResourceTypeNode } from '../explorer/nodes/resourceTypeNode'
+import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
 import { StacksManager } from '../stacks/stacksManager'
 
 export function validateTemplateCommand(
@@ -389,5 +390,18 @@ export function searchResourceCommand(explorer: CloudFormationExplorer, resource
         } else {
             void window.showErrorMessage(`Resource not found: ${identifier}`)
         }
+    })
+}
+
+export function refreshChangeSetsCommand(explorer: CloudFormationExplorer) {
+    return commands.registerCommand(commandKey('stacks.refreshChangeSets'), async (node: StackChangeSetsNode) => {
+        explorer.refresh(node)
+    })
+}
+
+export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
+    return commands.registerCommand(commandKey('api.loadMoreChangeSets'), async (node: StackChangeSetsNode) => {
+        await node.loadMoreChangeSets()
+        explorer.refresh(node)
     })
 }
