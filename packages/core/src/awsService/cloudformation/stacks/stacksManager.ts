@@ -91,6 +91,7 @@ export class StacksManager implements Disposable {
     }
 
     private async loadStacks() {
+        await setContext('aws.cloudformation.refreshingStacks', true)
         try {
             const response = await this.client.sendRequest(ListStacksRequest, {
                 statusToExclude: ['DELETE_COMPLETE'],
@@ -102,6 +103,7 @@ export class StacksManager implements Disposable {
             this.stacks = []
             this.nextToken = undefined
         } finally {
+            await setContext('aws.cloudformation.refreshingStacks', false)
             this.notifyListeners()
             if (this.stacks.length === 0) {
                 this.stopPolling()

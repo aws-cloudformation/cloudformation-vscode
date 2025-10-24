@@ -12,12 +12,12 @@ import {
     RefreshResourcesRequest,
     ResourceList,
     ResourceSelection,
+    ResourceStackManagementResult,
     ResourceStateParams,
     ResourceStatePurpose,
     ResourceStateRequest,
     ResourceStateResult,
     StackMgmtInfoRequest,
-    ResourceStackManagementResult,
     SearchResourceRequest,
     SearchResourceResult,
 } from '../cfn/resourceRequestTypes'
@@ -123,6 +123,7 @@ export class ResourcesManager {
                 title: 'Refreshing All Resources List',
             },
             async () => {
+                await setContext('aws.cloudformation.refreshingAllResources', true)
                 try {
                     if (this.selectedResourceTypes.length === 0) {
                         return
@@ -138,6 +139,7 @@ export class ResourcesManager {
                 } catch (error) {
                     getLogger().error(`Failed to refresh all resources: ${error}`)
                 } finally {
+                    await setContext('aws.cloudformation.refreshingAllResources', false)
                     this.notifyAllListeners()
                 }
             }
@@ -151,6 +153,7 @@ export class ResourcesManager {
                 title: `Refreshing ${resourceType} Resources List`,
             },
             async () => {
+                await setContext('aws.cloudformation.refreshingResourceList', true)
                 try {
                     const response = await this.client.sendRequest(RefreshResourcesRequest, {
                         resources: [{ resourceType }],
@@ -163,6 +166,7 @@ export class ResourcesManager {
                 } catch (error) {
                     getLogger().error(`Failed to refresh resource: ${error}`)
                 } finally {
+                    await setContext('aws.cloudformation.refreshingResourceList', false)
                     this.notifyAllListeners()
                 }
             }
@@ -206,6 +210,12 @@ export class ResourcesManager {
             return
         }
 
+        const contextKey =
+            purpose === ResourceStatePurpose.Import
+                ? 'aws.cloudformation.importingResource'
+                : 'aws.cloudformation.cloningResource'
+        await setContext(contextKey, true)
+
         try {
             const resourceSelectionsArray = await this.getResourceSelectionArray(resourceNodes)
             if (resourceSelectionsArray.length === 0) {
@@ -222,7 +232,7 @@ export class ResourcesManager {
 
             const title =
                 purpose === ResourceStatePurpose.Import ? 'Importing Resource State' : 'Cloning Resource State'
-            void window.withProgress(
+            await window.withProgress(
                 {
                     location: ProgressLocation.Notification,
                     title,
@@ -246,6 +256,8 @@ export class ResourcesManager {
             showErrorMessage(
                 `Error ${action} resource state: ${error instanceof Error ? error.message : String(error)}`
             )
+        } finally {
+            await setContext(contextKey, false)
         }
     }
 
@@ -403,56 +415,45 @@ export class ResourcesManager {
             resourceIdentifier = selection.resourceIdentifier
         }
 
+        await setContext('aws.cloudformation.gettingStackMgmtInfo', true)
         try {
-            await window
-                .withProgress(
-                    {
-                        location: ProgressLocation.Notification,
-                        title: 'Getting Stack Management Info',
-                        cancellable: false,
-                    },
-                    async () => {
-                        const result: ResourceStackManagementResult = await this.client.sendRequest(
-                            StackMgmtInfoRequest.method,
-                            resourceIdentifier
-                        )
-                        return result
-                    }
+            const result = (await window.withProgress(
+                {
+                    location: ProgressLocation.SourceControl,
+                    title: 'Getting Stack Management Info',
+                    cancellable: false,
+                },
+                async () => {
+                    return await this.client.sendRequest(StackMgmtInfoRequest.method, resourceIdentifier)
+                }
+            )) as ResourceStackManagementResult
+
+            await setContext('aws.cloudformation.gettingStackMgmtInfo', false)
+
+            if (result.managedByStack === true && result.stackName && result.stackId) {
+                const action = await window.showInformationMessage(
+                    `${result.physicalResourceId} is managed by stack: ${result.stackName}`,
+                    this.CopyStackName,
+                    this.CopyStackArn
                 )
-                .then(async (result) => {
-                    if (result.error) {
-                        void window.showInformationMessage(`${result.error}`)
-                        return
-                    }
 
-                    const managementStatus = result.managedByStack
-                        ? `Managed by stack: ${result.stackName ?? 'Unknown'}`
-                        : 'Not managed by any stack'
-
-                    const message = `Resource: ${result.physicalResourceId}\n${managementStatus}`
-
-                    if (result.managedByStack && result.stackName && result.stackId) {
-                        const action = await window.showInformationMessage(
-                            message,
-                            this.CopyStackName,
-                            this.CopyStackArn
-                        )
-
-                        if (action === this.CopyStackName) {
-                            await env.clipboard.writeText(result.stackName)
-                            window.setStatusBarMessage('Stack name copied to clipboard', 3000)
-                        } else if (action === this.CopyStackArn) {
-                            await env.clipboard.writeText(result.stackId)
-                            window.setStatusBarMessage('Stack arn copied to clipboard', 3000)
-                        }
-                    } else {
-                        void window.showInformationMessage(message)
-                    }
-                })
+                if (action === this.CopyStackName) {
+                    await env.clipboard.writeText(result.stackName)
+                    window.setStatusBarMessage('Stack name copied to clipboard', 3000)
+                } else if (action === this.CopyStackArn) {
+                    await env.clipboard.writeText(result.stackId)
+                    window.setStatusBarMessage('Stack ARN copied to clipboard', 3000)
+                }
+            } else if (result.managedByStack === false) {
+                void window.showInformationMessage(`${result.physicalResourceId} is not managed by any stack`)
+            } else {
+                showErrorMessage(`Failed to determine stack management status: ${result.error ?? 'Unknown error'}`)
+            }
         } catch (error) {
             showErrorMessage(
                 `Error getting stack management info: ${error instanceof Error ? error.message : String(error)}`
             )
+            await setContext('aws.cloudformation.gettingStackMgmtInfo', false)
         }
     }
 }
