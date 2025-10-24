@@ -2579,7 +2579,7 @@
                 },
                 {
                     "command": "aws.cloudformation.stacks.refresh",
-                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore)",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
                     "group": "inline@1"
                 },
                 {
@@ -2589,7 +2589,7 @@
                 },
                 {
                     "command": "aws.cloudformation.stacks.refresh",
-                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore)",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
                     "group": "1@2"
                 },
                 {
@@ -2599,12 +2599,12 @@
                 },
                 {
                     "command": "aws.cloudformation.api.addResourceTypes",
-                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection && !aws.cloudformation.refreshingAllResources",
                     "group": "inline@1"
                 },
                 {
                     "command": "aws.cloudformation.api.refreshAllResources",
-                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection && !aws.cloudformation.refreshingAllResources",
                     "group": "inline@2"
                 },
                 {
@@ -2619,32 +2619,32 @@
                 },
                 {
                     "command": "aws.cloudformation.api.importResourceState",
-                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "when": "view == aws.cloudformation && viewItem == resource && !aws.cloudformation.importingResource",
                     "group": "inline@1"
                 },
                 {
                     "command": "aws.cloudformation.api.cloneResourceState",
-                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "when": "view == aws.cloudformation && viewItem == resource && !aws.cloudformation.cloningResource",
                     "group": "inline@2"
                 },
                 {
                     "command": "aws.cloudformation.api.getStackManagementInfo",
-                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "when": "view == aws.cloudformation && viewItem == resource && !aws.cloudformation.gettingStackMgmtInfo",
                     "group": "inline@3"
                 },
                 {
                     "command": "aws.cloudformation.api.refreshResourceList",
-                    "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore)",
+                    "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore) && !aws.cloudformation.refreshingResourceList",
                     "group": "inline@2"
                 },
                 {
                     "command": "aws.cloudformation.api.importResourceState",
-                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "when": "view == aws.cloudformation && viewItem == resource && !aws.cloudformation.importingResource",
                     "group": "1@1"
                 },
                 {
                     "command": "aws.cloudformation.api.cloneResourceState",
-                    "when": "view == aws.cloudformation && viewItem == resource",
+                    "when": "view == aws.cloudformation && viewItem == resource && !aws.cloudformation.cloningResource",
                     "group": "1@2"
                 },
                 {
@@ -2669,17 +2669,17 @@
                 },
                 {
                     "command": "aws.cloudformation.api.refreshResourceList",
-                    "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore)",
+                    "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore) && !aws.cloudformation.refreshingResourceList",
                     "group": "1@1"
                 },
                 {
                     "command": "aws.cloudformation.api.addResourceTypes",
-                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection && !aws.cloudformation.refreshingAllResources",
                     "group": "1@1"
                 },
                 {
                     "command": "aws.cloudformation.api.refreshAllResources",
-                    "when": "view == aws.cloudformation && viewItem == resourceSection",
+                    "when": "view == aws.cloudformation && viewItem == resourceSection && !aws.cloudformation.refreshingAllResources",
                     "group": "1@2"
                 }
             ],
