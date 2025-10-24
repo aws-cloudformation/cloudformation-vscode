@@ -43,12 +43,7 @@ export class ResourceTypeNode extends AWSTreeNodeBase {
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
         const nodes = this.resourceList.resourceIdentifiers.map(
-            (identifier) =>
-                new ResourceNode(
-                    { name: identifier, resourceIdentifier: identifier },
-                    this.resourceList.typeName,
-                    identifier
-                )
+            (identifier) => new ResourceNode(identifier, this.resourceList.typeName)
         )
 
         return this.nextToken ? [...nodes, new LoadMoreResourcesNode(this)] : nodes
