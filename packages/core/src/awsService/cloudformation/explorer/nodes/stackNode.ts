@@ -9,6 +9,7 @@ import { StackSummary } from '@aws-sdk/client-cloudformation'
 import { StackStatusNode } from './stackStatusNode'
 import { StackOverviewNode } from './stackOverviewNode'
 import { StackEventsNode } from './stackEventsNode'
+import { StackOutputsNode } from './stackOutputsNode'
 import { StackResourcesNode } from './stackResourcesNode'
 import { StackChangeSetsNode } from './stackChangeSetsNode'
 import { ChangeSetsManager } from '../../stacks/changeSetsManager'
@@ -47,6 +48,7 @@ export class StackNode extends AWSTreeNodeBase {
             new StackStatusNode(stackStatus),
             new StackOverviewNode(stackName),
             new StackEventsNode(stackName),
+            new StackOutputsNode(stackName),
             new StackResourcesNode(stackName),
             new StackChangeSetsNode(stackName, this.changeSetsManager),
         ]
