@@ -7,15 +7,15 @@ import { Disposable, window, workspace } from 'vscode'
 import { Auth } from '../../../auth/auth'
 import { formatMessage, toString } from '../utils'
 import { CfnConfig, EnvironmentConfig, EnvironmentLookup } from './cfnProjectTypes'
-import { globals } from '../../../shared'
 import path from 'path'
 import fs from '../../../shared/fs/fs'
 import { EnvironmentSelector } from '../ui/environmentSelector'
+import globals from '../../../shared/extensionGlobals'
 
 export class EnvironmentManager implements Disposable {
-    private readonly CFN_PROJECT_PATH = 'cfn-project'
-    private readonly CONFIG_FILE = 'cfn-config.json'
-    private readonly SELECTED_ENVIRONMENT_KEY = 'aws.cloudformation.selectedEnvironment'
+    private readonly cfnProjectPath = 'cfn-project'
+    private readonly configFile = 'cfn-config.json'
+    private readonly selectedEnvironmentKey = 'aws.cloudformation.selectedEnvironment'
     private readonly auth = Auth.instance
     private listeners: (() => void)[] = []
 
@@ -26,11 +26,13 @@ export class EnvironmentManager implements Disposable {
     }
 
     public getSelectedEnvironmentName(): string | undefined {
-        return globals.context.workspaceState.get(this.SELECTED_ENVIRONMENT_KEY)
+        return globals.context.workspaceState.get(this.selectedEnvironmentKey)
     }
 
     private notifyListeners(): void {
-        this.listeners.forEach((listener) => listener())
+        for (const listener of this.listeners) {
+            listener()
+        }
     }
 
     public async selectEnvironment(): Promise<void> {
@@ -56,9 +58,9 @@ export class EnvironmentManager implements Disposable {
         const environment = environmentLookup[environmentName]
 
         if (environment) {
-            await globals.context.workspaceState.update(this.SELECTED_ENVIRONMENT_KEY, environmentName)
+            await globals.context.workspaceState.update(this.selectedEnvironmentKey, environmentName)
 
-            this.syncEnvironmentWithProfile(environment)
+            await this.syncEnvironmentWithProfile(environment)
         }
 
         this.notifyListeners()
@@ -89,7 +91,7 @@ export class EnvironmentManager implements Disposable {
         if (!workspaceRoot) {
             throw new Error('No workspace folder found')
         }
-        return path.join(workspaceRoot, this.CFN_PROJECT_PATH, this.CONFIG_FILE)
+        return path.join(workspaceRoot, this.cfnProjectPath, this.configFile)
     }
 
     dispose(): void {
