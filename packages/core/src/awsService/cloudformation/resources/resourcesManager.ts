@@ -344,16 +344,11 @@ export class ResourcesManager {
     private async getResourceSelectionArray(resourceNodes?: ResourceNode[]): Promise<ResourceSelection[]> {
         let selections: ResourceSelectionResult[]
 
-        if (resourceNodes && resourceNodes.length > 0) {
-            selections = resourceNodes
-                .filter(
-                    (node): node is ResourceNode & { resourceType: string } =>
-                        !!node.resourceList && !!node.resourceType && !!node.resourceIdentifier
-                )
-                .map((node) => ({
-                    resourceType: node.resourceType,
-                    resourceIdentifier: node.resourceIdentifier,
-                }))
+        if (resourceNodes?.length) {
+            selections = resourceNodes.map((node) => ({
+                resourceType: node.resourceType,
+                resourceIdentifier: node.resourceIdentifier,
+            }))
         } else {
             selections = await this.resourceSelector.selectResources()
         }

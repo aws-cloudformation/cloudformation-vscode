@@ -8,23 +8,11 @@ import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBa
 
 export class ResourceNode extends AWSTreeNodeBase {
     public constructor(
-        public readonly resource: any,
-        public readonly resourceType?: string,
-        resourceIdentifier?: string
+        public readonly resourceIdentifier: string,
+        public readonly resourceType: string
     ) {
-        super(resource.name || resource.resourceIdentifier || 'Unknown Resource', TreeItemCollapsibleState.None)
+        super(resourceIdentifier, TreeItemCollapsibleState.None)
         this.contextValue = 'resource'
-        this.description = resource.typeName || resourceType
-        this.resourceType = resourceType || resource.typeName
-        this.resourceIdentifier = resourceIdentifier || resource.resourceIdentifier || ''
-    }
-
-    // Ensure resourceIdentifier is always a string
-    public readonly resourceIdentifier: string
-
-    // Add resourceList property for backward compatibility
-    public get resourceList() {
-        return this.resource
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
