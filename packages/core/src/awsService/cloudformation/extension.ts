@@ -54,6 +54,9 @@ import { RemoteLspServerProvider } from './lsp-server/remoteLspServerProvider'
 import { LspServerProvider } from './lsp-server/lspServerProvider'
 import { getLogger } from '../../shared/logger/logger'
 import { ChangeSetsManager } from './stacks/changeSetsManager'
+import { EnvironmentManager } from './cfn-init/environmentManager'
+import { EnvironmentSelector } from './ui/environmentSelector'
+import { selectEnvironmentCommand } from './commands/environmentCommands'
 
 let client: LanguageClient
 
@@ -139,13 +142,16 @@ export async function activate(context: ExtensionContext) {
             const resourceSelector = new ResourceSelector(client)
             const resourcesManager = new ResourcesManager(client, resourceSelector)
             const changeSetManager = new ChangeSetsManager(client)
+            const environmentSelector = new EnvironmentSelector()
+            const environmentManager = new EnvironmentManager(environmentSelector)
 
             const cfnExplorer = new CloudFormationExplorer(
                 stacksManager,
                 resourcesManager,
                 changeSetManager,
                 documentManager,
-                globals.regionProvider
+                globals.regionProvider,
+                environmentManager
             )
 
             // Add listener to refresh explorer when resources change
@@ -158,6 +164,10 @@ export async function activate(context: ExtensionContext) {
             })
 
             documentManager.addListener(() => {
+                cfnExplorer.refresh()
+            })
+            
+            environmentManager.addListener(() => {
                 cfnExplorer.refresh()
             })
 
@@ -221,6 +231,7 @@ export async function activate(context: ExtensionContext) {
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
                 selectRegionCommand(cfnExplorer),
+                selectEnvironmentCommand(cfnExplorer),
                 rerunLastValidationCommand(),
                 extractToParameterPositionCursorCommand(),
                 credentialsService,
