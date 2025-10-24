@@ -398,3 +398,10 @@ export function refreshChangeSetsCommand(explorer: CloudFormationExplorer) {
         explorer.refresh(node)
     })
 }
+
+export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
+    return commands.registerCommand(commandKey('api.loadMoreChangeSets'), async (node: StackChangeSetsNode) => {
+        await node.loadMoreChangeSets()
+        explorer.refresh(node)
+    })
+}

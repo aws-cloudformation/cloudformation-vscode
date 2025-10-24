@@ -159,8 +159,10 @@ export type ChangeSetInfo = {
 
 export type ListChangeSetsParams = {
     stackName: string
+    nextToken?: string
 }
 
 export type ListChangeSetsResult = {
     changeSets: ChangeSetInfo[]
+    nextToken?: string
 }

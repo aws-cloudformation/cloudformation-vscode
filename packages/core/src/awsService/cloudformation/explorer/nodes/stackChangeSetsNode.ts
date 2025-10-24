@@ -7,6 +7,19 @@ import { TreeItemCollapsibleState, ThemeIcon, ThemeColor } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
 import { ChangeSetsManager } from '../../stacks/changeSetsManager'
 import { ChangeSetInfo } from '../../stacks/actions/stackActionRequestType'
+import { commandKey } from '../../utils'
+
+class LoadMoreChangeSetsNode extends AWSTreeNodeBase {
+    public constructor(private readonly parent: StackChangeSetsNode) {
+        super('[Load More...]', TreeItemCollapsibleState.None)
+        this.contextValue = 'loadMoreChangeSets'
+        this.command = {
+            title: 'Load More',
+            command: commandKey('api.loadMoreChangeSets'),
+            arguments: [this.parent],
+        }
+    }
+}
 
 export class StackChangeSetsNode extends AWSTreeNodeBase {
     public constructor(
@@ -16,11 +29,27 @@ export class StackChangeSetsNode extends AWSTreeNodeBase {
         super('Change Sets', TreeItemCollapsibleState.Collapsed)
         this.contextValue = 'stackChangeSets'
         this.iconPath = new ThemeIcon('diff')
+        this.updateNode()
+    }
+
+    private updateNode(): void {
+        const count = this.changeSetsManager.get(this.stackName).length
+        const hasMore = this.changeSetsManager.hasMore(this.stackName)
+        this.description = hasMore ? `(${count}+)` : `(${count})`
+        this.contextValue = hasMore ? 'stackChangeSetsWithMore' : 'stackChangeSets'
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
         const changeSets = await this.changeSetsManager.getChangeSets(this.stackName)
-        return changeSets.map((changeSet) => new ChangeSetNode(changeSet))
+        this.updateNode()
+
+        const nodes = changeSets.map((changeSet) => new ChangeSetNode(changeSet))
+        return this.changeSetsManager.hasMore(this.stackName) ? [...nodes, new LoadMoreChangeSetsNode(this)] : nodes
+    }
+
+    public async loadMoreChangeSets(): Promise<void> {
+        await this.changeSetsManager.loadMoreChangeSets(this.stackName)
+        this.updateNode()
     }
 }
 

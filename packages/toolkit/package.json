@@ -2694,8 +2694,13 @@
                 },
                 {
                     "command": "aws.cloudformation.stacks.refreshChangeSets",
-                    "when": "view == aws.cloudformation && viewItem == stackChangeSets",
+                    "when": "view == aws.cloudformation && (viewItem == stackChangeSets || viewItem == stackChangeSetsWithMore)",
                     "group": "inline@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.loadMoreChangeSets",
+                    "when": "view == aws.cloudformation && viewItem == stackChangeSetsWithMore",
+                    "group": "inline@2"
                 }
             ],
             "aws.toolkit.auth": [
@@ -4849,6 +4854,12 @@
                 "command": "aws.cloudformation.stacks.refreshChangeSets",
                 "title": "Refresh Change Sets",
                 "icon": "$(refresh)",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.api.loadMoreChangeSets",
+                "title": "Load More Change Sets",
+                "icon": "$(surround-with)",
                 "category": "CloudFormation"
             }
         ],

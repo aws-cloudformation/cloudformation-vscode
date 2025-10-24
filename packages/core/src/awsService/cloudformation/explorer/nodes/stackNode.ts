@@ -44,6 +44,10 @@ export class StackNode extends AWSTreeNodeBase {
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
         const stackName = this.stack.StackName ?? ''
         const stackStatus = this.stack.StackStatus ?? 'UNKNOWN'
+
+        // Pre-load change sets to get accurate count
+        await this.changeSetsManager.getChangeSets(stackName)
+
         return [
             new StackStatusNode(stackStatus),
             new StackOverviewNode(stackName),
