@@ -12,11 +12,11 @@ export class EnvironmentsNode extends AWSTreeNodeBase {
     public constructor(readonly environmentManager: EnvironmentManager) {
         const selectedEnv = environmentManager.getSelectedEnvironmentName()
         const label = selectedEnv ? `Environment: ${selectedEnv}` : 'Environment: not selected'
-        
+
         super(label, TreeItemCollapsibleState.None)
         this.contextValue = 'environmentsSection'
         this.iconPath = new ThemeIcon('settings-gear')
-        this.tooltip = selectedEnv 
+        this.tooltip = selectedEnv
             ? `Current environment: ${selectedEnv}. Click to select a different environment.`
             : 'No environment selected. Click to select an environment.'
         this.command = {

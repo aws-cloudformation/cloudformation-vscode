@@ -166,7 +166,7 @@ export async function activate(context: ExtensionContext) {
             documentManager.addListener(() => {
                 cfnExplorer.refresh()
             })
-            
+
             environmentManager.addListener(() => {
                 cfnExplorer.refresh()
             })
