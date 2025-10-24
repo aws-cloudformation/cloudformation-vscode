@@ -8,20 +8,23 @@ import { Identifiable } from '../../lspTypes'
 import {
     TemplateUri,
     GetParametersResult,
-    CreateStackActionParams,
     CreateStackActionResult,
     GetStackActionStatusResult,
     GetCapabilitiesResult,
     GetTemplateResourcesResult,
     ListChangeSetsParams,
     ListChangeSetsResult,
+    CreateValidationParams,
+    CreateDeploymentParams,
+    DescribeValidationStatusResult,
+    DescribeDeploymentStatusResult,
 } from './stackActionRequestType'
 
-export const CreateValidationRequest = new RequestType<CreateStackActionParams, CreateStackActionResult, void>(
+export const CreateValidationRequest = new RequestType<CreateValidationParams, CreateStackActionResult, void>(
     'aws/cfn/stack/validation/create'
 )
 
-export const CreateDeploymentRequest = new RequestType<CreateStackActionParams, CreateStackActionResult, void>(
+export const CreateDeploymentRequest = new RequestType<CreateDeploymentParams, CreateStackActionResult, void>(
     'aws/cfn/stack/deployment/create'
 )
 
@@ -31,6 +34,14 @@ export const GetValidationStatusRequest = new RequestType<Identifiable, GetStack
 
 export const GetDeploymentStatusRequest = new RequestType<Identifiable, GetStackActionStatusResult, void>(
     'aws/cfn/stack/deployment/status'
+)
+
+export const DescribeValidationStatusRequest = new RequestType<Identifiable, DescribeValidationStatusResult, void>(
+    'aws/cfn/stack/validation/status/describe'
+)
+
+export const DescribeDeploymentStatusRequest = new RequestType<Identifiable, DescribeDeploymentStatusResult, void>(
+    'aws/cfn/stack/deployment/status/describe'
 )
 
 export const GetParametersRequest = new RequestType<TemplateUri, GetParametersResult, void>('aws/cfn/stack/parameters')

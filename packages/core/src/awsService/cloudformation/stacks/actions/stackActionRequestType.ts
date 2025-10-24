@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Parameter, Capability, ResourceChangeDetail } from '@aws-sdk/client-cloudformation'
+import {
+    Parameter,
+    Capability,
+    ResourceChangeDetail,
+    ResourceStatus,
+    DetailedStatus,
+} from '@aws-sdk/client-cloudformation'
 import { Identifiable } from '../../lspTypes'
 
 export type ResourceToImport = {
@@ -12,19 +18,23 @@ export type ResourceToImport = {
     ResourceIdentifier: Record<string, string>
 }
 
-export type CreateStackActionParams = Identifiable & {
+export type CreateValidationParams = Identifiable & {
     uri: string
     stackName: string
     parameters?: Parameter[]
     capabilities?: Capability[]
     resourcesToImport?: ResourceToImport[]
+    keepChangeSet?: boolean
 }
 
-export type CreateStackActionResult = Identifiable & {
-    id: string
+export type ChangeSetReference = {
     changeSetName: string
     stackName: string
 }
+
+export type CreateDeploymentParams = Identifiable & ChangeSetReference
+
+export type CreateStackActionResult = Identifiable & ChangeSetReference
 
 export type ValidationResult = {
     level: 'FAIL' | 'WARN' | 'INFO'
@@ -75,6 +85,36 @@ export type GetStackActionStatusResult = Identifiable & {
     state: StackActionState
     changes?: StackChange[]
 }
+
+export type ValidationDetail = {
+    ValidationName: string
+    LogicalId?: string
+    ResourcePropertyPath?: string
+    Severity: 'INFO' | 'ERROR'
+    Message: string
+}
+
+export type DeploymentEvent = {
+    LogicalResourceId?: string
+    ResourceType?: string
+    ResourceStatus?: ResourceStatus
+    ResourceStatusReason?: string
+    DetailedStatus?: DetailedStatus
+}
+
+export type Failable = {
+    FailureReason?: string
+}
+
+export type DescribeValidationStatusResult = GetStackActionStatusResult &
+    Failable & {
+        ValidationDetails?: ValidationDetail[]
+    }
+
+export type DescribeDeploymentStatusResult = GetStackActionStatusResult &
+    Failable & {
+        DeploymentEvents?: DeploymentEvent[]
+    }
 
 export type GetParametersResult = {
     parameters: TemplateParameter[]

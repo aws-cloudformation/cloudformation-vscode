@@ -28,6 +28,7 @@ import {
     loadMoreResourcesCommand,
     loadMoreStacksCommand,
     searchResourceCommand,
+    executeChangeSetCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -211,7 +212,8 @@ export async function activate(context: ExtensionContext) {
                 focusDiffCommand(),
                 restartCommand(client),
                 validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
-                deployTemplateCommand(client, stacksManager, documentManager),
+                deployTemplateCommand(client, stacksManager, diffProvider, documentManager),
+                executeChangeSetCommand(client, stacksManager),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
                 selectRegionCommand(cfnExplorer),

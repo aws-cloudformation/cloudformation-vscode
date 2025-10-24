@@ -4,10 +4,10 @@
  */
 
 import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType } from 'vscode'
-import { commandKey, findParameterDescriptionPosition } from '../utils'
+import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
-import { Deployment, setLastDeployment } from '../stacks/actions/deploymentWorkflow'
+import { Deployment } from '../stacks/actions/deploymentWorkflow'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
 import {
     getParameterValues,
@@ -47,16 +47,14 @@ export function validateTemplateCommand(
                 return
             }
 
-            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
-
             const validation = new Validation(
-                uri,
-                stackName,
+                result.templateUri,
+                result.stackName,
                 client,
                 diffProvider,
-                parameters,
-                capabilities,
-                resourcesToImport
+                result.parameters,
+                result.capabilities,
+                result.resourcesToImport
             )
 
             setLastValidation(validation)
@@ -64,14 +62,33 @@ export function validateTemplateCommand(
             await validation.validate()
             stacks.startPolling()
         } catch (error) {
-            showErrorMessage(
-                `Client: Error validating template: ${error instanceof Error ? error.message : String(error)}`
-            )
+            showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
         }
     })
 }
 
-export function deployTemplateCommand(client: LanguageClient, stacks: StacksManager, documentManager: DocumentManager) {
+export function executeChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
+    return commands.registerCommand(
+        commandKey('api.executeChangeSet'),
+        async (stackName: string, changeSetName: string) => {
+            try {
+                const deployment = new Deployment(stackName, changeSetName, client)
+
+                await deployment.deploy()
+                stacks.startPolling()
+            } catch (error) {
+                showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
+            }
+        }
+    )
+}
+
+export function deployTemplateCommand(
+    client: LanguageClient,
+    stacks: StacksManager,
+    diffProvider: DiffWebviewProvider,
+    documentManager: DocumentManager
+) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
             const result = await changeSetSteps(client, documentManager, false, templateUri)
@@ -79,14 +96,23 @@ export function deployTemplateCommand(client: LanguageClient, stacks: StacksMana
                 return
             }
 
-            const { templateUri: uri, stackName, parameters, capabilities, resourcesToImport } = result
+            const validation = new Validation(
+                result.templateUri,
+                result.stackName,
+                client,
+                diffProvider,
+                result.parameters,
+                result.capabilities,
+                result.resourcesToImport,
+                true // Confirm deployment following successful validation
+            )
 
-            const deployment = new Deployment(uri, stackName, client, parameters, capabilities, resourcesToImport)
-            setLastDeployment(deployment)
-            await deployment.deploy()
+            setLastValidation(validation)
+
+            await validation.validate()
             stacks.startPolling()
         } catch (error) {
-            showErrorMessage(`Error deploying template: ${error instanceof Error ? error.message : String(error)}`)
+            showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
         }
     })
 }
@@ -109,21 +135,20 @@ async function promptForResourceImport(client: LanguageClient, templateUri: stri
     return resourcesToImport
 }
 
+type UserInputtedTemplateParameters = {
+    templateUri: string
+    stackName: string
+    parameters: Parameter[] | undefined
+    capabilities: Capability[]
+    resourcesToImport: ResourceToImport[] | undefined
+}
+
 async function changeSetSteps(
     client: LanguageClient,
     documentManager: DocumentManager,
     isValidation: boolean,
     templateUri: string | undefined
-): Promise<
-    | {
-          templateUri: string
-          stackName: string
-          parameters: Parameter[] | undefined
-          capabilities: Capability[]
-          resourcesToImport: ResourceToImport[] | undefined
-      }
-    | undefined
-> {
+): Promise<UserInputtedTemplateParameters | undefined> {
     templateUri ??= await getTemplatePath(documentManager)
     if (!templateUri) {
         return
