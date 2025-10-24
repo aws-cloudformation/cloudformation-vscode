@@ -154,6 +154,10 @@ export async function activate(context: ExtensionContext) {
                 cfnExplorer.refresh()
             })
 
+            documentManager.addListener(() => {
+                cfnExplorer.refresh()
+            })
+
             const credentialsService = new AwsCredentialsService(
                 stacksManager,
                 resourcesManager,
