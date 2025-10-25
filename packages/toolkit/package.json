@@ -1430,6 +1430,10 @@
                 {
                     "command": "aws.smus.refreshProject",
                     "when": "false"
+                },
+                {
+                    "command": "aws.cloudformation.api.copyResourceIdentifier",
+                    "when": "false"
                 }
             ],
             "editor/title": [
@@ -4735,132 +4739,132 @@
                 "command": "aws.cloudformation.api.importResourceState",
                 "title": "Import Resource State",
                 "icon": "$(cloud-download)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.copyResourceIdentifier",
                 "title": "Copy Resource Identifier",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.refreshResourceList",
                 "title": "Refresh Resource List",
                 "icon": "$(refresh)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.addResourceTypes",
                 "title": "Add Resource Types",
                 "icon": "$(add)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.refreshAllResources",
                 "title": "Refresh All Resources",
                 "icon": "$(refresh)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.stacks.refresh",
                 "title": "Refresh Stacks",
                 "icon": "$(refresh)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.loadMoreStacks",
                 "title": "Load More Stacks",
                 "icon": "$(surround-with)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.loadMoreResources",
                 "title": "Load More Resources",
                 "icon": "$(surround-with)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.searchResource",
                 "title": "Find Resource by Identifier",
                 "icon": "$(search)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.cloneResourceState",
                 "title": "Clone Resource State",
                 "icon": "$(copy)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.getStackManagementInfo",
                 "title": "Get Stack Management Info",
                 "icon": "$(info)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.stacks.viewDiff",
                 "title": "View Stack Diff",
                 "icon": "$(diff)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.diff.focus",
                 "title": "Focus CloudFormation Diff View",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.server.attachDebugger",
-                "title": "AWS CloudFormation: Attach Debugger to Server",
-                "category": "CloudFormation"
+                "title": "Attach Debugger to Server",
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.server.restartServer",
-                "title": "AWS CloudFormation: Restart Server",
-                "category": "CloudFormation"
+                "title": "Restart Server",
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.validateTemplate",
-                "title": "AWS CloudFormation: Validate Template",
-                "category": "CloudFormation"
+                "title": "Validate Template",
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.deployTemplate",
-                "title": "AWS CloudFormation: Deploy Template",
-                "category": "CloudFormation"
+                "title": "Deploy Template",
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.rerunLastValidation",
-                "title": "AWS CloudFormation: Rerun Last Validation",
-                "category": "CloudFormation"
+                "title": "Rerun Last Validation",
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.selectRegion",
                 "title": "Select Region",
                 "icon": "$(gear)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.stacks.viewChangeSet",
                 "title": "View Change Set",
                 "icon": "$(search)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.stacks.deleteChangeSet",
                 "title": "Delete Change Set",
                 "icon": "$(close)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.stacks.refreshChangeSets",
                 "title": "Refresh Change Sets",
                 "icon": "$(refresh)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.loadMoreChangeSets",
                 "title": "Load More Change Sets",
                 "icon": "$(surround-with)",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             }
         ],
         "jsonValidation": [
