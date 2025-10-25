@@ -298,11 +298,9 @@ export function refreshAllResourcesCommand(resourcesManager: ResourcesManager) {
 }
 
 export function refreshResourceListCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(commandKey('api.refreshResourceList'), (resourceNode?: ResourceNode) => {
-        const resourceType = resourceNode?.resourceType
-        if (resourceType) {
-            resourcesManager.refreshResourceList(resourceType)
-        }
+    return commands.registerCommand(RefreshResourceListCommand.command, (resourceTypeNode: ResourceTypeNode) => {
+        const resourceType = resourceTypeNode.resourceList.typeName
+        resourcesManager.refreshResourceList(resourceType)
     })
 }
 
