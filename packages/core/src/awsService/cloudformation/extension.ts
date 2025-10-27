@@ -32,6 +32,9 @@ import {
     refreshChangeSetsCommand,
     loadMoreChangeSetsCommand,
     showStackOverviewCommand,
+    createProjectCommand,
+    addEnvironmentCommand,
+    removeEnvironmentCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -59,6 +62,8 @@ import { ChangeSetsManager } from './stacks/changeSetsManager'
 import { EnvironmentManager } from './cfn-init/environmentManager'
 import { EnvironmentSelector } from './ui/environmentSelector'
 import { selectEnvironmentCommand } from './commands/environmentCommands'
+import { CfnInitUiInterface } from './cfn-init/cfnInitUiInterface'
+import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
 
 let client: LanguageClient
 
@@ -70,6 +75,7 @@ export async function activate(context: ExtensionContext) {
     ])
     const serverFile = await serverProvider.serverExecutable()
     getLogger().info(`Found CloudFormation LSP executable: ${serverFile}`)
+    const serverRootDir = await serverProvider.serverRootDir()
 
     const envOptions = {
         NODE_OPTIONS: '--enable-source-maps',
@@ -146,6 +152,9 @@ export async function activate(context: ExtensionContext) {
             const changeSetManager = new ChangeSetsManager(client)
             const environmentSelector = new EnvironmentSelector()
             const environmentManager = new EnvironmentManager(environmentSelector)
+
+            const cfnInitCliCaller = new CfnInitCliCaller(serverRootDir)
+            const cfnInitUiInterface = new CfnInitUiInterface(cfnInitCliCaller)
 
             const cfnExplorer = new CloudFormationExplorer(
                 stacksManager,
@@ -240,6 +249,9 @@ export async function activate(context: ExtensionContext) {
                 selectEnvironmentCommand(cfnExplorer),
                 rerunLastValidationCommand(),
                 extractToParameterPositionCursorCommand(),
+                createProjectCommand(cfnInitUiInterface),
+                addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller),
+                removeEnvironmentCommand(cfnInitCliCaller),
                 credentialsService,
                 serverProvider
             )

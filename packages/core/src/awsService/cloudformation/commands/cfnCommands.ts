@@ -36,6 +36,8 @@ import { StacksNode } from '../explorer/nodes/stacksNode'
 import { ResourceTypeNode } from '../explorer/nodes/resourceTypeNode'
 import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
 import { StacksManager } from '../stacks/stacksManager'
+import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
+import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 
 export function validateTemplateCommand(
     client: LanguageClient,
@@ -409,5 +411,69 @@ export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
 export function showStackOverviewCommand(overviewProvider: StackOverviewWebviewProvider) {
     return commands.registerCommand(commandKey('api.showStackOverview'), async (stack: StackInfo) => {
         await overviewProvider.showStackOverview(stack)
+    }
+)}
+
+export function createProjectCommand(uiInterface: CfnInitUiInterface) {
+    return commands.registerCommand(commandKey('init.initializeProject'), async () => {
+        await uiInterface.promptForCreate()
+    })
+}
+
+export function addEnvironmentCommand(uiInterface: CfnInitUiInterface, cfnInit: CfnInitCliCaller) {
+    return commands.registerCommand(commandKey('init.addEnvironment'), async () => {
+        try {
+            const environment = await uiInterface.collectEnvironmentConfig()
+            if (!environment) {
+                return
+            }
+
+            const result = await cfnInit.addEnvironments([environment])
+
+            if (result.success) {
+                void window.showInformationMessage(`Environment '${environment.name}' added successfully`)
+            } else {
+                showErrorMessage(`Failed to add environment: ${result.error}`)
+            }
+        } catch (error) {
+            showErrorMessage(`Error adding environment: ${error}`)
+        }
+    })
+}
+
+export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
+    return commands.registerCommand(commandKey('init.removeEnvironment'), async () => {
+        try {
+            // TODO: Show quickpick of environments instead of inputting it
+            const envName = await window.showInputBox({
+                prompt: 'Environment name to remove',
+                validateInput: (v) => {
+                    if (!v.trim()) {
+                        return 'Required'
+                    }
+                    if (!/^[a-zA-Z0-9_-]{1,32}$/.test(v.trim())) {
+                        return 'Must be 1-32 characters, alphanumeric with hyphens and underscores only'
+                    }
+                    return undefined
+                },
+            })
+            if (!envName) {
+                return
+            }
+
+            const confirm = await window.showWarningMessage(`Remove environment '${envName}'?`, 'Remove', 'Cancel')
+            if (confirm !== 'Remove') {
+                return
+            }
+
+            const result = await cfnInit.removeEnvironment(envName)
+            if (result.success) {
+                void window.showInformationMessage(`Environment '${envName}' removed successfully`)
+            } else {
+                showErrorMessage(`Failed to remove environment: ${result.error}`)
+            }
+        } catch (error) {
+            showErrorMessage(`Error removing environment: ${error}`)
+        }
     })
 }
