@@ -83,7 +83,7 @@ export class CfnInitUiInterface {
 
                 if (selected.label.includes('Project Name')) {
                     const name = await getProjectName(this.state.projectName)
-                
+
                     if (name) {
                         this.state.projectName = name
                     }

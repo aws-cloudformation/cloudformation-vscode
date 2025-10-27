@@ -233,29 +233,38 @@ export async function getProjectName(prefillValue: string | undefined) {
 }
 
 export async function getProjectPath(prefillValue: string) {
-    return await window.showInputBox({
-        prompt: 'Enter project path (optional)',
-        value: prefillValue,
-        placeHolder: 'Press Enter for current directory',
-        validateInput: (v) => {
-            if (!v.trim()) {
-                return undefined
-            } // Optional field
+    while (true) {
+        const input = await window.showInputBox({
+            prompt: 'Enter project path (optional)',
+            value: prefillValue,
+            placeHolder: 'Press Enter for current directory',
+            ignoreFocusOut: true,
+        })
 
-            try {
-                const resolvedPath = path.resolve(v.trim())
-                const parentDir = path.dirname(resolvedPath)
+        if (input === undefined) {
+            return undefined
+        } // User cancelled
+        if (!input.trim()) {
+            return input
+        } // Empty is valid (optional field)
 
-                if (!fs.existsDir(parentDir)) {
-                    return 'Parent directory does not exist'
-                }
+        // Validate after input
+        try {
+            const resolvedPath = path.resolve(input.trim())
+            const parentDir = path.dirname(resolvedPath)
 
-                return undefined
-            } catch (error) {
-                return 'Invalid path format'
+            const parentPathExists = await fs.existsDir(parentDir)
+            if (!parentPathExists) {
+                void window.showErrorMessage('Parent directory does not exist. Please try again.')
+                continue // Ask again
             }
-        },
-    })
+
+            return input
+        } catch (error) {
+            void window.showErrorMessage('Invalid path format. Please try again.')
+            continue // Ask again
+        }
+    }
 }
 
 export async function getEnvironmentName() {
