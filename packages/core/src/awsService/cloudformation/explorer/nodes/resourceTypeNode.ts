@@ -26,7 +26,7 @@ export class ResourceTypeNode extends AWSTreeNodeBase {
     private nextToken?: string
 
     public constructor(
-        private readonly resourceList: ResourceList,
+        public readonly resourceList: ResourceList,
         private readonly resourcesManager: ResourcesManager
     ) {
         super(resourceList.typeName, TreeItemCollapsibleState.Collapsed)
