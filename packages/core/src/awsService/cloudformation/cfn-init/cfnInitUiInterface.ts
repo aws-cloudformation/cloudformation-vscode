@@ -5,10 +5,10 @@
 
 import * as vscode from 'vscode'
 import * as path from 'path'
-import fs from '../../../shared/fs/fs'
 import { CfnInitCliCaller, EnvironmentOption } from './cfnInitCliCaller'
 import { Auth } from '../../../auth/auth'
 import { promptForConnection } from '../../../auth/utils'
+import { getEnvironmentName, getProjectName, getProjectPath } from '../ui/inputBox'
 
 interface FormState {
     projectName?: string
@@ -82,47 +82,16 @@ export class CfnInitUiInterface {
                 }
 
                 if (selected.label.includes('Project Name')) {
-                    const name = await vscode.window.showInputBox({
-                        prompt: 'Enter project name',
-                        value: this.state.projectName,
-                        validateInput: (v) => {
-                            if (!v.trim()) {
-                                return 'Required'
-                            }
-                            if (!/^[a-zA-Z0-9_-]{1,64}$/.test(v.trim())) {
-                                return 'Must be 1-64 characters, alphanumeric with hyphens and underscores only'
-                            }
-                            return undefined
-                        },
-                    })
+                    const name = await getProjectName(this.state.projectName)
+                
                     if (name) {
                         this.state.projectName = name
                     }
                 } else if (selected.label.includes('Project Path')) {
                     const currentPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '.'
-                    const pathInput = await vscode.window.showInputBox({
-                        prompt: 'Enter project path (optional)',
-                        value: this.state.projectPath || currentPath,
-                        placeHolder: 'Press Enter for current directory',
-                        validateInput: (v) => {
-                            if (!v.trim()) {
-                                return undefined
-                            } // Optional field
 
-                            try {
-                                const resolvedPath = path.resolve(v.trim())
-                                const parentDir = path.dirname(resolvedPath)
+                    const pathInput = await getProjectPath(this.state.projectPath || currentPath)
 
-                                if (!fs.existsDir(parentDir)) {
-                                    return 'Parent directory does not exist'
-                                }
-
-                                return undefined
-                            } catch (error) {
-                                return 'Invalid path format'
-                            }
-                        },
-                    })
                     if (pathInput !== undefined) {
                         this.state.projectPath = pathInput.trim() || currentPath
                     }
@@ -156,18 +125,8 @@ export class CfnInitUiInterface {
     }
 
     async collectEnvironmentConfig(): Promise<EnvironmentOption | undefined> {
-        const envName = await vscode.window.showInputBox({
-            prompt: 'Environment name',
-            validateInput: (v) => {
-                if (!v.trim()) {
-                    return 'Required'
-                }
-                if (!/^[a-zA-Z0-9_-]{1,32}$/.test(v.trim())) {
-                    return 'Must be 1-32 characters, alphanumeric with hyphens and underscores only'
-                }
-                return undefined
-            },
-        })
+        const envName = await getEnvironmentName()
+
         if (!envName) {
             return undefined
         }

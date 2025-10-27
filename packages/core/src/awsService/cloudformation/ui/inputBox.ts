@@ -8,6 +8,8 @@ import { validateStackName, validateParameterValue } from '../stacks/actions/sta
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
 import { TemplateParameter, ResourceToImport, TemplateResource } from '../stacks/actions/stackActionRequestType'
 import { DocumentManager } from '../documents/documentManager'
+import path from 'path'
+import fs from '../../../shared/fs/fs'
 
 export async function getTemplatePath(documentManager: DocumentManager): Promise<string | undefined> {
     const validTemplates = documentManager
@@ -212,4 +214,61 @@ async function getResourceIdentifier(
     }
 
     return identifiers
+}
+
+export async function getProjectName(prefillValue: string | undefined) {
+    return await window.showInputBox({
+        prompt: 'Enter project name',
+        value: prefillValue,
+        validateInput: (v) => {
+            if (!v.trim()) {
+                return 'Required'
+            }
+            if (!/^[a-zA-Z0-9_-]{1,64}$/.test(v.trim())) {
+                return 'Must be 1-64 characters, alphanumeric with hyphens and underscores only'
+            }
+            return undefined
+        },
+    })
+}
+
+export async function getProjectPath(prefillValue: string) {
+    return await window.showInputBox({
+        prompt: 'Enter project path (optional)',
+        value: prefillValue,
+        placeHolder: 'Press Enter for current directory',
+        validateInput: (v) => {
+            if (!v.trim()) {
+                return undefined
+            } // Optional field
+
+            try {
+                const resolvedPath = path.resolve(v.trim())
+                const parentDir = path.dirname(resolvedPath)
+
+                if (!fs.existsDir(parentDir)) {
+                    return 'Parent directory does not exist'
+                }
+
+                return undefined
+            } catch (error) {
+                return 'Invalid path format'
+            }
+        },
+    })
+}
+
+export async function getEnvironmentName() {
+    return await window.showInputBox({
+        prompt: 'Environment name',
+        validateInput: (v) => {
+            if (!v.trim()) {
+                return 'Required'
+            }
+            if (!/^[a-zA-Z0-9_-]{1,32}$/.test(v.trim())) {
+                return 'Must be 1-32 characters, alphanumeric with hyphens and underscores only'
+            }
+            return undefined
+        },
+    })
 }

@@ -16,6 +16,7 @@ import {
     confirmCapabilities,
     shouldImportResources,
     getResourcesToImport,
+    getEnvironmentName,
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
 import { showErrorMessage } from '../ui/message'
@@ -445,18 +446,7 @@ export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
     return commands.registerCommand(commandKey('init.removeEnvironment'), async () => {
         try {
             // TODO: Show quickpick of environments instead of inputting it
-            const envName = await window.showInputBox({
-                prompt: 'Environment name to remove',
-                validateInput: (v) => {
-                    if (!v.trim()) {
-                        return 'Required'
-                    }
-                    if (!/^[a-zA-Z0-9_-]{1,32}$/.test(v.trim())) {
-                        return 'Must be 1-32 characters, alphanumeric with hyphens and underscores only'
-                    }
-                    return undefined
-                },
-            })
+            const envName = await getEnvironmentName()
             if (!envName) {
                 return
             }
