@@ -31,6 +31,7 @@ import {
     executeChangeSetCommand,
     refreshChangeSetsCommand,
     loadMoreChangeSetsCommand,
+    showStackOverviewCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -40,6 +41,7 @@ import { CloudFormationExplorer } from './explorer/explorer'
 
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
 import { DiffWebviewProvider } from './ui/diffWebviewProvider'
+import { StackOverviewWebviewProvider } from './ui/stackOverviewWebviewProvider'
 import { DocumentManager } from './documents/documentManager'
 
 import { ResourcesManager } from './resources/resourcesManager'
@@ -181,6 +183,9 @@ export async function activate(context: ExtensionContext) {
             // Create diff webview provider
             const diffProvider = new DiffWebviewProvider()
 
+            // Create stack overview webview provider
+            const overviewProvider = new StackOverviewWebviewProvider()
+
             const documentSelector = [
                 { scheme: 'file', language: 'cloudformation' },
                 { scheme: 'file', language: 'yaml' },
@@ -212,6 +217,7 @@ export async function activate(context: ExtensionContext) {
                 searchResourceCommand(cfnExplorer, resourcesManager),
                 refreshChangeSetsCommand(cfnExplorer),
                 loadMoreChangeSetsCommand(cfnExplorer),
+                showStackOverviewCommand(overviewProvider),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager),

@@ -166,3 +166,18 @@ export type ListChangeSetsResult = {
     changeSets: ChangeSetInfo[]
     nextToken?: string
 }
+
+export type StackInfo = {
+    StackName: string
+    StackId?: string
+    StackStatus?: string
+    StackStatusReason?: string
+    TemplateDescription?: string
+    CreationTime?: string
+    LastUpdatedTime?: string
+    RootId?: string
+    ParentId?: string
+    DisableRollback?: boolean
+    EnableTerminationProtection?: boolean
+    TimeoutInMinutes?: number
+}
