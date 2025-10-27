@@ -164,7 +164,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     margin: 0 5px;
                     cursor: pointer;
                     border-radius: 2px;
-                ">View Side-by-Side Diff</button>
+                ">View Diff</button>
             </div>
         `
 
