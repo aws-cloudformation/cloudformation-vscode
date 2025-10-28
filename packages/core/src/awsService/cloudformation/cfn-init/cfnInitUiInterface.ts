@@ -4,7 +4,6 @@
  */
 
 import * as vscode from 'vscode'
-import * as path from 'path'
 import { CfnInitCliCaller, EnvironmentOption } from './cfnInitCliCaller'
 import { Auth } from '../../../auth/auth'
 import { promptForConnection } from '../../../auth/utils'
