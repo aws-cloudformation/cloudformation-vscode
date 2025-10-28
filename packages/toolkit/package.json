@@ -4865,6 +4865,21 @@
                 "title": "Load More Change Sets",
                 "icon": "$(surround-with)",
                 "category": "AWS CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.init.initializeProject",
+                "title": "CFN Init: Initialize Project",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.init.addEnvironment",
+                "title": "CFN Init: Add Environment",
+                "category": "CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.init.removeEnvironment",
+                "title": "CFN Init: Remove Environment",
+                "category": "CloudFormation"
             }
         ],
         "jsonValidation": [

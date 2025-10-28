@@ -8,6 +8,8 @@ import { validateStackName, validateParameterValue } from '../stacks/actions/sta
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
 import { TemplateParameter, ResourceToImport, TemplateResource } from '../stacks/actions/stackActionRequestType'
 import { DocumentManager } from '../documents/documentManager'
+import path from 'path'
+import fs from '../../../shared/fs/fs'
 
 export async function getTemplatePath(documentManager: DocumentManager): Promise<string | undefined> {
     const validTemplates = documentManager
@@ -212,4 +214,70 @@ async function getResourceIdentifier(
     }
 
     return identifiers
+}
+
+export async function getProjectName(prefillValue: string | undefined) {
+    return await window.showInputBox({
+        prompt: 'Enter project name',
+        value: prefillValue,
+        validateInput: (v) => {
+            if (!v.trim()) {
+                return 'Required'
+            }
+            if (!/^[a-zA-Z0-9_-]{1,64}$/.test(v.trim())) {
+                return 'Must be 1-64 characters, alphanumeric with hyphens and underscores only'
+            }
+            return undefined
+        },
+    })
+}
+
+export async function getProjectPath(prefillValue: string) {
+    while (true) {
+        const input = await window.showInputBox({
+            prompt: 'Enter project path (optional)',
+            value: prefillValue,
+            placeHolder: 'Press Enter for current directory',
+            ignoreFocusOut: true,
+        })
+
+        if (input === undefined) {
+            return undefined
+        } // User cancelled
+        if (!input.trim()) {
+            return input
+        } // Empty is valid (optional field)
+
+        // Validate after input
+        try {
+            const resolvedPath = path.resolve(input.trim())
+            const parentDir = path.dirname(resolvedPath)
+
+            const parentPathExists = await fs.existsDir(parentDir)
+            if (!parentPathExists) {
+                void window.showErrorMessage('Parent directory does not exist. Please try again.')
+                continue // Ask again
+            }
+
+            return input
+        } catch (error) {
+            void window.showErrorMessage('Invalid path format. Please try again.')
+            continue // Ask again
+        }
+    }
+}
+
+export async function getEnvironmentName() {
+    return await window.showInputBox({
+        prompt: 'Environment name',
+        validateInput: (v) => {
+            if (!v.trim()) {
+                return 'Required'
+            }
+            if (!/^[a-zA-Z0-9_-]{1,32}$/.test(v.trim())) {
+                return 'Must be 1-32 characters, alphanumeric with hyphens and underscores only'
+            }
+            return undefined
+        },
+    })
 }
