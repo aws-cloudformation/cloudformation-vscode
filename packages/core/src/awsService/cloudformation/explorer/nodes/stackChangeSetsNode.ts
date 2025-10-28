@@ -21,6 +21,14 @@ class LoadMoreChangeSetsNode extends AWSTreeNodeBase {
     }
 }
 
+class NoChangeSetsNode extends AWSTreeNodeBase {
+    public constructor() {
+        super('No change sets found', TreeItemCollapsibleState.None)
+        this.contextValue = 'noChangeSets'
+        this.iconPath = new ThemeIcon('info')
+    }
+}
+
 export class StackChangeSetsNode extends AWSTreeNodeBase {
     public constructor(
         private readonly stackName: string,
@@ -42,6 +50,10 @@ export class StackChangeSetsNode extends AWSTreeNodeBase {
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
         const changeSets = await this.changeSetsManager.getChangeSets(this.stackName)
         this.updateNode()
+
+        if (changeSets.length === 0) {
+            return [new NoChangeSetsNode()]
+        }
 
         const nodes = changeSets.map((changeSet) => new ChangeSetNode(changeSet))
         return this.changeSetsManager.hasMore(this.stackName) ? [...nodes, new LoadMoreChangeSetsNode(this)] : nodes
