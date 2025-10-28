@@ -291,6 +291,27 @@ describe('DiffViewHelper', function () {
             clock = sandbox.useFakeTimers()
         })
 
+        function setupMockEditor(stackName: string, documentText: string) {
+            const tmpDir = os.tmpdir()
+            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+            const beforeUri = `file://${beforePath}`
+
+            const mockEditor = {
+                document: {
+                    uri: { toString: () => beforeUri },
+                    getText: () => documentText,
+                },
+                setDecorations: setDecorationsStub,
+            }
+
+            sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
+        }
+
+        async function runDriftTest(stackName: string, changes: StackChange[]) {
+            await DiffViewHelper.openDiff(stackName, changes)
+            clock.tick(500)
+        }
+
         it('should add drift decoration when LiveResourceDrift is present', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
@@ -318,22 +339,11 @@ describe('DiffViewHelper', function () {
                 },
             ]
 
-            const tmpDir = os.tmpdir()
-            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const beforeUri = `file://${beforePath}`
-
-            const mockEditor = {
-                document: {
-                    uri: { toString: () => beforeUri },
-                    getText: () => '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}',
-                },
-                setDecorations: setDecorationsStub,
-            }
-
-            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
-
-            await DiffViewHelper.openDiff(stackName, changes)
-            clock.tick(500)
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
 
             assert.ok(createTextEditorDecorationTypeStub.called)
             assert.ok(setDecorationsStub.called)
@@ -370,22 +380,11 @@ describe('DiffViewHelper', function () {
                 },
             ]
 
-            const tmpDir = os.tmpdir()
-            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const beforeUri = `file://${beforePath}`
-
-            const mockEditor = {
-                document: {
-                    uri: { toString: () => beforeUri },
-                    getText: () => '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}',
-                },
-                setDecorations: setDecorationsStub,
-            }
-
-            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
-
-            await DiffViewHelper.openDiff(stackName, changes)
-            clock.tick(500)
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
 
             assert.ok(setDecorationsStub.called)
             const decorations = setDecorationsStub.getCall(0).args[1]
@@ -415,22 +414,11 @@ describe('DiffViewHelper', function () {
                 },
             ]
 
-            const tmpDir = os.tmpdir()
-            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const beforeUri = `file://${beforePath}`
-
-            const mockEditor = {
-                document: {
-                    uri: { toString: () => beforeUri },
-                    getText: () => '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}',
-                },
-                setDecorations: setDecorationsStub,
-            }
-
-            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
-
-            await DiffViewHelper.openDiff(stackName, changes)
-            clock.tick(500)
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
 
             assert.ok(setDecorationsStub.called)
             const decorations = setDecorationsStub.getCall(0).args[1]
@@ -464,23 +452,11 @@ describe('DiffViewHelper', function () {
                 },
             ]
 
-            const tmpDir = os.tmpdir()
-            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const beforeUri = `file://${beforePath}`
-
-            const mockEditor = {
-                document: {
-                    uri: { toString: () => beforeUri },
-                    getText: () =>
-                        '{\n  "MyResource": {\n    "Properties": {\n      "Config": {\n        "Setting": "old"\n      }\n    }\n  }\n}',
-                },
-                setDecorations: setDecorationsStub,
-            }
-
-            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
-
-            await DiffViewHelper.openDiff(stackName, changes)
-            clock.tick(500)
+            setupMockEditor(
+                stackName,
+                '{\n  "MyResource": {\n    "Properties": {\n      "Config": {\n        "Setting": "old"\n      }\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
 
             assert.ok(setDecorationsStub.called)
             const decorations = setDecorationsStub.getCall(0).args[1]
@@ -527,23 +503,11 @@ describe('DiffViewHelper', function () {
                 },
             ]
 
-            const tmpDir = os.tmpdir()
-            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const beforeUri = `file://${beforePath}`
-
-            const mockEditor = {
-                document: {
-                    uri: { toString: () => beforeUri },
-                    getText: () =>
-                        '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5",\n      "MessageRetentionPeriod": "100"\n    }\n  }\n}',
-                },
-                setDecorations: setDecorationsStub,
-            }
-
-            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
-
-            await DiffViewHelper.openDiff(stackName, changes)
-            clock.tick(500)
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5",\n      "MessageRetentionPeriod": "100"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
 
             assert.ok(setDecorationsStub.called)
             const decorations = setDecorationsStub.getCall(0).args[1]
