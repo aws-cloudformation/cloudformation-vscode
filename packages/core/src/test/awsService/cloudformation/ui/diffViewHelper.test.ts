@@ -312,31 +312,55 @@ describe('DiffViewHelper', function () {
             clock.tick(500)
         }
 
+        function createDriftChange(
+            logicalResourceId: string,
+            beforeContext: string,
+            afterContext: string,
+            details: any[]
+        ): StackChange {
+            return {
+                resourceChange: {
+                    action: 'Modify',
+                    logicalResourceId,
+                    beforeContext,
+                    afterContext,
+                    details,
+                },
+            }
+        }
+
+        function createDetailTarget(
+            name: string,
+            path: string,
+            beforeValue: string,
+            afterValue: string,
+            drift?: { PreviousValue: string; ActualValue: string }
+        ) {
+            return {
+                Target: {
+                    Name: name,
+                    Path: path,
+                    BeforeValue: beforeValue,
+                    AfterValue: afterValue,
+                    ...(drift && { LiveResourceDrift: drift }),
+                },
+            }
+        }
+
         it('should add drift decoration when LiveResourceDrift is present', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Modify',
-                        logicalResourceId: 'MyQueue',
-                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
-                        afterContext: '{"Properties":{"DelaySeconds":"1"}}',
-                        details: [
-                            {
-                                Target: {
-                                    Name: 'DelaySeconds',
-                                    Path: '/Properties/DelaySeconds',
-                                    BeforeValue: '5',
-                                    AfterValue: '1',
-                                    LiveResourceDrift: {
-                                        PreviousValue: '1',
-                                        ActualValue: '5',
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                },
+                createDriftChange(
+                    'MyQueue',
+                    '{"Properties":{"DelaySeconds":"5"}}',
+                    '{"Properties":{"DelaySeconds":"1"}}',
+                    [
+                        createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '1', {
+                            PreviousValue: '1',
+                            ActualValue: '5',
+                        }),
+                    ]
+                ),
             ]
 
             setupMockEditor(
@@ -356,28 +380,17 @@ describe('DiffViewHelper', function () {
         it('should not add decoration when BeforeValue equals AfterValue', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Modify',
-                        logicalResourceId: 'MyQueue',
-                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
-                        afterContext: '{"Properties":{"DelaySeconds":"5"}}',
-                        details: [
-                            {
-                                Target: {
-                                    Name: 'DelaySeconds',
-                                    Path: '/Properties/DelaySeconds',
-                                    BeforeValue: '5',
-                                    AfterValue: '5',
-                                    LiveResourceDrift: {
-                                        PreviousValue: '1',
-                                        ActualValue: '5',
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                },
+                createDriftChange(
+                    'MyQueue',
+                    '{"Properties":{"DelaySeconds":"5"}}',
+                    '{"Properties":{"DelaySeconds":"5"}}',
+                    [
+                        createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '5', {
+                            PreviousValue: '1',
+                            ActualValue: '5',
+                        }),
+                    ]
+                ),
             ]
 
             setupMockEditor(
@@ -394,24 +407,12 @@ describe('DiffViewHelper', function () {
         it('should not add decoration when LiveResourceDrift is not present', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Modify',
-                        logicalResourceId: 'MyQueue',
-                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
-                        afterContext: '{"Properties":{"DelaySeconds":"1"}}',
-                        details: [
-                            {
-                                Target: {
-                                    Name: 'DelaySeconds',
-                                    Path: '/Properties/DelaySeconds',
-                                    BeforeValue: '5',
-                                    AfterValue: '1',
-                                },
-                            },
-                        ],
-                    },
-                },
+                createDriftChange(
+                    'MyQueue',
+                    '{"Properties":{"DelaySeconds":"5"}}',
+                    '{"Properties":{"DelaySeconds":"1"}}',
+                    [createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '1')]
+                ),
             ]
 
             setupMockEditor(
@@ -428,28 +429,17 @@ describe('DiffViewHelper', function () {
         it('should handle nested property paths correctly', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Modify',
-                        logicalResourceId: 'MyResource',
-                        beforeContext: '{"Properties":{"Config":{"Setting":"old"}}}',
-                        afterContext: '{"Properties":{"Config":{"Setting":"new"}}}',
-                        details: [
-                            {
-                                Target: {
-                                    Name: 'Setting',
-                                    Path: '/Properties/Config/Setting',
-                                    BeforeValue: 'old',
-                                    AfterValue: 'new',
-                                    LiveResourceDrift: {
-                                        PreviousValue: 'new',
-                                        ActualValue: 'old',
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                },
+                createDriftChange(
+                    'MyResource',
+                    '{"Properties":{"Config":{"Setting":"old"}}}',
+                    '{"Properties":{"Config":{"Setting":"new"}}}',
+                    [
+                        createDetailTarget('Setting', '/Properties/Config/Setting', 'old', 'new', {
+                            PreviousValue: 'new',
+                            ActualValue: 'old',
+                        }),
+                    ]
+                ),
             ]
 
             setupMockEditor(
@@ -467,40 +457,24 @@ describe('DiffViewHelper', function () {
         it('should handle multiple drift decorations for different properties', async function () {
             const stackName = 'test-stack'
             const changes: StackChange[] = [
-                {
-                    resourceChange: {
-                        action: 'Modify',
-                        logicalResourceId: 'MyQueue',
-                        beforeContext: '{"Properties":{"DelaySeconds":"5","MessageRetentionPeriod":"100"}}',
-                        afterContext: '{"Properties":{"DelaySeconds":"1","MessageRetentionPeriod":"200"}}',
-                        details: [
-                            {
-                                Target: {
-                                    Name: 'DelaySeconds',
-                                    Path: '/Properties/DelaySeconds',
-                                    BeforeValue: '5',
-                                    AfterValue: '1',
-                                    LiveResourceDrift: {
-                                        PreviousValue: '1',
-                                        ActualValue: '5',
-                                    },
-                                },
-                            },
-                            {
-                                Target: {
-                                    Name: 'MessageRetentionPeriod',
-                                    Path: '/Properties/MessageRetentionPeriod',
-                                    BeforeValue: '100',
-                                    AfterValue: '200',
-                                    LiveResourceDrift: {
-                                        PreviousValue: '100',
-                                        ActualValue: '150',
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                },
+                createDriftChange(
+                    'MyQueue',
+                    '{"Properties":{"DelaySeconds":"5","MessageRetentionPeriod":"100"}}',
+                    '{"Properties":{"DelaySeconds":"1","MessageRetentionPeriod":"200"}}',
+                    [
+                        createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '1', {
+                            PreviousValue: '1',
+                            ActualValue: '5',
+                        }),
+                        createDetailTarget(
+                            'MessageRetentionPeriod',
+                            '/Properties/MessageRetentionPeriod',
+                            '100',
+                            '200',
+                            { PreviousValue: '100', ActualValue: '150' }
+                        ),
+                    ]
+                ),
             ]
 
             setupMockEditor(
