@@ -5,18 +5,18 @@
 
 import { TreeItemCollapsibleState, ThemeIcon } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
-import { getLogger } from '../../../../shared/logger/logger'
+import { StackSummary } from '@aws-sdk/client-cloudformation'
+import { commandKey } from '../../utils'
 
 export class StackOverviewNode extends AWSTreeNodeBase {
-    public constructor(private readonly stackName: string) {
+    public constructor(private readonly stack: StackSummary) {
         super('Overview', TreeItemCollapsibleState.None)
         this.contextValue = 'stackOverview'
         this.iconPath = new ThemeIcon('info')
-        getLogger().info(`StackOverview: ${stackName}`)
-    }
-
-    public override async getChildren(): Promise<AWSTreeNodeBase[]> {
-        getLogger().info(`StackOverview getChildren: ${this.stackName}`)
-        return []
+        this.command = {
+            title: 'Show Stack Overview',
+            command: commandKey('api.showStackOverview'),
+            arguments: [this.stack],
+        }
     }
 }

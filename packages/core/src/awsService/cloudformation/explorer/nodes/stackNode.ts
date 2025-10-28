@@ -50,7 +50,7 @@ export class StackNode extends AWSTreeNodeBase {
 
         return [
             new StackStatusNode(stackStatus),
-            new StackOverviewNode(stackName),
+            new StackOverviewNode(this.stack),
             new StackEventsNode(stackName),
             new StackOutputsNode(stackName),
             new StackResourcesNode(stackName),

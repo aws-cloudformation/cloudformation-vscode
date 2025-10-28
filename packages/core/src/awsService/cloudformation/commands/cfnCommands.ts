@@ -22,11 +22,13 @@ import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
 import { getParameters, getCapabilities, getTemplateResources } from '../stacks/actions/stackActionApi'
 import { TemplateParameter, ResourceToImport } from '../stacks/actions/stackActionRequestType'
+import { StackInfo } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
 import { DocumentManager } from '../documents/documentManager'
 
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
+import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
 import { ResourceContextValue } from '../explorer/contextValue'
 import { getLogger } from '../../../shared/logger/logger'
 import { CloudFormationExplorer } from '../explorer/explorer'
@@ -401,5 +403,11 @@ export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
     return commands.registerCommand(commandKey('api.loadMoreChangeSets'), async (node: StackChangeSetsNode) => {
         await node.loadMoreChangeSets()
         explorer.refresh(node)
+    })
+}
+
+export function showStackOverviewCommand(overviewProvider: StackOverviewWebviewProvider) {
+    return commands.registerCommand(commandKey('api.showStackOverview'), async (stack: StackInfo) => {
+        await overviewProvider.showStackOverview(stack)
     })
 }
