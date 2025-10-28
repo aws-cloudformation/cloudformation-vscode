@@ -15,6 +15,8 @@ import {
     CreateDeploymentParams,
     DescribeValidationStatusResult,
     DescribeDeploymentStatusResult,
+    DeleteChangeSetParams,
+    DescribeDeletionStatusResult,
 } from './stackActionRequestType'
 import {
     GetParametersRequest,
@@ -26,6 +28,9 @@ import {
     GetTemplateResourcesRequest,
     DescribeValidationStatusRequest,
     DescribeDeploymentStatusRequest,
+    DeleteChangeSetRequest,
+    GetChangeSetDeletionStatusRequest,
+    DescribeChangeSetDeletionStatusRequest,
 } from './stackActionProtocol'
 import { Identifiable } from '../../lspTypes'
 
@@ -38,6 +43,13 @@ export async function validate(
 
 export async function deploy(client: LanguageClient, params: CreateDeploymentParams): Promise<CreateStackActionResult> {
     return await client.sendRequest(CreateDeploymentRequest, params)
+}
+
+export async function deleteChangeSet(
+    client: LanguageClient,
+    params: DeleteChangeSetParams
+): Promise<CreateStackActionResult> {
+    return await client.sendRequest(DeleteChangeSetRequest, params)
 }
 
 export async function getValidationStatus(
@@ -66,6 +78,20 @@ export async function describeDeploymentStatus(
     params: Identifiable
 ): Promise<DescribeDeploymentStatusResult> {
     return await client.sendRequest(DescribeDeploymentStatusRequest, params)
+}
+
+export async function getChangeSetDeletionStatus(
+    client: LanguageClient,
+    params: Identifiable
+): Promise<GetStackActionStatusResult> {
+    return await client.sendRequest(GetChangeSetDeletionStatusRequest, params)
+}
+
+export async function describeChangeSetDeletionStatus(
+    client: LanguageClient,
+    params: Identifiable
+): Promise<DescribeDeletionStatusResult> {
+    return await client.sendRequest(DescribeChangeSetDeletionStatusRequest, params)
 }
 
 export async function getParameters(client: LanguageClient, params: TemplateUri): Promise<GetParametersResult> {

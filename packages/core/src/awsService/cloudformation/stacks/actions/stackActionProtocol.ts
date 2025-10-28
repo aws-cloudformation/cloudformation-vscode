@@ -18,6 +18,8 @@ import {
     CreateDeploymentParams,
     DescribeValidationStatusResult,
     DescribeDeploymentStatusResult,
+    DeleteChangeSetParams,
+    DescribeDeletionStatusResult,
 } from './stackActionRequestType'
 
 export const CreateValidationRequest = new RequestType<CreateValidationParams, CreateStackActionResult, void>(
@@ -42,6 +44,18 @@ export const DescribeValidationStatusRequest = new RequestType<Identifiable, Des
 
 export const DescribeDeploymentStatusRequest = new RequestType<Identifiable, DescribeDeploymentStatusResult, void>(
     'aws/cfn/stack/deployment/status/describe'
+)
+
+export const DeleteChangeSetRequest = new RequestType<DeleteChangeSetParams, CreateStackActionResult, void>(
+    'aws/cfn/stack/changeSet/delete'
+)
+
+export const GetChangeSetDeletionStatusRequest = new RequestType<Identifiable, GetStackActionStatusResult, void>(
+    'aws/cfn/stack/changeSet/deletion/status'
+)
+
+export const DescribeChangeSetDeletionStatusRequest = new RequestType<Identifiable, DescribeDeletionStatusResult, void>(
+    'aws/cfn/stack/changeSet/deletion/status/describe'
 )
 
 export const GetParametersRequest = new RequestType<TemplateUri, GetParametersResult, void>('aws/cfn/stack/parameters')

@@ -39,8 +39,20 @@ export function showDeploymentSuccess(stackName: string) {
     void window.showInformationMessage(`Deployment completed successfully for stack: ${stackName}`)
 }
 
+export function showChangeSetDeletionSuccess(changeSetName: string, stackName: string) {
+    void window.showInformationMessage(
+        `Deletion completed successfully for change set: ${changeSetName}, in stack: ${stackName}`
+    )
+}
+
 export function showDeploymentFailure(stackName: string, failureReason: string) {
     void window.showErrorMessage(`Deployment failed for stack: ${stackName} with reason: ${failureReason}`)
+}
+
+export function showChangeSetDeletionFailure(changeSetName: string, stackName: string, failureReason: string) {
+    void window.showErrorMessage(
+        `Change Set Deletion failed for change set: ${changeSetName}, in stack: ${stackName} with reason: ${failureReason}`
+    )
 }
 
 export function showValidationComplete(stackName: string) {
@@ -61,6 +73,10 @@ export function showValidationFailure(stackName: string, failureReason: string) 
 
 export function showDeploymentStarted(stackName: string) {
     void window.showInformationMessage(`Deployment started for stack: ${stackName}`)
+}
+
+export function showChangeSetDeletionStarted(changeSetName: string, stackName: string) {
+    void window.showInformationMessage(`Deletion started for change set: ${changeSetName}, in stack: ${stackName}`)
 }
 
 export function showErrorMessage(message: string) {

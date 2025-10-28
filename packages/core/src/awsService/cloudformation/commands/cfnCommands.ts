@@ -39,6 +39,7 @@ import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
 import { StacksManager } from '../stacks/stacksManager'
 import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
 import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
+import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 
 export function validateTemplateCommand(
     client: LanguageClient,
@@ -84,6 +85,22 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
                 stacks.startPolling()
             } catch (error) {
                 showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
+            }
+        }
+    )
+}
+
+export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
+    return commands.registerCommand(
+        commandKey('api.deleteChangeSet'),
+        async (stackName: string, changeSetName: string) => {
+            try {
+                const changeSetDeletion = new ChangeSetDeletion(stackName, changeSetName, client)
+
+                await changeSetDeletion.delete()
+                stacks.startPolling()
+            } catch (error) {
+                showErrorMessage(`Error deleting change set: ${extractErrorMessage(error)}`)
             }
         }
     )

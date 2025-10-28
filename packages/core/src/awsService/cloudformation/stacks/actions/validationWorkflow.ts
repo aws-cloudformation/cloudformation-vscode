@@ -10,7 +10,7 @@ import { LanguageClient } from 'vscode-languageclient'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
 import { setContext } from '../../../../shared/vscode/setContext'
 import { describeValidationStatus, getValidationStatus, validate } from './stackActionApi'
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
+import { createDeploymentStatusBar, updateWorkflowStatus } from '../../ui/statusBar'
 import { StatusBarItem, commands } from 'vscode'
 import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
 import { createValidationParams } from './stackActionUtil'
@@ -108,7 +108,7 @@ export class Validation {
                     this.changes = validationResult.changes
 
                     if (this.statusBarItem) {
-                        updateDeploymentStatus(this.statusBarItem, validationResult.phase)
+                        updateWorkflowStatus(this.statusBarItem, validationResult.phase)
                     }
 
                     switch (validationResult.phase) {

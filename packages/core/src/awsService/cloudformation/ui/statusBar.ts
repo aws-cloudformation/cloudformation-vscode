@@ -52,7 +52,7 @@ export function createDeploymentStatusBar(): StatusBarItem {
     return globalStatusBarItem
 }
 
-export function updateDeploymentStatus(statusBarItem: StatusBarItem, status: StackActionPhase): void {
+export function updateWorkflowStatus(statusBarItem: StatusBarItem, status: StackActionPhase): void {
     const properties = getStatusProperties(status)
 
     statusBarItem.text = properties.text

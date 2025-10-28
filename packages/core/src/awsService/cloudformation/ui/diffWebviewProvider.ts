@@ -45,7 +45,12 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     this.enableDeployments = false
                     this._view!.webview.html = this.getHtmlContent()
                 }
-            } else if (message.command === 'cancelDeploy') {
+            } else if (message.command === 'deleteChangeSet') {
+                void commands.executeCommand(
+                    'aws.cloudformation.api.deleteChangeSet',
+                    this.stackName,
+                    this.changeSetName
+                )
                 this.changeSetName = undefined
                 this.enableDeployments = false
                 this._view!.webview.html = this.getHtmlContent()
@@ -181,7 +186,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     cursor: pointer;
                     border-radius: 2px;
                 ">Deploy Changes</button>
-                <button id="cancelDeploy" onclick="cancelDeploy()" style="
+                <button id="deleteChangeSet" onclick="deleteChangeSet()" style="
                     background-color: var(--vscode-button-secondaryBackground);
                     color: var(--vscode-button-secondaryForeground);
                     border: none;
@@ -189,7 +194,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     margin: 0 5px;
                     cursor: pointer;
                     border-radius: 2px;
-                ">Cancel</button>
+                ">Delete Changeset</button>
             </div>
         `
                 : ''
@@ -229,8 +234,8 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     function confirmDeploy() {
                         vscode.postMessage({ command: 'confirmDeploy' });
                     }
-                    function cancelDeploy() {
-                        vscode.postMessage({ command: 'cancelDeploy' });
+                    function deleteChangeSet() {
+                        vscode.postMessage({ command: 'deleteChangeSet' });
                     }
                 </script>
             </body>
