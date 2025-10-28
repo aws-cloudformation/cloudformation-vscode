@@ -282,7 +282,6 @@ describe('DiffViewHelper', function () {
 
     describe('drift decorations', function () {
         let createTextEditorDecorationTypeStub: sinon.SinonStub
-        let visibleTextEditorsStub: sinon.SinonStub
         let setDecorationsStub: sinon.SinonStub
         let clock: sinon.SinonFakeTimers
 
