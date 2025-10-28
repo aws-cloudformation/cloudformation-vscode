@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Uri, commands, workspace, Range, Position } from 'vscode'
+import { Uri, commands, workspace, Range, Position, window, ThemeColor } from 'vscode'
 import { StackChange } from '../stacks/actions/stackActionRequestType'
 import * as path from 'path'
 import { fs } from '../../../shared/fs/fs'
@@ -77,6 +77,8 @@ export class DiffViewHelper {
 
         await commands.executeCommand('vscode.diff', beforeUri, afterUri, `${stackName}: Before ↔ After`)
 
+        this.addDriftDecorations(beforeUri, changes)
+
         if (resourceId) {
             // Find the line with the resource ID in the after doc.
             // In a deleted resource case this will just be the top
@@ -91,5 +93,82 @@ export class DiffViewHelper {
                 })
             }
         }
+    }
+
+    private static addDriftDecorations(beforeUri: Uri, changes: StackChange[]) {
+        const driftDecorationType = window.createTextEditorDecorationType({
+            after: {
+                contentText: ' ⚠️ Drifted',
+                color: new ThemeColor('editorWarning.foreground'),
+                fontWeight: 'bold',
+            },
+            backgroundColor: new ThemeColor('editorWarning.background'),
+            cursor: 'pointer',
+        })
+
+        setTimeout(() => {
+            const editors = window.visibleTextEditors.filter(
+                (editor) => editor.document.uri.toString() === beforeUri.toString()
+            )
+
+            editors.forEach((editor) => {
+                const decorations: any[] = []
+                const lines = editor.document.getText().split('\n')
+
+                for (const change of changes) {
+                    const rc = change.resourceChange
+                    if (!rc?.details || !rc.logicalResourceId) continue
+
+                    const resourceLineIndex = lines.findIndex((line) => line.includes(`"${rc.logicalResourceId}"`))
+                    if (resourceLineIndex < 0) continue
+
+                    for (const detail of rc.details) {
+                        const target = detail.Target
+                        // only show the drift if the before/after are different
+                        if (target?.LiveResourceDrift && target.Path && target.BeforeValue !== target.AfterValue) {
+                            const pathParts = target.Path.split('/').filter((p) => p)
+                            let currentLineIndex = resourceLineIndex
+
+                            for (const part of pathParts) {
+                                const foundIndex = lines.findIndex(
+                                    (line, idx) => idx > currentLineIndex && line.includes(`"${part}"`)
+                                )
+                                if (foundIndex < 0) break
+                                currentLineIndex = foundIndex
+                            }
+
+                            if (currentLineIndex > resourceLineIndex) {
+                                const line = lines[currentLineIndex]
+                                const endCol = line.trimEnd().length
+                                // sets hover range to just the decoration
+                                const range = new Range(currentLineIndex, endCol, currentLineIndex, endCol)
+
+                                const hoverMessage = [
+                                    '### ⚠️ Resource Drift Detected',
+                                    '',
+                                    `**Resource:** \`${rc.logicalResourceId}\``,
+                                    '',
+                                    `**Property:** \`${target.Path}\``,
+                                    '',
+                                    '| Source | Value |',
+                                    '|--------|-------|',
+                                    `| 📄 Template | \`${target.LiveResourceDrift.PreviousValue}\` |`,
+                                    `| ☁️ Live AWS | \`${target.LiveResourceDrift.ActualValue}\` |`,
+                                    '',
+                                    '*The live resource has drifted from the previously deployed template.*',
+                                ].join('\n')
+
+                                decorations.push({
+                                    range,
+                                    hoverMessage,
+                                })
+                            }
+                        }
+                    }
+                }
+
+                editor.setDecorations(driftDecorationType, decorations)
+            })
+        }, 100)
     }
 }

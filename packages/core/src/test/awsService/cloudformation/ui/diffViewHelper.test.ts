@@ -279,4 +279,276 @@ describe('DiffViewHelper', function () {
             assert.ok(executeCommandStub.calledOnce)
         })
     })
+
+    describe('drift decorations', function () {
+        let createTextEditorDecorationTypeStub: sinon.SinonStub
+        let visibleTextEditorsStub: sinon.SinonStub
+        let setDecorationsStub: sinon.SinonStub
+        let clock: sinon.SinonFakeTimers
+
+        beforeEach(function () {
+            createTextEditorDecorationTypeStub = sandbox.stub(vscode.window, 'createTextEditorDecorationType')
+            setDecorationsStub = sandbox.stub()
+            clock = sandbox.useFakeTimers()
+        })
+
+        it('should add drift decoration when LiveResourceDrift is present', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
+                        afterContext: '{"Properties":{"DelaySeconds":"1"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    BeforeValue: '5',
+                                    AfterValue: '1',
+                                    LiveResourceDrift: {
+                                        PreviousValue: '1',
+                                        ActualValue: '5',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            const tmpDir = os.tmpdir()
+            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+            const beforeUri = `file://${beforePath}`
+
+            const mockEditor = {
+                document: {
+                    uri: { toString: () => beforeUri },
+                    getText: () => '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}',
+                },
+                setDecorations: setDecorationsStub,
+            }
+
+            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
+
+            await DiffViewHelper.openDiff(stackName, changes)
+            clock.tick(500)
+
+            assert.ok(createTextEditorDecorationTypeStub.called)
+            assert.ok(setDecorationsStub.called)
+            const decorations = setDecorationsStub.getCall(0).args[1]
+            assert.strictEqual(decorations.length, 1)
+            assert.ok(decorations[0].hoverMessage.includes('Resource Drift Detected'))
+            assert.ok(decorations[0].hoverMessage.includes('MyQueue'))
+        })
+
+        it('should not add decoration when BeforeValue equals AfterValue', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
+                        afterContext: '{"Properties":{"DelaySeconds":"5"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    BeforeValue: '5',
+                                    AfterValue: '5',
+                                    LiveResourceDrift: {
+                                        PreviousValue: '1',
+                                        ActualValue: '5',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            const tmpDir = os.tmpdir()
+            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+            const beforeUri = `file://${beforePath}`
+
+            const mockEditor = {
+                document: {
+                    uri: { toString: () => beforeUri },
+                    getText: () => '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}',
+                },
+                setDecorations: setDecorationsStub,
+            }
+
+            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
+
+            await DiffViewHelper.openDiff(stackName, changes)
+            clock.tick(500)
+
+            assert.ok(setDecorationsStub.called)
+            const decorations = setDecorationsStub.getCall(0).args[1]
+            assert.strictEqual(decorations.length, 0)
+        })
+
+        it('should not add decoration when LiveResourceDrift is not present', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
+                        afterContext: '{"Properties":{"DelaySeconds":"1"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    BeforeValue: '5',
+                                    AfterValue: '1',
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            const tmpDir = os.tmpdir()
+            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+            const beforeUri = `file://${beforePath}`
+
+            const mockEditor = {
+                document: {
+                    uri: { toString: () => beforeUri },
+                    getText: () => '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}',
+                },
+                setDecorations: setDecorationsStub,
+            }
+
+            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
+
+            await DiffViewHelper.openDiff(stackName, changes)
+            clock.tick(500)
+
+            assert.ok(setDecorationsStub.called)
+            const decorations = setDecorationsStub.getCall(0).args[1]
+            assert.strictEqual(decorations.length, 0)
+        })
+
+        it('should handle nested property paths correctly', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyResource',
+                        beforeContext: '{"Properties":{"Config":{"Setting":"old"}}}',
+                        afterContext: '{"Properties":{"Config":{"Setting":"new"}}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'Setting',
+                                    Path: '/Properties/Config/Setting',
+                                    BeforeValue: 'old',
+                                    AfterValue: 'new',
+                                    LiveResourceDrift: {
+                                        PreviousValue: 'new',
+                                        ActualValue: 'old',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            const tmpDir = os.tmpdir()
+            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+            const beforeUri = `file://${beforePath}`
+
+            const mockEditor = {
+                document: {
+                    uri: { toString: () => beforeUri },
+                    getText: () =>
+                        '{\n  "MyResource": {\n    "Properties": {\n      "Config": {\n        "Setting": "old"\n      }\n    }\n  }\n}',
+                },
+                setDecorations: setDecorationsStub,
+            }
+
+            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
+
+            await DiffViewHelper.openDiff(stackName, changes)
+            clock.tick(500)
+
+            assert.ok(setDecorationsStub.called)
+            const decorations = setDecorationsStub.getCall(0).args[1]
+            assert.strictEqual(decorations.length, 1)
+            assert.ok(decorations[0].hoverMessage.includes('/Properties/Config/Setting'))
+        })
+
+        it('should handle multiple drift decorations for different properties', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5","MessageRetentionPeriod":"100"}}',
+                        afterContext: '{"Properties":{"DelaySeconds":"1","MessageRetentionPeriod":"200"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    BeforeValue: '5',
+                                    AfterValue: '1',
+                                    LiveResourceDrift: {
+                                        PreviousValue: '1',
+                                        ActualValue: '5',
+                                    },
+                                },
+                            },
+                            {
+                                Target: {
+                                    Name: 'MessageRetentionPeriod',
+                                    Path: '/Properties/MessageRetentionPeriod',
+                                    BeforeValue: '100',
+                                    AfterValue: '200',
+                                    LiveResourceDrift: {
+                                        PreviousValue: '100',
+                                        ActualValue: '150',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            const tmpDir = os.tmpdir()
+            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+            const beforeUri = `file://${beforePath}`
+
+            const mockEditor = {
+                document: {
+                    uri: { toString: () => beforeUri },
+                    getText: () =>
+                        '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5",\n      "MessageRetentionPeriod": "100"\n    }\n  }\n}',
+                },
+                setDecorations: setDecorationsStub,
+            }
+
+            visibleTextEditorsStub = sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
+
+            await DiffViewHelper.openDiff(stackName, changes)
+            clock.tick(500)
+
+            assert.ok(setDecorationsStub.called)
+            const decorations = setDecorationsStub.getCall(0).args[1]
+            assert.strictEqual(decorations.length, 2)
+        })
+    })
 })
