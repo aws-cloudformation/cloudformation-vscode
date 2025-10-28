@@ -29,6 +29,7 @@ import {
     loadMoreStacksCommand,
     searchResourceCommand,
     executeChangeSetCommand,
+    addRelatedResourcesCommand,
     refreshChangeSetsCommand,
     loadMoreChangeSetsCommand,
     showStackOverviewCommand,
@@ -268,6 +269,7 @@ export async function activate(context: ExtensionContext) {
                 createProjectCommand(cfnInitUiInterface),
                 addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller),
                 removeEnvironmentCommand(cfnInitCliCaller),
+                addRelatedResourcesCommand(resourcesManager),
                 credentialsService,
                 serverProvider
             )

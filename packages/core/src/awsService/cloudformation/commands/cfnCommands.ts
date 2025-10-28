@@ -534,3 +534,10 @@ export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
         }
     })
 }
+
+export function addRelatedResourcesCommand(resourcesManager: ResourcesManager) {
+    return commands.registerCommand(commandKey('api.addRelatedResources'), async (node?: any) => {
+        const selectedResourceType = node?.resourceList?.typeName
+        await resourcesManager.addRelatedResources(selectedResourceType)
+    })
+}
