@@ -120,7 +120,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 <td rowspan="${detailCount}" style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;"><a href="#" onclick="openDiffToResource('${rc.logicalResourceId}'); return false;" style="color: var(--vscode-textLink-foreground); cursor: pointer; font-weight: bold; text-decoration: underline;">${rc.logicalResourceId ?? 'Unknown'}</a></td>
                 <td rowspan="${detailCount}" style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.physicalResourceId ?? ' '}</td>
                 <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.resourceType ?? 'Unknown'}</td>
-                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.replacement ?? 'N/LA'}</td>
+                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.replacement ?? 'N/A'}</td>
                 <td rowspan="${detailCount}" style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.scope?.join(', ') ?? ' '}</td>`
 
             if (rc.details && rc.details.length > 0) {
