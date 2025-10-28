@@ -412,8 +412,8 @@ export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
 export function showStackOverviewCommand(overviewProvider: StackOverviewWebviewProvider) {
     return commands.registerCommand(commandKey('api.showStackOverview'), async (stack: StackInfo) => {
         await overviewProvider.showStackOverview(stack)
-    }
-)}
+    })
+}
 
 export function createProjectCommand(uiInterface: CfnInitUiInterface) {
     return commands.registerCommand(commandKey('init.initializeProject'), async () => {
