@@ -111,29 +111,35 @@ export class DiffViewHelper {
                 (editor) => editor.document.uri.toString() === beforeUri.toString()
             )
 
-            editors.forEach((editor) => {
+            for (const editor of editors) {
                 const decorations: any[] = []
                 const lines = editor.document.getText().split('\n')
 
                 for (const change of changes) {
                     const rc = change.resourceChange
-                    if (!rc?.details || !rc.logicalResourceId) continue
+                    if (!rc?.details || !rc.logicalResourceId) {
+                        continue
+                    }
 
                     const resourceLineIndex = lines.findIndex((line) => line.includes(`"${rc.logicalResourceId}"`))
-                    if (resourceLineIndex < 0) continue
+                    if (resourceLineIndex < 0) {
+                        continue
+                    }
 
                     for (const detail of rc.details) {
                         const target = detail.Target
                         // only show the drift if the before/after are different
                         if (target?.LiveResourceDrift && target.Path && target.BeforeValue !== target.AfterValue) {
-                            const pathParts = target.Path.split('/').filter((p) => p)
+                            const pathParts = target.Path.split('/').filter(Boolean)
                             let currentLineIndex = resourceLineIndex
 
                             for (const part of pathParts) {
                                 const foundIndex = lines.findIndex(
                                     (line, idx) => idx > currentLineIndex && line.includes(`"${part}"`)
                                 )
-                                if (foundIndex < 0) break
+                                if (foundIndex < 0) {
+                                    break
+                                }
                                 currentLineIndex = foundIndex
                             }
 
@@ -168,7 +174,7 @@ export class DiffViewHelper {
                 }
 
                 editor.setDecorations(driftDecorationType, decorations)
-            })
+            }
         }, 100)
     }
 }
