@@ -312,6 +312,13 @@ describe('DiffViewHelper', function () {
             clock.tick(500)
         }
 
+        function assertDecorationCount(expectedCount: number) {
+            assert.ok(setDecorationsStub.called)
+            const decorations = setDecorationsStub.getCall(0).args[1]
+            assert.strictEqual(decorations.length, expectedCount)
+            return decorations
+        }
+
         function createDriftChange(
             logicalResourceId: string,
             beforeContext: string,
@@ -370,38 +377,9 @@ describe('DiffViewHelper', function () {
             await runDriftTest(stackName, changes)
 
             assert.ok(createTextEditorDecorationTypeStub.called)
-            assert.ok(setDecorationsStub.called)
-            const decorations = setDecorationsStub.getCall(0).args[1]
-            assert.strictEqual(decorations.length, 1)
+            const decorations = assertDecorationCount(1)
             assert.ok(decorations[0].hoverMessage.includes('Resource Drift Detected'))
             assert.ok(decorations[0].hoverMessage.includes('MyQueue'))
-        })
-
-        it('should not add decoration when BeforeValue equals AfterValue', async function () {
-            const stackName = 'test-stack'
-            const changes: StackChange[] = [
-                createDriftChange(
-                    'MyQueue',
-                    '{"Properties":{"DelaySeconds":"5"}}',
-                    '{"Properties":{"DelaySeconds":"5"}}',
-                    [
-                        createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '5', {
-                            PreviousValue: '1',
-                            ActualValue: '5',
-                        }),
-                    ]
-                ),
-            ]
-
-            setupMockEditor(
-                stackName,
-                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
-            )
-            await runDriftTest(stackName, changes)
-
-            assert.ok(setDecorationsStub.called)
-            const decorations = setDecorationsStub.getCall(0).args[1]
-            assert.strictEqual(decorations.length, 0)
         })
 
         it('should not add decoration when LiveResourceDrift is not present', async function () {
@@ -421,9 +399,7 @@ describe('DiffViewHelper', function () {
             )
             await runDriftTest(stackName, changes)
 
-            assert.ok(setDecorationsStub.called)
-            const decorations = setDecorationsStub.getCall(0).args[1]
-            assert.strictEqual(decorations.length, 0)
+            assertDecorationCount(0)
         })
 
         it('should handle nested property paths correctly', async function () {
@@ -448,9 +424,7 @@ describe('DiffViewHelper', function () {
             )
             await runDriftTest(stackName, changes)
 
-            assert.ok(setDecorationsStub.called)
-            const decorations = setDecorationsStub.getCall(0).args[1]
-            assert.strictEqual(decorations.length, 1)
+            const decorations = assertDecorationCount(1)
             assert.ok(decorations[0].hoverMessage.includes('/Properties/Config/Setting'))
         })
 
@@ -483,9 +457,52 @@ describe('DiffViewHelper', function () {
             )
             await runDriftTest(stackName, changes)
 
-            assert.ok(setDecorationsStub.called)
-            const decorations = setDecorationsStub.getCall(0).args[1]
-            assert.strictEqual(decorations.length, 2)
+            assertDecorationCount(2)
+        })
+
+        it('should add drift decoration for DELETED resources', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        logicalResourceId: 'DeletedResource',
+                        resourceDriftStatus: 'DELETED',
+                    },
+                },
+            ]
+
+            setupMockEditor(stackName, '{\n  "DeletedResource": {}\n}')
+            await runDriftTest(stackName, changes)
+
+            const decorations = assertDecorationCount(1)
+            assert.ok(decorations[0].hoverMessage.includes('Resource Deleted'))
+            assert.ok(decorations[0].hoverMessage.includes('deleted sometime after the previous deployment'))
+        })
+
+        it('should handle array indices in property paths', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                createDriftChange(
+                    'MyRole',
+                    '{"Properties":{"Policies":[{"PolicyDocument":"old"}]}}',
+                    '{"Properties":{"Policies":[{"PolicyDocument":"new"}]}}',
+                    [
+                        createDetailTarget('PolicyDocument', '/Properties/Policies/0/PolicyDocument', 'old', 'new', {
+                            PreviousValue: 'old',
+                            ActualValue: 'drifted',
+                        }),
+                    ]
+                ),
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyRole": {\n    "Properties": {\n      "Policies": [\n        {\n          "PolicyDocument": "old"\n        }\n      ]\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            const decorations = assertDecorationCount(1)
+            assert.ok(decorations[0].hoverMessage.includes('/Properties/Policies/0/PolicyDocument'))
         })
     })
 })

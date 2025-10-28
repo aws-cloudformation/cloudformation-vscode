@@ -61,12 +61,17 @@ export type StackChange = {
         scope?: string[]
         beforeContext?: string
         afterContext?: string
+        resourceDriftStatus?: string
         details?: ResourceChangeDetailV2[]
     }
     validationResults?: ValidationResult[]
 }
 
 export type ResourceTargetDefinitionV2 = ResourceTargetDefinition & {
+    Drift?: {
+        PreviousValue?: string
+        ActualValue?: string
+    }
     LiveResourceDrift?: {
         PreviousValue?: string
         ActualValue?: string

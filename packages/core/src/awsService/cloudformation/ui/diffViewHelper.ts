@@ -26,7 +26,7 @@ export class DiffViewHelper {
 
             const id = rc.logicalResourceId
 
-            if (rc.action !== 'Add') {
+            if (rc.action !== 'Add' || rc.resourceDriftStatus === 'DELETED') {
                 if (rc.beforeContext) {
                     try {
                         beforeData[id] = JSON.parse(rc.beforeContext) as Record<string, unknown>
@@ -117,7 +117,7 @@ export class DiffViewHelper {
 
                 for (const change of changes) {
                     const rc = change.resourceChange
-                    if (!rc?.details || !rc.logicalResourceId) {
+                    if (!rc?.logicalResourceId) {
                         continue
                     }
 
@@ -126,14 +126,43 @@ export class DiffViewHelper {
                         continue
                     }
 
+                    // Handle DELETED drift status
+                    if (rc.resourceDriftStatus === 'DELETED') {
+                        const line = lines[resourceLineIndex]
+                        const endCol = line.trimEnd().length
+                        const range = new Range(resourceLineIndex, endCol, resourceLineIndex, endCol)
+
+                        const hoverMessage = [
+                            '### ⚠️ Resource Drift Detected',
+                            '',
+                            `**Resource:** \`${rc.logicalResourceId}\``,
+                            '',
+                            '**Status:** Resource Deleted',
+                            '',
+                            '*This resource was deleted sometime after the previous deployment (out-of-band).*',
+                        ].join('\n')
+
+                        decorations.push({ range, hoverMessage })
+                        continue
+                    }
+
+                    if (!rc.details) {
+                        continue
+                    }
+
                     for (const detail of rc.details) {
                         const target = detail.Target
-                        // only show the drift if the before/after are different
-                        if (target?.LiveResourceDrift && target.Path && target.BeforeValue !== target.AfterValue) {
+                        const drift = target?.Drift || target?.LiveResourceDrift
+                        if (drift && target?.Path) {
                             const pathParts = target.Path.split('/').filter(Boolean)
                             let currentLineIndex = resourceLineIndex
 
                             for (const part of pathParts) {
+                                // Skip numeric array indices - they don't appear as keys in JSON
+                                if (/^\d+$/.test(part)) {
+                                    continue
+                                }
+
                                 const foundIndex = lines.findIndex(
                                     (line, idx) => idx > currentLineIndex && line.includes(`"${part}"`)
                                 )
@@ -158,8 +187,8 @@ export class DiffViewHelper {
                                     '',
                                     '| Source | Value |',
                                     '|--------|-------|',
-                                    `| 📄 Template | \`${target.LiveResourceDrift.PreviousValue}\` |`,
-                                    `| ☁️ Live AWS | \`${target.LiveResourceDrift.ActualValue}\` |`,
+                                    `| 📄 Template | \`${drift.PreviousValue}\` |`,
+                                    `| ☁️ Live AWS | \`${drift.ActualValue}\` |`,
                                     '',
                                     '*The live resource has drifted from the previously deployed template.*',
                                 ].join('\n')
