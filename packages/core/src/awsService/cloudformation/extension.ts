@@ -35,6 +35,7 @@ import {
     createProjectCommand,
     addEnvironmentCommand,
     removeEnvironmentCommand,
+    deleteChangeSetCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -247,6 +248,7 @@ export async function activate(context: ExtensionContext) {
                 validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
                 deployTemplateCommand(client, stacksManager, diffProvider, documentManager),
                 executeChangeSetCommand(client, stacksManager),
+                deleteChangeSetCommand(client, stacksManager),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
                 selectRegionCommand(cfnExplorer),

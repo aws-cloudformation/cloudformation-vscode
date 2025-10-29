@@ -40,6 +40,22 @@ export function validateStackName(value: string): string | undefined {
     return undefined
 }
 
+export function validateChangeSetName(value: string): string | undefined {
+    if (!value) {
+        return 'Change Set name is required'
+    }
+
+    if (value.length > 128) {
+        return 'Change Set name must be 128 characters or less'
+    }
+
+    if (!/^[a-zA-Z][-a-zA-Z0-9]*$/.test(value)) {
+        return 'Change Set name must start with a letter and contain only alphanumeric characters and hyphens'
+    }
+
+    return undefined
+}
+
 export function validateParameterValue(input: string, param: TemplateParameter): string | undefined {
     if (!input && !param.Default) {
         return `Parameter ${param.name} is required`
