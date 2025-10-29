@@ -224,7 +224,7 @@ export class DiffViewHelper {
                     for (const detail of rc.details) {
                         const target = detail.Target
                         const drift = target?.Drift || target?.LiveResourceDrift
-                        if (drift && target?.Path) {
+                        if (drift && target?.Path && drift.ActualValue !== undefined) {
                             // Check if property exists in afterContext
                             if (rc.afterContext && !this.propertyExistsInContext(rc.afterContext, target.Path)) {
                                 continue

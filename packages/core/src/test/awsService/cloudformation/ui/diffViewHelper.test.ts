@@ -540,5 +540,39 @@ describe('DiffViewHelper', function () {
 
             assertDecorationCount(0)
         })
+
+        it('should not add decoration when ActualValue is undefined', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
+                        afterContext: '{"Properties":{"DelaySeconds":"1"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    AfterValue: '1',
+                                    Drift: {
+                                        PreviousValue: '1',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            assertDecorationCount(0)
+        })
     })
 })

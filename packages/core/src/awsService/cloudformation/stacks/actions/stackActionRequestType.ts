@@ -70,11 +70,11 @@ export type StackChange = {
 export type ResourceTargetDefinitionV2 = ResourceTargetDefinition & {
     Drift?: {
         PreviousValue: string
-        ActualValue: string
+        ActualValue?: string
     }
     LiveResourceDrift?: {
         PreviousValue: string
-        ActualValue: string
+        ActualValue?: string
     }
 }
 
