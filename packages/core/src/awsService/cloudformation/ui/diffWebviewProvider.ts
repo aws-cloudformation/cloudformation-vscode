@@ -16,12 +16,17 @@ export class DiffWebviewProvider implements WebviewViewProvider {
     private changes: StackChange[] = []
     private changeSetName?: string
     private enableDeployments: boolean = false
+    private currentPage: number = 0
+    private pageSize: number = 50
+    private totalPages: number = 0
 
     updateData(stackName: string, changes: StackChange[] = [], changeSetName?: string, enableDeployments = false) {
         this.stackName = stackName
         this.changes = changes
         this.changeSetName = changeSetName
         this.enableDeployments = enableDeployments
+        this.currentPage = 0
+        this.totalPages = Math.ceil(changes.length / this.pageSize)
         if (this._view) {
             this._view.webview.html = this.getHtmlContent()
         }
@@ -50,12 +55,28 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 this.changeSetName = undefined
                 this.enableDeployments = false
                 this._view!.webview.html = this.getHtmlContent()
+            } else if (message.command === 'nextPage') {
+                if (this.currentPage < this.totalPages - 1) {
+                    this.currentPage++
+                    this._view!.webview.html = this.getHtmlContent()
+                }
+            } else if (message.command === 'prevPage') {
+                if (this.currentPage > 0) {
+                    this.currentPage--
+                    this._view!.webview.html = this.getHtmlContent()
+                }
             }
         })
     }
 
     private getHtmlContent(): string {
         const changes = this.changes
+
+        const startIndex = this.currentPage * this.pageSize
+        const endIndex = startIndex + this.pageSize
+        const displayedChanges = changes.slice(startIndex, endIndex)
+        const hasNext = this.currentPage < this.totalPages - 1
+        const hasPrev = this.currentPage > 0
 
         if (!changes || changes.length === 0) {
             return `
@@ -100,7 +121,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">CausingEntity</th>
                 </tr>`
 
-        for (const change of changes) {
+        for (const change of displayedChanges) {
             const rc = change.resourceChange
             if (!rc) {
                 continue
@@ -154,6 +175,35 @@ export class DiffWebviewProvider implements WebviewViewProvider {
         }
 
         tableHtml += `</table>`
+
+        const paginationControls =
+            this.totalPages > 1
+                ? `
+            <div class="pagination-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
+                <button onclick="prevPage()" ${!hasPrev ? 'disabled' : ''} style="
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 8px 16px;
+                    margin: 0 5px;
+                    cursor: ${hasPrev ? 'pointer' : 'not-allowed'};
+                    border-radius: 2px;
+                    opacity: ${hasPrev ? '1' : '0.5'};
+                ">Previous</button>
+                <span style="margin: 0 10px; color: var(--vscode-foreground);">Page ${this.currentPage + 1} of ${this.totalPages}</span>
+                <button onclick="nextPage()" ${!hasNext ? 'disabled' : ''} style="
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    padding: 8px 16px;
+                    margin: 0 5px;
+                    cursor: ${hasNext ? 'pointer' : 'not-allowed'};
+                    border-radius: 2px;
+                    opacity: ${hasNext ? '1' : '0.5'};
+                ">Next</button>
+            </div>
+        `
+                : ''
 
         const viewDiffButton = `
             <div class="view-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
@@ -217,7 +267,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 </style>
             </head>
             <body>
-                ${viewDiffButton}${deploymentButtons}
+                ${viewDiffButton}${deploymentButtons}${paginationControls}
                 ${tableHtml}
                 <script>
                     const vscode = acquireVsCodeApi();
@@ -232,6 +282,12 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     }
                     function deleteChangeSet() {
                         vscode.postMessage({ command: 'deleteChangeSet' });
+                    }
+                    function nextPage() {
+                        vscode.postMessage({ command: 'nextPage' });
+                    }
+                    function prevPage() {
+                        vscode.postMessage({ command: 'prevPage' });
                     }
                 </script>
             </body>

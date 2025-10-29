@@ -8,7 +8,6 @@ import { commandKey, extractErrorMessage, findParameterDescriptionPosition } fro
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
-import { ChangeSetReference } from '../stacks/actions/stackActionRequestType'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
 import {
     getParameterValues,
@@ -23,8 +22,13 @@ import {
 import { setContext } from '../../../shared/vscode/setContext'
 import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
-import { getParameters, getCapabilities, getTemplateResources } from '../stacks/actions/stackActionApi'
-import { TemplateParameter, ResourceToImport } from '../stacks/actions/stackActionRequestType'
+import {
+    getParameters,
+    getCapabilities,
+    getTemplateResources,
+    describeChangeSet,
+} from '../stacks/actions/stackActionApi'
+import { TemplateParameter, ResourceToImport, ChangeSetReference } from '../stacks/actions/stackActionRequestType'
 import { StackInfo } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
@@ -115,6 +119,24 @@ export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksMan
             await changeSetDeletion.delete()
         } catch (error) {
             showErrorMessage(`Error deleting change set: ${extractErrorMessage(error)}`)
+        }
+    })
+}
+
+export function viewChangeSetCommand(client: LanguageClient, stacks: StacksManager, diffProvider: DiffWebviewProvider) {
+    return commands.registerCommand(commandKey('stacks.viewChangeSet'), async (params: ChangeSetReference) => {
+        try {
+            const describeChangeSetResult = await describeChangeSet(client, {
+                changeSetName: params.changeSetName,
+                stackName: params.stackName,
+            })
+
+            void setContext('aws.cloudformation.stacks.diffVisible', true)
+
+            diffProvider.updateData(params.stackName, describeChangeSetResult.changes, params.changeSetName, true)
+            void commands.executeCommand('aws.cloudformation.diff.focus')
+        } catch (error) {
+            showErrorMessage(`Error viewing change set: ${extractErrorMessage(error)}`)
         }
     })
 }
@@ -342,7 +364,7 @@ export function refreshResourceListCommand(resourcesManager: ResourcesManager) {
 export function viewStackDiffCommand() {
     return commands.registerCommand(commandKey('stacks.viewDiff'), () => {
         void setContext('aws.cloudformation.stacks.diffVisible', true)
-        void commands.executeCommand('aws.cloudformation.diff.focus')
+        void commands.executeCommand(commandKey('diff.focus'))
     })
 }
 
