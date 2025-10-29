@@ -6,6 +6,7 @@
 import { WebviewView, WebviewViewProvider, commands } from 'vscode'
 import { StackChange } from '../stacks/actions/stackActionRequestType'
 import { DiffViewHelper } from './diffViewHelper'
+import { commandKey } from '../utils'
 
 const webviewCommandOpenDiff = 'openDiff'
 
@@ -37,7 +38,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
             } else if (message.command === 'confirmDeploy') {
                 if (this.changeSetName) {
                     void commands.executeCommand(
-                        'aws.cloudformation.api.executeChangeSet',
+                        commandKey('api.executeChangeSet'),
                         this.stackName,
                         this.changeSetName
                     )
@@ -46,7 +47,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     this._view!.webview.html = this.getHtmlContent()
                 }
             } else if (message.command === 'deleteChangeSet') {
-                void commands.executeCommand('aws.cloudformation.stacks.deleteChangeSet', {
+                void commands.executeCommand(commandKey('stacks.deleteChangeSet'), {
                     stackName: this.stackName,
                     changeSetName: this.changeSetName,
                 })

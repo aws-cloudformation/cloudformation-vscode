@@ -2694,12 +2694,7 @@
                 {
                     "command": "aws.cloudformation.stacks.deleteChangeSet",
                     "when": "view == aws.cloudformation && viewItem == changeSet",
-                    "group": "inline@2"
-                },
-                {
-                    "command": "aws.cloudformation.stacks.deleteChangeSet",
-                    "when": "view == aws.cloudformation && viewItem == changeSet",
-                    "group": "1_modification"
+                    "group": "1_cloudformation@1"
                 },
                 {
                     "command": "aws.cloudformation.stacks.refreshChangeSets",
