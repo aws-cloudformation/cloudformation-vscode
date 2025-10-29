@@ -55,7 +55,7 @@ export class StackChangeSetsNode extends AWSTreeNodeBase {
             return [new NoChangeSetsNode()]
         }
 
-        const nodes = changeSets.map((changeSet) => new ChangeSetNode(changeSet))
+        const nodes = changeSets.map((changeSet) => new ChangeSetNode(changeSet, this.stackName))
         return this.changeSetsManager.hasMore(this.stackName) ? [...nodes, new LoadMoreChangeSetsNode(this)] : nodes
     }
 
@@ -66,8 +66,16 @@ export class StackChangeSetsNode extends AWSTreeNodeBase {
 }
 
 export class ChangeSetNode extends AWSTreeNodeBase {
-    public constructor(public readonly changeSet: ChangeSetInfo) {
+    public readonly stackName: string
+    public readonly changeSetName: string
+
+    public constructor(
+        public readonly changeSet: ChangeSetInfo,
+        stackName: string
+    ) {
         super(changeSet.changeSetName, TreeItemCollapsibleState.None)
+        this.stackName = stackName
+        this.changeSetName = changeSet.changeSetName
         this.contextValue = 'changeSet'
         this.tooltip = `${changeSet.changeSetName} [${changeSet.status}]`
         this.iconPath = this.getIconForStatus(changeSet.status)

@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { StackActionPhase, StackActionState } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import { showDeploymentStarted, showDeploymentSuccess, showDeploymentFailure, showErrorMessage } from '../../ui/message'
-import { createDeploymentStatusBar, updateDeploymentStatus } from '../../ui/statusBar'
+import { createDeploymentStatusBar, updateWorkflowStatus } from '../../ui/statusBar'
 import { StatusBarItem } from 'vscode'
 import { deploy, describeDeploymentStatus, getDeploymentStatus } from './stackActionApi'
 import { createDeploymentParams } from './stackActionUtil'
@@ -46,7 +46,7 @@ export class Deployment {
 
                     this.status = deploymentResult.phase
                     if (this.statusBarItem) {
-                        updateDeploymentStatus(this.statusBarItem, deploymentResult.phase)
+                        updateWorkflowStatus(this.statusBarItem, deploymentResult.phase)
                     }
 
                     switch (deploymentResult.phase) {
