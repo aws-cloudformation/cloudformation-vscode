@@ -37,11 +37,7 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 void DiffViewHelper.openDiff(this.stackName, this.changes, message.resourceId)
             } else if (message.command === 'confirmDeploy') {
                 if (this.changeSetName) {
-                    void commands.executeCommand(
-                        commandKey('api.executeChangeSet'),
-                        this.stackName,
-                        this.changeSetName
-                    )
+                    void commands.executeCommand(commandKey('api.executeChangeSet'), this.stackName, this.changeSetName)
                     this.changeSetName = undefined
                     this.enableDeployments = false
                     this._view!.webview.html = this.getHtmlContent()
