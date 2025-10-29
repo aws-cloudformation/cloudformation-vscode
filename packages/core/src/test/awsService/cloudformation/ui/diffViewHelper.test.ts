@@ -504,5 +504,41 @@ describe('DiffViewHelper', function () {
             const decorations = assertDecorationCount(1)
             assert.ok(decorations[0].hoverMessage.includes('/Properties/Policies/0/PolicyDocument'))
         })
+
+        it('should not add decoration when property is not in afterContext', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5","MessageRetentionPeriod":"100"}}',
+                        afterContext: '{"Properties":{"MessageRetentionPeriod":"200"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    BeforeValue: '5',
+                                    AfterValue: '1',
+                                    Drift: {
+                                        PreviousValue: '1',
+                                        ActualValue: '5',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5",\n      "MessageRetentionPeriod": "100"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            assertDecorationCount(0)
+        })
     })
 })
