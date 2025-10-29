@@ -47,9 +47,8 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 }
             } else if (message.command === 'deleteChangeSet') {
                 void commands.executeCommand(
-                    'aws.cloudformation.api.deleteChangeSet',
-                    this.stackName,
-                    this.changeSetName
+                    'aws.cloudformation.stacks.deleteChangeSet',
+                    { stackName: this.stackName, changeSetName: this.changeSetName }
                 )
                 this.changeSetName = undefined
                 this.enableDeployments = false

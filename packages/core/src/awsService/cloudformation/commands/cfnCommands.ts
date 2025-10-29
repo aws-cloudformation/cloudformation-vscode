@@ -8,6 +8,7 @@ import { commandKey, extractErrorMessage, findParameterDescriptionPosition } fro
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
+import { ChangeSetReference } from '../stacks/actions/stackActionRequestType'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
 import {
     getParameterValues,
@@ -17,6 +18,7 @@ import {
     shouldImportResources,
     getResourcesToImport,
     getEnvironmentName,
+    getChangeSetName,
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
 import { showErrorMessage } from '../ui/message'
@@ -92,13 +94,24 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
 
 export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
     return commands.registerCommand(
-        commandKey('api.deleteChangeSet'),
-        async (stackName: string, changeSetName: string) => {
+        commandKey('stacks.deleteChangeSet'),
+        async (params?: ChangeSetReference) => {
             try {
+                let stackName: string
+                let changeSetName: string
+
+                if (params) {
+                    stackName = params.stackName
+                    changeSetName = params.changeSetName
+                } else {
+                    stackName = await getStackName() ?? ''
+                    changeSetName = await getChangeSetName() ?? ''
+                    if (!stackName || !changeSetName) return
+                }
+
                 const changeSetDeletion = new ChangeSetDeletion(stackName, changeSetName, client)
 
                 await changeSetDeletion.delete()
-                stacks.startPolling()
             } catch (error) {
                 showErrorMessage(`Error deleting change set: ${extractErrorMessage(error)}`)
             }

@@ -4,7 +4,7 @@
  */
 
 import { window, workspace, Uri } from 'vscode'
-import { validateStackName, validateParameterValue } from '../stacks/actions/stackActionInputValidation'
+import { validateStackName, validateParameterValue, validateChangeSetName } from '../stacks/actions/stackActionInputValidation'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
 import { TemplateParameter, ResourceToImport, TemplateResource } from '../stacks/actions/stackActionRequestType'
 import { DocumentManager } from '../documents/documentManager'
@@ -43,6 +43,15 @@ export async function getStackName(prefill?: string): Promise<string | undefined
         prompt: 'Enter the CloudFormation stack name',
         value: prefill,
         validateInput: validateStackName,
+        ignoreFocusOut: true,
+    })
+}
+
+export async function getChangeSetName(prefill?: string): Promise<string | undefined> {
+    return await window.showInputBox({
+        prompt: 'Enter the CloudFormation change set name',
+        value: prefill,
+        validateInput: validateChangeSetName,
         ignoreFocusOut: true,
     })
 }
