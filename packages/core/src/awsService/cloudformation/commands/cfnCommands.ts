@@ -32,6 +32,7 @@ import { TemplateParameter, ResourceToImport, ChangeSetReference } from '../stac
 import { StackInfo } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
+import { RelatedResourcesManager } from '../relatedResources/relatedResourcesManager'
 import { DocumentManager } from '../documents/documentManager'
 
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
@@ -535,9 +536,9 @@ export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
     })
 }
 
-export function addRelatedResourcesCommand(resourcesManager: ResourcesManager) {
+export function addRelatedResourcesCommand(relatedResourcesManager: RelatedResourcesManager) {
     return commands.registerCommand(commandKey('api.addRelatedResources'), async (node?: any) => {
         const selectedResourceType = node?.resourceList?.typeName
-        await resourcesManager.addRelatedResources(selectedResourceType)
+        await relatedResourcesManager.addRelatedResources(selectedResourceType)
     })
 }

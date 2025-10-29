@@ -21,12 +21,6 @@ import {
     SearchResourceRequest,
     SearchResourceResult,
 } from '../cfn/resourceRequestTypes'
-import {
-    getAuthoredResourceTypes,
-    getRelatedResourceTypes,
-    insertRelatedResources,
-} from '../relatedResources/relatedResourcesApi'
-import { RelatedResourcesCodeAction } from '../relatedResources/relatedResourcesProtocol'
 
 import { showErrorMessage } from '../ui/message'
 import {
@@ -35,7 +29,6 @@ import {
     Range,
     Selection,
     TextEdit,
-    TextEditorRevealType,
     Uri,
     window,
     workspace,
@@ -462,150 +455,5 @@ export class ResourcesManager {
             )
             await setContext('aws.cloudformation.gettingStackMgmtInfo', false)
         }
-    }
-
-    async addRelatedResources(preSelectedResourceType?: string): Promise<void> {
-        const activeEditor = window.activeTextEditor
-        if (!activeEditor) {
-            void window.showErrorMessage('No template file opened')
-            return
-        }
-
-        try {
-            const templateUri = activeEditor.document.uri.toString()
-
-            let selectedResourceType = preSelectedResourceType
-
-            if (!selectedResourceType) {
-                const resourceTypes = await getAuthoredResourceTypes(this.client, templateUri)
-                if (resourceTypes.length === 0) {
-                    void window.showInformationMessage('No resources found in the current template')
-                    return
-                }
-                selectedResourceType = await window.showQuickPick(resourceTypes, {
-                    placeHolder: 'Select a resource type to add related resources',
-                    canPickMany: false,
-                })
-            }
-
-            if (!selectedResourceType) {
-                return
-            }
-
-            const action = await window.showQuickPick(['Create new', 'Import existing'], {
-                placeHolder: 'How would you like to add related resources?',
-                canPickMany: false,
-            })
-
-            if (!action) {
-                return
-            }
-
-            if (action === 'Create new') {
-                await this.createRelatedResources(selectedResourceType)
-            } else {
-                await this.importRelatedResources(selectedResourceType)
-            }
-        } catch (error) {
-            showErrorMessage(
-                `Error adding related resources: ${error instanceof Error ? error.message : String(error)}`
-            )
-        }
-    }
-
-    async createRelatedResources(selectedResourceType: string): Promise<void> {
-        const activeEditor = window.activeTextEditor
-        if (!activeEditor) {
-            void window.showErrorMessage('No template file opened')
-            return
-        }
-
-        const templateUri = activeEditor.document.uri.toString()
-        const relatedTypes = await getRelatedResourceTypes(this.client, { resourceType: selectedResourceType })
-
-        if (relatedTypes.length === 0) {
-            void window.showInformationMessage(`No related resources found for ${selectedResourceType}`)
-            return
-        }
-
-        const selectedRelatedTypes = await window.showQuickPick(relatedTypes, {
-            placeHolder: 'Select related resources to create',
-            canPickMany: true,
-        })
-
-        if (!selectedRelatedTypes || selectedRelatedTypes.length === 0) {
-            return
-        }
-
-        const result = await insertRelatedResources(this.client, {
-            templateUri,
-            resourceTypes: selectedRelatedTypes,
-            selectedResourceType,
-        })
-
-        await this.applyCodeAction(result)
-
-        // Scroll to the inserted resources
-        if (result.data?.scrollToPosition) {
-            const position = new Position(result.data.scrollToPosition.line, result.data.scrollToPosition.character)
-            const revealRange = new Range(
-                new Position(Math.max(0, position.line - 2), 0),
-                new Position(position.line + 8, 0)
-            )
-            activeEditor.revealRange(revealRange, TextEditorRevealType.InCenter)
-        }
-
-        void window.showInformationMessage(`Added ${selectedRelatedTypes.length} related resources`)
-    }
-
-    private async applyCodeAction(codeAction: RelatedResourcesCodeAction): Promise<void> {
-        if (codeAction.edit?.changes) {
-            const workspaceEdit = new WorkspaceEdit()
-
-            for (const [uri, textEdits] of Object.entries(codeAction.edit.changes)) {
-                const vsCodeUri = Uri.parse(uri)
-                const vsCodeEdits = textEdits.map((edit) => {
-                    const range = new Range(
-                        new Position(edit.range.start.line, edit.range.start.character),
-                        new Position(edit.range.end.line, edit.range.end.character)
-                    )
-                    return new TextEdit(range, edit.newText)
-                })
-                workspaceEdit.set(vsCodeUri, vsCodeEdits)
-            }
-
-            await workspace.applyEdit(workspaceEdit)
-        }
-    }
-
-    async importRelatedResources(selectedResourceType: string): Promise<void> {
-        const relatedTypes = await getRelatedResourceTypes(this.client, { resourceType: selectedResourceType })
-
-        if (relatedTypes.length === 0) {
-            void window.showInformationMessage(`No related resources found for ${selectedResourceType}`)
-            return
-        }
-
-        const selectedRelatedTypes = await window.showQuickPick(relatedTypes, {
-            placeHolder: 'Select related resource types to import',
-            canPickMany: true,
-        })
-
-        if (!selectedRelatedTypes || selectedRelatedTypes.length === 0) {
-            return
-        }
-
-        const selections = await this.resourceSelector.selectResources(true, selectedRelatedTypes)
-
-        if (selections.length === 0) {
-            return
-        }
-
-        const resourceNodes = selections.map((selection) => ({
-            resourceType: selection.resourceType,
-            resourceIdentifier: selection.resourceIdentifier,
-        })) as ResourceNode[]
-
-        await this.importResourceStates(resourceNodes)
     }
 }
