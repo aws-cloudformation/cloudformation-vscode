@@ -294,7 +294,7 @@ describe('DiffViewHelper', function () {
         function setupMockEditor(stackName: string, documentText: string) {
             const tmpDir = os.tmpdir()
             const beforePath = path.join(tmpDir, `${stackName}-before.json`)
-            const beforeUri = `file://${beforePath}`
+            const beforeUri = vscode.Uri.file(beforePath).toString()
 
             const mockEditor = {
                 document: {
