@@ -69,7 +69,10 @@ export class ChangeSetNode extends AWSTreeNodeBase {
     public readonly stackName: string
     public readonly changeSetName: string
 
-    public constructor(public readonly changeSet: ChangeSetInfo, stackName: string) {
+    public constructor(
+        public readonly changeSet: ChangeSetInfo,
+        stackName: string
+    ) {
         super(changeSet.changeSetName, TreeItemCollapsibleState.None)
         this.stackName = stackName
         this.changeSetName = changeSet.changeSetName

@@ -93,30 +93,29 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
 }
 
 export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
-    return commands.registerCommand(
-        commandKey('stacks.deleteChangeSet'),
-        async (params?: ChangeSetReference) => {
-            try {
-                let stackName: string
-                let changeSetName: string
+    return commands.registerCommand(commandKey('stacks.deleteChangeSet'), async (params?: ChangeSetReference) => {
+        try {
+            let stackName: string
+            let changeSetName: string
 
-                if (params) {
-                    stackName = params.stackName
-                    changeSetName = params.changeSetName
-                } else {
-                    stackName = await getStackName() ?? ''
-                    changeSetName = await getChangeSetName() ?? ''
-                    if (!stackName || !changeSetName) return
+            if (params) {
+                stackName = params.stackName
+                changeSetName = params.changeSetName
+            } else {
+                stackName = (await getStackName()) ?? ''
+                changeSetName = (await getChangeSetName()) ?? ''
+                if (!stackName || !changeSetName) {
+                    return
                 }
-
-                const changeSetDeletion = new ChangeSetDeletion(stackName, changeSetName, client)
-
-                await changeSetDeletion.delete()
-            } catch (error) {
-                showErrorMessage(`Error deleting change set: ${extractErrorMessage(error)}`)
             }
+
+            const changeSetDeletion = new ChangeSetDeletion(stackName, changeSetName, client)
+
+            await changeSetDeletion.delete()
+        } catch (error) {
+            showErrorMessage(`Error deleting change set: ${extractErrorMessage(error)}`)
         }
-    )
+    })
 }
 
 export function deployTemplateCommand(

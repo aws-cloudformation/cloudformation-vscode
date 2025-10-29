@@ -46,10 +46,10 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     this._view!.webview.html = this.getHtmlContent()
                 }
             } else if (message.command === 'deleteChangeSet') {
-                void commands.executeCommand(
-                    'aws.cloudformation.stacks.deleteChangeSet',
-                    { stackName: this.stackName, changeSetName: this.changeSetName }
-                )
+                void commands.executeCommand('aws.cloudformation.stacks.deleteChangeSet', {
+                    stackName: this.stackName,
+                    changeSetName: this.changeSetName,
+                })
                 this.changeSetName = undefined
                 this.enableDeployments = false
                 this._view!.webview.html = this.getHtmlContent()
