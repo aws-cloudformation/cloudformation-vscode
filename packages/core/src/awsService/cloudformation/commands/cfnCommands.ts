@@ -100,21 +100,13 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
 export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
     return commands.registerCommand(commandKey('stacks.deleteChangeSet'), async (params?: ChangeSetReference) => {
         try {
-            let stackName: string
-            let changeSetName: string
+            params = params ?? await promptForChangeSetReference()
 
-            if (params) {
-                stackName = params.stackName
-                changeSetName = params.changeSetName
-            } else {
-                stackName = (await getStackName()) ?? ''
-                changeSetName = (await getChangeSetName()) ?? ''
-                if (!stackName || !changeSetName) {
-                    return
-                }
+            if (!params) {
+                return
             }
 
-            const changeSetDeletion = new ChangeSetDeletion(stackName, changeSetName, client)
+            const changeSetDeletion = new ChangeSetDeletion(params.stackName, params.changeSetName, client)
 
             await changeSetDeletion.delete()
         } catch (error) {
@@ -124,8 +116,14 @@ export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksMan
 }
 
 export function viewChangeSetCommand(client: LanguageClient, stacks: StacksManager, diffProvider: DiffWebviewProvider) {
-    return commands.registerCommand(commandKey('stacks.viewChangeSet'), async (params: ChangeSetReference) => {
+    return commands.registerCommand(commandKey('stacks.viewChangeSet'), async (params?: ChangeSetReference) => {
         try {
+            params = params ?? await promptForChangeSetReference()
+
+            if (!params) {
+                return
+            }
+
             const describeChangeSetResult = await describeChangeSet(client, {
                 changeSetName: params.changeSetName,
                 stackName: params.stackName,
@@ -139,6 +137,16 @@ export function viewChangeSetCommand(client: LanguageClient, stacks: StacksManag
             showErrorMessage(`Error viewing change set: ${extractErrorMessage(error)}`)
         }
     })
+}
+
+async function promptForChangeSetReference(): Promise<ChangeSetReference | undefined> {
+    const stackName = await getStackName()
+    const changeSetName = await getChangeSetName()
+    if (!stackName || !changeSetName) {
+        return undefined
+    }
+
+    return {stackName: stackName, changeSetName: changeSetName}
 }
 
 export function deployTemplateCommand(
