@@ -38,7 +38,7 @@ import {
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
-import { AwsCredentialsService } from './auth/credentials'
+import { AwsCredentialsService, encryptionKey } from './auth/credentials'
 import { ExtensionId, ExtensionName, Version } from './extensionConfig'
 import { CloudFormationExplorer } from './explorer/explorer'
 
@@ -123,6 +123,10 @@ export async function activate(context: ExtensionContext) {
                     clientId: getClientId(globals.globalState, globals.telemetry.telemetryEnabled),
                 },
                 telemetryEnabled: globals.telemetry.telemetryEnabled,
+            },
+            encryption: {
+                key: encryptionKey.toString('base64'),
+                mode: 'JWT',
             },
         },
         errorHandler: {
