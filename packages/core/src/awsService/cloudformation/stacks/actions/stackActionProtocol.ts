@@ -20,6 +20,9 @@ import {
     DescribeDeploymentStatusResult,
     DeleteChangeSetParams,
     DescribeDeletionStatusResult,
+    GetStackEventsParams,
+    GetStackEventsResult,
+    ClearStackEventsParams,
 } from './stackActionRequestType'
 
 export const CreateValidationRequest = new RequestType<CreateValidationParams, CreateStackActionResult, void>(
@@ -71,3 +74,9 @@ export const GetTemplateResourcesRequest = new RequestType<TemplateUri, GetTempl
 export const ListChangeSetsRequest = new RequestType<ListChangeSetsParams, ListChangeSetsResult, void>(
     'aws/cfn/stack/changeSet/list'
 )
+
+export const GetStackEventsRequest = new RequestType<GetStackEventsParams, GetStackEventsResult, void>(
+    'aws/cfn/stack/events'
+)
+
+export const ClearStackEventsRequest = new RequestType<ClearStackEventsParams, void, void>('aws/cfn/stack/events/clear')
