@@ -100,7 +100,7 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
 export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
     return commands.registerCommand(commandKey('stacks.deleteChangeSet'), async (params?: ChangeSetReference) => {
         try {
-            params = params ?? await promptForChangeSetReference()
+            params = params ?? (await promptForChangeSetReference())
 
             if (!params) {
                 return
@@ -118,7 +118,7 @@ export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksMan
 export function viewChangeSetCommand(client: LanguageClient, stacks: StacksManager, diffProvider: DiffWebviewProvider) {
     return commands.registerCommand(commandKey('stacks.viewChangeSet'), async (params?: ChangeSetReference) => {
         try {
-            params = params ?? await promptForChangeSetReference()
+            params = params ?? (await promptForChangeSetReference())
 
             if (!params) {
                 return
@@ -146,7 +146,7 @@ async function promptForChangeSetReference(): Promise<ChangeSetReference | undef
         return undefined
     }
 
-    return {stackName: stackName, changeSetName: changeSetName}
+    return { stackName: stackName, changeSetName: changeSetName }
 }
 
 export function deployTemplateCommand(
