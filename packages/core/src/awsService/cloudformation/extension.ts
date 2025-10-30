@@ -11,7 +11,7 @@ import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
 import {
     deployTemplateCommand,
-    validateTemplateCommand,
+    dryRunTemplateCommand,
     rerunLastValidationCommand,
     importResourceStateCommand,
     cloneResourceStateCommand,
@@ -264,10 +264,10 @@ export async function activate(context: ExtensionContext) {
                 viewStackDiffCommand(),
                 focusDiffCommand(),
                 restartCommand(client),
-                validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
-                deployTemplateCommand(client, stacksManager, diffProvider, documentManager),
-                executeChangeSetCommand(client, stacksManager),
-                deleteChangeSetCommand(client, stacksManager),
+                dryRunTemplateCommand(client, diffProvider, documentManager),
+                deployTemplateCommand(client, diffProvider, documentManager),
+                executeChangeSetCommand(client),
+                deleteChangeSetCommand(client),
                 viewChangeSetCommand(client, stacksManager, diffProvider),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
