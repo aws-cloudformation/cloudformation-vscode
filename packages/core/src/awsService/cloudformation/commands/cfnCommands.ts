@@ -25,6 +25,8 @@ import {
     getImportExistingResources,
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
+import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
+import { StackDetailWebviewProvider } from '../ui/stackDetailWebviewProvider'
 import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
 import {
@@ -46,7 +48,6 @@ import { ResourcesManager } from '../resources/resourcesManager'
 import { RelatedResourcesManager } from '../relatedResources/relatedResourcesManager'
 import { DocumentManager } from '../documents/documentManager'
 
-import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
 import { ResourceContextValue } from '../explorer/contextValue'
@@ -411,6 +412,17 @@ export function viewStackDiffCommand() {
     return commands.registerCommand(commandKey('stacks.viewDiff'), () => {
         void setContext('aws.cloudformation.stacks.diffVisible', true)
         void commands.executeCommand(commandKey('diff.focus'))
+    })
+}
+
+export function viewStackDetailCommand(detailProvider: StackDetailWebviewProvider) {
+    return commands.registerCommand(commandKey('stacks.viewDetail'), async (node?: any) => {
+        void setContext('aws.cloudformation.stacks.detailVisible', true)
+
+        const stackName = node?.stackName || 'Unknown Stack'
+
+        await detailProvider.updateData(stackName)
+        void commands.executeCommand(commandKey('detail.focus'))
     })
 }
 

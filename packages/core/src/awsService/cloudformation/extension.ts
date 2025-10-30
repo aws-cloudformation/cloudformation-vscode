@@ -21,6 +21,7 @@ import {
     refreshResourceListCommand,
     copyResourceIdentifierCommand,
     viewStackDiffCommand,
+    viewStackDetailCommand,
     focusDiffCommand,
     getStackManagementInfoCommand,
     extractToParameterPositionCursorCommand,
@@ -48,9 +49,10 @@ import { commandKey } from './utils'
 import { CloudFormationExplorer } from './explorer/explorer'
 
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
-import { DiffWebviewProvider } from './ui/diffWebviewProvider'
 import { StackOverviewWebviewProvider } from './ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from './ui/stackEventsWebviewProvider'
+import { DiffWebviewProvider } from './ui/diffWebviewProvider'
+import { StackDetailWebviewProvider } from './ui/stackDetailWebviewProvider'
 import { DocumentManager } from './documents/documentManager'
 
 import { ResourcesManager } from './resources/resourcesManager'
@@ -211,6 +213,9 @@ export async function activate(context: ExtensionContext) {
             // Create diff webview provider
             const diffProvider = new DiffWebviewProvider()
 
+            // Create stack detail webview provider
+            const detailProvider = new StackDetailWebviewProvider(client)
+
             // Create stack overview webview provider
             const overviewProvider = new StackOverviewWebviewProvider()
 
@@ -261,7 +266,9 @@ export async function activate(context: ExtensionContext) {
                 getStackManagementInfoCommandPalette(resourcesManager),
                 window.registerWebviewViewProvider(commandKey('diff'), diffProvider),
                 window.registerWebviewViewProvider(commandKey('stack.events'), eventsProvider),
+                window.registerWebviewViewProvider(commandKey('detail'), detailProvider),
                 viewStackDiffCommand(),
+                viewStackDetailCommand(detailProvider),
                 focusDiffCommand(),
                 restartCommand(client),
                 validateDeploymentCommand(client, diffProvider, documentManager),
