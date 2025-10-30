@@ -53,6 +53,7 @@ import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
 import { RelatedResourcesManager } from '../relatedResources/relatedResourcesManager'
 import { DocumentManager } from '../documents/documentManager'
+import { EnvironmentManager } from '../cfn-init/environmentManager'
 
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
@@ -70,11 +71,12 @@ import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 export function validateDeploymentCommand(
     client: LanguageClient,
     diffProvider: DiffWebviewProvider,
-    documentManager: DocumentManager
+    documentManager: DocumentManager,
+    environmentManager: EnvironmentManager
 ) {
     return commands.registerCommand(commandKey('api.validateDeployment'), async (templateUri?: string) => {
         try {
-            const result = await changeSetSteps(client, documentManager, true, templateUri)
+            const result = await changeSetSteps(client, documentManager, environmentManager, true, templateUri)
             if (!result) {
                 return
             }
@@ -171,11 +173,12 @@ async function promptForChangeSetReference(): Promise<ChangeSetReference | undef
 export function deployTemplateCommand(
     client: LanguageClient,
     diffProvider: DiffWebviewProvider,
-    documentManager: DocumentManager
+    documentManager: DocumentManager,
+    environmentManager: EnvironmentManager
 ) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
-            const result = await changeSetSteps(client, documentManager, false, templateUri)
+            const result = await changeSetSteps(client, documentManager, environmentManager, false, templateUri)
             if (!result) {
                 return
             }
@@ -258,6 +261,7 @@ type UserInputtedTemplateParameters = {
 async function changeSetSteps(
     client: LanguageClient,
     documentManager: DocumentManager,
+    environmentManager: EnvironmentManager,
     isValidation: boolean,
     templateUri: string | undefined
 ): Promise<UserInputtedTemplateParameters | undefined> {
@@ -317,11 +321,26 @@ async function changeSetSteps(
 
     const paramDefinition = await getTemplateParameters(client, templateUri)
     let parameters: Parameter[] | undefined
+
+    const deploymentFileDetail = await environmentManager.selectDeploymentFile(templateUri, paramDefinition)
+
     if (paramDefinition.length > 0) {
-        if (isValidation) {
-            parameters = await getParameterValues(paramDefinition, getLastValidation()?.parameters)
-        } else {
-            parameters = await getParameterValues(paramDefinition)
+        parameters = deploymentFileDetail?.compatibleParameters
+
+        // Prompt for any remaining parameters not provided by file
+        const providedParamNames = parameters?.map((p) => p.ParameterKey) ?? []
+        const remainingParams = paramDefinition.filter((p) => !providedParamNames.includes(p.name))
+
+        if (remainingParams.length > 0) {
+            const additionalParams = isValidation
+                ? await getParameterValues(remainingParams, getLastValidation()?.parameters)
+                : await getParameterValues(remainingParams)
+
+            if (!additionalParams) {
+                return
+            }
+
+            parameters = [...(parameters ?? []), ...additionalParams]
         }
     }
     if (paramDefinition.length > 0 && !parameters) {

@@ -75,6 +75,7 @@ import { EnvironmentSelector } from './ui/environmentSelector'
 import { selectEnvironmentCommand } from './commands/environmentCommands'
 import { CfnInitUiInterface } from './cfn-init/cfnInitUiInterface'
 import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
+import { DeploymentFileSelector } from './ui/deploymentFileSelector'
 
 let client: LanguageClient
 
@@ -173,7 +174,8 @@ export async function activate(context: ExtensionContext) {
             )
             const changeSetManager = new ChangeSetsManager(client)
             const environmentSelector = new EnvironmentSelector()
-            const environmentManager = new EnvironmentManager(environmentSelector)
+            const deploymentFileSelector = new DeploymentFileSelector()
+            const environmentManager = new EnvironmentManager(environmentSelector, deploymentFileSelector)
 
             const cfnInitCliCaller = new CfnInitCliCaller(serverRootDir)
             const cfnInitUiInterface = new CfnInitUiInterface(cfnInitCliCaller)
