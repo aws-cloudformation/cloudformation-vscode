@@ -36,16 +36,19 @@ import {
     addEnvironmentCommand,
     removeEnvironmentCommand,
     deleteChangeSetCommand,
+    showStackEventsCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
 import { AwsCredentialsService, encryptionKey } from './auth/credentials'
 import { ExtensionId, ExtensionName, Version } from './extensionConfig'
+import { commandKey } from './utils'
 import { CloudFormationExplorer } from './explorer/explorer'
 
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
 import { DiffWebviewProvider } from './ui/diffWebviewProvider'
 import { StackOverviewWebviewProvider } from './ui/stackOverviewWebviewProvider'
+import { StackEventsWebviewProvider } from './ui/stackEventsWebviewProvider'
 import { DocumentManager } from './documents/documentManager'
 
 import { ResourcesManager } from './resources/resourcesManager'
@@ -200,6 +203,9 @@ export async function activate(context: ExtensionContext) {
             // Create stack overview webview provider
             const overviewProvider = new StackOverviewWebviewProvider()
 
+            // Create stack events webview provider
+            const eventsProvider = new StackEventsWebviewProvider(client)
+
             const documentSelector = [
                 { scheme: 'file', language: 'cloudformation' },
                 { scheme: 'file', language: 'yaml' },
@@ -232,6 +238,7 @@ export async function activate(context: ExtensionContext) {
                 refreshChangeSetsCommand(cfnExplorer),
                 loadMoreChangeSetsCommand(cfnExplorer),
                 showStackOverviewCommand(overviewProvider),
+                showStackEventsCommand(eventsProvider),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager),
@@ -241,7 +248,8 @@ export async function activate(context: ExtensionContext) {
                 ...cloneResourceStateCommand(resourcesManager),
                 getStackManagementInfoCommand(resourcesManager),
                 getStackManagementInfoCommandPalette(resourcesManager),
-                window.registerWebviewViewProvider('aws.cloudformation.diff', diffProvider),
+                window.registerWebviewViewProvider(commandKey('diff'), diffProvider),
+                window.registerWebviewViewProvider(commandKey('stack.events'), eventsProvider),
                 viewStackDiffCommand(),
                 focusDiffCommand(),
                 restartCommand(client),
