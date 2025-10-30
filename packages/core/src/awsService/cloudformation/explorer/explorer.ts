@@ -82,10 +82,10 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
                 const signInNode = new PlaceholderNode(this as any, 'Sign in to get started')
                 signInNode.iconPath = getIcon('vscode-account')
                 signInNode.command = {
-                    command: 'aws.auth.signIn',
+                    command: 'aws.toolkit.login',
                     title: 'Sign in',
                 }
-                return [signInNode]
+                return [signInNode, this.documentsNode]
             }
 
             const children: AWSTreeNodeBase[] = [
