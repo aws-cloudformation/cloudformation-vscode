@@ -179,24 +179,35 @@ export class DiffWebviewProvider implements WebviewViewProvider {
         const paginationControls =
             this.totalPages > 1
                 ? `
-            <div class="pagination-actions" style="margin: 10px 0; text-align: left; display: inline-block;">
+            <div class="pagination-controls" style="
+                position: fixed;
+                top: 0;
+                right: 0;
+                z-index: 10;
+                background: var(--vscode-editor-background);
+                padding: 8px;
+                border-bottom: 1px solid var(--vscode-panel-border);
+                border-left: 1px solid var(--vscode-panel-border);
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 8px;
+            ">
+                <span style="color: var(--vscode-foreground);">Page ${this.currentPage + 1} of ${this.totalPages}</span>
                 <button onclick="prevPage()" ${!hasPrev ? 'disabled' : ''} style="
                     background-color: var(--vscode-button-background);
                     color: var(--vscode-button-foreground);
                     border: none;
-                    padding: 8px 16px;
-                    margin: 0 5px;
+                    padding: 4px 12px;
                     cursor: ${hasPrev ? 'pointer' : 'not-allowed'};
                     border-radius: 2px;
                     opacity: ${hasPrev ? '1' : '0.5'};
                 ">Previous</button>
-                <span style="margin: 0 10px; color: var(--vscode-foreground);">Page ${this.currentPage + 1} of ${this.totalPages}</span>
                 <button onclick="nextPage()" ${!hasNext ? 'disabled' : ''} style="
                     background-color: var(--vscode-button-background);
                     color: var(--vscode-button-foreground);
                     border: none;
-                    padding: 8px 16px;
-                    margin: 0 5px;
+                    padding: 4px 12px;
                     cursor: ${hasNext ? 'pointer' : 'not-allowed'};
                     border-radius: 2px;
                     opacity: ${hasNext ? '1' : '0.5'};
@@ -252,9 +263,13 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 <style>
                     body {
                         font-family: var(--vscode-font-family);
-                        margin: 8px;
+                        margin: 0;
+                        padding: 0;
                         background-color: var(--vscode-panel-background);
                         color: var(--vscode-panel-foreground);
+                    }
+                    .content {
+                        padding: 8px;
                     }
                     a {
                         color: var(--vscode-textLink-foreground);
@@ -267,8 +282,11 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                 </style>
             </head>
             <body>
-                ${viewDiffButton}${deploymentButtons}${paginationControls}
-                ${tableHtml}
+                ${paginationControls}
+                <div class="content">
+                    ${viewDiffButton}${deploymentButtons}
+                    ${tableHtml}
+                </div>
                 <script>
                     const vscode = acquireVsCodeApi();
                     function openDiff() {
