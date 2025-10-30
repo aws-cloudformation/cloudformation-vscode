@@ -9,6 +9,7 @@ import {
     ResourceChangeDetail,
     ResourceStatus,
     DetailedStatus,
+    ResourceTargetDefinition,
 } from '@aws-sdk/client-cloudformation'
 import { Identifiable } from '../../lspTypes'
 
@@ -60,9 +61,25 @@ export type StackChange = {
         scope?: string[]
         beforeContext?: string
         afterContext?: string
-        details?: ResourceChangeDetail[]
+        resourceDriftStatus?: string
+        details?: ResourceChangeDetailV2[]
     }
     validationResults?: ValidationResult[]
+}
+
+export type ResourceTargetDefinitionV2 = ResourceTargetDefinition & {
+    Drift?: {
+        PreviousValue: string
+        ActualValue?: string
+    }
+    LiveResourceDrift?: {
+        PreviousValue: string
+        ActualValue?: string
+    }
+}
+
+export type ResourceChangeDetailV2 = Omit<ResourceChangeDetail, 'Target'> & {
+    Target?: ResourceTargetDefinitionV2
 }
 
 export enum StackActionPhase {

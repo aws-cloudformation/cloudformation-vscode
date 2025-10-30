@@ -279,4 +279,300 @@ describe('DiffViewHelper', function () {
             assert.ok(executeCommandStub.calledOnce)
         })
     })
+
+    describe('drift decorations', function () {
+        let createTextEditorDecorationTypeStub: sinon.SinonStub
+        let setDecorationsStub: sinon.SinonStub
+        let clock: sinon.SinonFakeTimers
+
+        beforeEach(function () {
+            createTextEditorDecorationTypeStub = sandbox.stub(vscode.window, 'createTextEditorDecorationType')
+            setDecorationsStub = sandbox.stub()
+            clock = sandbox.useFakeTimers()
+        })
+
+        function setupMockEditor(stackName: string, documentText: string) {
+            const tmpDir = os.tmpdir()
+            const beforePath = path.join(tmpDir, `${stackName}-before.json`)
+            const beforeUri = vscode.Uri.file(beforePath).toString()
+
+            const mockEditor = {
+                document: {
+                    uri: { toString: () => beforeUri },
+                    getText: () => documentText,
+                },
+                setDecorations: setDecorationsStub,
+            }
+
+            sandbox.stub(vscode.window, 'visibleTextEditors').get(() => [mockEditor])
+        }
+
+        async function runDriftTest(stackName: string, changes: StackChange[]) {
+            await DiffViewHelper.openDiff(stackName, changes)
+            clock.tick(500)
+        }
+
+        function assertDecorationCount(expectedCount: number) {
+            assert.ok(setDecorationsStub.called)
+            const decorations = setDecorationsStub.getCall(0).args[1]
+            assert.strictEqual(decorations.length, expectedCount)
+            return decorations
+        }
+
+        function createDriftChange(
+            logicalResourceId: string,
+            beforeContext: string,
+            afterContext: string,
+            details: any[]
+        ): StackChange {
+            return {
+                resourceChange: {
+                    action: 'Modify',
+                    logicalResourceId,
+                    beforeContext,
+                    afterContext,
+                    details,
+                },
+            }
+        }
+
+        function createDetailTarget(
+            name: string,
+            path: string,
+            beforeValue: string,
+            afterValue: string,
+            drift?: { PreviousValue: string; ActualValue: string }
+        ) {
+            return {
+                Target: {
+                    Name: name,
+                    Path: path,
+                    BeforeValue: beforeValue,
+                    AfterValue: afterValue,
+                    ...(drift && { LiveResourceDrift: drift }),
+                },
+            }
+        }
+
+        it('should add drift decoration when LiveResourceDrift is present', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                createDriftChange(
+                    'MyQueue',
+                    '{"Properties":{"DelaySeconds":"5"}}',
+                    '{"Properties":{"DelaySeconds":"1"}}',
+                    [
+                        createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '1', {
+                            PreviousValue: '1',
+                            ActualValue: '5',
+                        }),
+                    ]
+                ),
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            assert.ok(createTextEditorDecorationTypeStub.called)
+            const decorations = assertDecorationCount(1)
+            assert.ok(decorations[0].hoverMessage.includes('Resource Drift Detected'))
+            assert.ok(decorations[0].hoverMessage.includes('MyQueue'))
+        })
+
+        it('should not add decoration when LiveResourceDrift is not present', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                createDriftChange(
+                    'MyQueue',
+                    '{"Properties":{"DelaySeconds":"5"}}',
+                    '{"Properties":{"DelaySeconds":"1"}}',
+                    [createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '1')]
+                ),
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            assertDecorationCount(0)
+        })
+
+        it('should handle nested property paths correctly', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                createDriftChange(
+                    'MyResource',
+                    '{"Properties":{"Config":{"Setting":"old"}}}',
+                    '{"Properties":{"Config":{"Setting":"new"}}}',
+                    [
+                        createDetailTarget('Setting', '/Properties/Config/Setting', 'old', 'new', {
+                            PreviousValue: 'new',
+                            ActualValue: 'old',
+                        }),
+                    ]
+                ),
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyResource": {\n    "Properties": {\n      "Config": {\n        "Setting": "old"\n      }\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            const decorations = assertDecorationCount(1)
+            assert.ok(decorations[0].hoverMessage.includes('/Properties/Config/Setting'))
+        })
+
+        it('should handle multiple drift decorations for different properties', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                createDriftChange(
+                    'MyQueue',
+                    '{"Properties":{"DelaySeconds":"5","MessageRetentionPeriod":"100"}}',
+                    '{"Properties":{"DelaySeconds":"1","MessageRetentionPeriod":"200"}}',
+                    [
+                        createDetailTarget('DelaySeconds', '/Properties/DelaySeconds', '5', '1', {
+                            PreviousValue: '1',
+                            ActualValue: '5',
+                        }),
+                        createDetailTarget(
+                            'MessageRetentionPeriod',
+                            '/Properties/MessageRetentionPeriod',
+                            '100',
+                            '200',
+                            { PreviousValue: '100', ActualValue: '150' }
+                        ),
+                    ]
+                ),
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5",\n      "MessageRetentionPeriod": "100"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            assertDecorationCount(2)
+        })
+
+        it('should add drift decoration for DELETED resources', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        logicalResourceId: 'DeletedResource',
+                        resourceDriftStatus: 'DELETED',
+                    },
+                },
+            ]
+
+            setupMockEditor(stackName, '{\n  "DeletedResource": {}\n}')
+            await runDriftTest(stackName, changes)
+
+            const decorations = assertDecorationCount(1)
+            assert.ok(decorations[0].hoverMessage.includes('Resource Deleted'))
+            assert.ok(decorations[0].hoverMessage.includes('deleted sometime after the previous deployment'))
+        })
+
+        it('should handle array indices in property paths', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                createDriftChange(
+                    'MyRole',
+                    '{"Properties":{"Policies":[{"PolicyDocument":"old"}]}}',
+                    '{"Properties":{"Policies":[{"PolicyDocument":"new"}]}}',
+                    [
+                        createDetailTarget('PolicyDocument', '/Properties/Policies/0/PolicyDocument', 'old', 'new', {
+                            PreviousValue: 'old',
+                            ActualValue: 'drifted',
+                        }),
+                    ]
+                ),
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyRole": {\n    "Properties": {\n      "Policies": [\n        {\n          "PolicyDocument": "old"\n        }\n      ]\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            const decorations = assertDecorationCount(1)
+            assert.ok(decorations[0].hoverMessage.includes('/Properties/Policies/0/PolicyDocument'))
+        })
+
+        it('should not add decoration when property is not in afterContext', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5","MessageRetentionPeriod":"100"}}',
+                        afterContext: '{"Properties":{"MessageRetentionPeriod":"200"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    BeforeValue: '5',
+                                    AfterValue: '1',
+                                    Drift: {
+                                        PreviousValue: '1',
+                                        ActualValue: '5',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5",\n      "MessageRetentionPeriod": "100"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            assertDecorationCount(0)
+        })
+
+        it('should not add decoration when ActualValue is undefined', async function () {
+            const stackName = 'test-stack'
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'MyQueue',
+                        beforeContext: '{"Properties":{"DelaySeconds":"5"}}',
+                        afterContext: '{"Properties":{"DelaySeconds":"1"}}',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'DelaySeconds',
+                                    Path: '/Properties/DelaySeconds',
+                                    AfterValue: '1',
+                                    Drift: {
+                                        PreviousValue: '1',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            setupMockEditor(
+                stackName,
+                '{\n  "MyQueue": {\n    "Properties": {\n      "DelaySeconds": "5"\n    }\n  }\n}'
+            )
+            await runDriftTest(stackName, changes)
+
+            assertDecorationCount(0)
+        })
+    })
 })
