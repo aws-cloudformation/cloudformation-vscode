@@ -890,6 +890,11 @@
                     "name": "Stack Changes",
                     "type": "webview",
                     "when": "aws.cloudformation.stacks.diffVisible"
+                },
+                {
+                    "id": "aws.cloudformation.stack.events",
+                    "name": "Stack Events",
+                    "type": "webview"
                 }
             ],
             "explorer": [

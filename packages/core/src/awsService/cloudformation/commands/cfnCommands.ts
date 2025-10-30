@@ -32,6 +32,7 @@ import { DocumentManager } from '../documents/documentManager'
 
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
+import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
 import { ResourceContextValue } from '../explorer/contextValue'
 import { getLogger } from '../../../shared/logger/logger'
 import { CloudFormationExplorer } from '../explorer/explorer'
@@ -441,6 +442,13 @@ export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
 export function showStackOverviewCommand(overviewProvider: StackOverviewWebviewProvider) {
     return commands.registerCommand(commandKey('api.showStackOverview'), async (stack: StackInfo) => {
         await overviewProvider.showStackOverview(stack)
+    })
+}
+
+export function showStackEventsCommand(eventsProvider: StackEventsWebviewProvider) {
+    return commands.registerCommand(commandKey('stack.events.show'), async (stackName: string) => {
+        await eventsProvider.showStackEvents(stackName)
+        await commands.executeCommand('workbench.view.extension.cfn-diff')
     })
 }
 

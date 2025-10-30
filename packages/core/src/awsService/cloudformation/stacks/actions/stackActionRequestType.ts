@@ -10,6 +10,7 @@ import {
     ResourceStatus,
     DetailedStatus,
     ResourceTargetDefinition,
+    StackEvent,
 } from '@aws-sdk/client-cloudformation'
 import { Identifiable } from '../../lspTypes'
 
@@ -205,4 +206,20 @@ export type StackInfo = {
     DisableRollback?: boolean
     EnableTerminationProtection?: boolean
     TimeoutInMinutes?: number
+}
+
+export type GetStackEventsParams = {
+    stackName: string
+    nextToken?: string
+    refresh?: boolean
+}
+
+export type GetStackEventsResult = {
+    events: StackEvent[]
+    nextToken?: string
+    gapDetected?: boolean
+}
+
+export type ClearStackEventsParams = {
+    stackName: string
 }
