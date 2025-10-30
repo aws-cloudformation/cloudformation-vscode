@@ -132,7 +132,7 @@ export function viewChangeSetCommand(client: LanguageClient, stacks: StacksManag
             void setContext('aws.cloudformation.stacks.diffVisible', true)
 
             diffProvider.updateData(params.stackName, describeChangeSetResult.changes, params.changeSetName, true)
-            void commands.executeCommand('aws.cloudformation.diff.focus')
+            void commands.executeCommand(commandKey('diff.focus'))
         } catch (error) {
             showErrorMessage(`Error viewing change set: ${extractErrorMessage(error)}`)
         }
