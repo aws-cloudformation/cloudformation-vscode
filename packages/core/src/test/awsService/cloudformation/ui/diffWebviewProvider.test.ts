@@ -110,26 +110,32 @@ describe('DiffWebviewProvider', function () {
 
             const html = setupProviderWithChanges('test-stack', changes)
 
-            // Verify table headers
+            // Verify main table headers
             assert.ok(html.includes('Action'))
             assert.ok(html.includes('LogicalResourceId'))
-            assert.ok(html.includes('Name'))
-            assert.ok(html.includes('ChangeSource'))
-            assert.ok(html.includes('CausingEntity'))
+            assert.ok(html.includes('ResourceType'))
+            assert.ok(html.includes('Replacement'))
 
-            // Verify data
+            // Verify main row data
             assert.ok(html.includes('Modify'))
             assert.ok(html.includes('TestBucket'))
+            assert.ok(html.includes('test-bucket-123'))
+            assert.ok(html.includes('AWS::S3::Bucket'))
+
+            // Verify detail data (in expandable section)
             assert.ok(html.includes('BucketName'))
+            assert.ok(html.includes('old-bucket'))
+            assert.ok(html.includes('new-bucket'))
             assert.ok(html.includes('DirectModification'))
             assert.ok(html.includes('user-change'))
 
-            // Verify rowspan for vertical centering
-            assert.ok(html.includes('rowspan="1"'))
-            assert.ok(html.includes('vertical-align: middle'))
+            // Verify expandable structure
+            assert.ok(html.includes('toggleDetails'))
+            assert.ok(html.includes('display: none'))
+            assert.ok(html.includes('▶'))
         })
 
-        it('should handle multiple detail rows with proper rowspan', function () {
+        it('should handle multiple detail rows with proper expandable structure', function () {
             const changes: StackChange[] = [
                 {
                     resourceChange: {
@@ -162,10 +168,10 @@ describe('DiffWebviewProvider', function () {
             provider.resolveWebviewView(mockWebview as any)
             const html = mockWebview.webview.html
 
-            // Should have rowspan="2" for resource columns
-            assert.ok(html.includes('rowspan="2"'))
+            // Should have expandable details with both properties
             assert.ok(html.includes('Property1'))
             assert.ok(html.includes('Property2'))
+            assert.ok(html.includes('toggleDetails'))
         })
 
         it('should handle changes without details', function () {
@@ -183,7 +189,8 @@ describe('DiffWebviewProvider', function () {
 
             assert.ok(html.includes('Add'))
             assert.ok(html.includes('NewResource'))
-            assert.ok(html.includes('rowspan="1"'))
+            // Should have empty expand icon cell for resources without details
+            assert.ok(html.includes('expand-icon-0'))
         })
 
         it('should apply correct border colors for different actions', function () {
@@ -213,6 +220,69 @@ describe('DiffWebviewProvider', function () {
             assert.ok(html.includes('--vscode-gitDecoration-addedResourceForeground'))
             assert.ok(html.includes('--vscode-gitDecoration-deletedResourceForeground'))
             assert.ok(html.includes('--vscode-gitDecoration-modifiedResourceForeground'))
+        })
+
+        it('should show drift status column when drift is detected', function () {
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'DriftedResource',
+                        resourceDriftStatus: 'DELETED',
+                    },
+                },
+            ]
+
+            const html = setupProviderWithChanges('test-stack', changes)
+
+            assert.ok(html.includes('Drift Status'))
+            assert.ok(html.includes('⚠️ Deleted'))
+        })
+
+        it('should not show drift status column when no drift is detected', function () {
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'NormalResource',
+                    },
+                },
+            ]
+
+            const html = setupProviderWithChanges('test-stack', changes)
+
+            assert.ok(!html.includes('Drift Status'))
+        })
+
+        it('should show drift detail columns when property drift is detected', function () {
+            const changes: StackChange[] = [
+                {
+                    resourceChange: {
+                        action: 'Modify',
+                        logicalResourceId: 'DriftedResource',
+                        details: [
+                            {
+                                Target: {
+                                    Name: 'BucketName',
+                                    AttributeChangeType: 'Modify',
+                                    Drift: {
+                                        PreviousValue: 'template-value',
+                                        ActualValue: 'live-value',
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+
+            const html = setupProviderWithChanges('test-stack', changes)
+
+            assert.ok(html.includes('Drift: Previous'))
+            assert.ok(html.includes('Drift: Actual'))
+            assert.ok(html.includes('template-value'))
+            assert.ok(html.includes('live-value'))
+            assert.ok(html.includes('⚠️ Modified'))
         })
     })
 })
