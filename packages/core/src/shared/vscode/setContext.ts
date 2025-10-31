@@ -37,6 +37,7 @@ export type contextKey =
     | 'aws.cloudformation.refreshingResourceList'
     | 'aws.cloudformation.refreshingAllResources'
     | 'aws.cloudformation.refreshingStacks'
+    | 'aws.cloudformation.stacks.detailVisible'
     | 'aws.toolkit.notifications.show'
     | 'aws.amazonq.editSuggestionActive'
     | 'aws.smus.connected'

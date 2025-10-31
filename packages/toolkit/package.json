@@ -895,6 +895,12 @@
                     "id": "aws.cloudformation.stack.events",
                     "name": "Stack Events",
                     "type": "webview"
+                },
+                {
+                    "id": "aws.cloudformation.detail",
+                    "name": "Stack Resources",
+                    "type": "webview",
+                    "when": "aws.cloudformation.stacks.detailVisible"
                 }
             ],
             "explorer": [
@@ -4819,6 +4825,11 @@
             {
                 "command": "aws.cloudformation.diff.focus",
                 "title": "Focus CloudFormation Diff View",
+                "category": "AWS CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.detail.focus",
+                "title": "Focus CloudFormation Detail View",
                 "category": "AWS CloudFormation"
             },
             {
