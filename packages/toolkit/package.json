@@ -4801,7 +4801,7 @@
             {
                 "command": "aws.cloudformation.api.cloneResourceState",
                 "title": "Clone Resource State",
-                "icon": "$(symbol-enum)",
+                "icon": "$(copy)",
                 "category": "AWS CloudFormation"
             },
             {
