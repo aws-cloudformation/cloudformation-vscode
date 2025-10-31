@@ -29,6 +29,7 @@ import {
     loadMoreStacksCommand,
     searchResourceCommand,
     executeChangeSetCommand,
+    addRelatedResourcesCommand,
     refreshChangeSetsCommand,
     loadMoreChangeSetsCommand,
     showStackOverviewCommand,
@@ -54,6 +55,8 @@ import { DocumentManager } from './documents/documentManager'
 
 import { ResourcesManager } from './resources/resourcesManager'
 import { ResourceSelector } from './ui/resourceSelector'
+import { RelatedResourcesManager } from './relatedResources/relatedResourcesManager'
+import { RelatedResourceSelector } from './ui/relatedResourceSelector'
 
 import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
@@ -158,6 +161,13 @@ export async function activate(context: ExtensionContext) {
 
             const resourceSelector = new ResourceSelector(client)
             const resourcesManager = new ResourcesManager(client, resourceSelector)
+            const relatedResourceSelector = new RelatedResourceSelector(client)
+            const relatedResourcesManager = new RelatedResourcesManager(
+                client,
+                relatedResourceSelector,
+                resourceSelector,
+                resourcesManager.importResourceStates.bind(resourcesManager)
+            )
             const changeSetManager = new ChangeSetsManager(client)
             const environmentSelector = new EnvironmentSelector()
             const environmentManager = new EnvironmentManager(environmentSelector)
@@ -268,6 +278,7 @@ export async function activate(context: ExtensionContext) {
                 createProjectCommand(cfnInitUiInterface),
                 addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller),
                 removeEnvironmentCommand(cfnInitCliCaller),
+                addRelatedResourcesCommand(relatedResourcesManager),
                 credentialsService,
                 serverProvider
             )

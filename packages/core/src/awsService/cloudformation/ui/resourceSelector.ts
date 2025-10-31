@@ -53,11 +53,18 @@ export class ResourceSelector {
         }
     }
 
-    async selectResources(multiSelect = true): Promise<ResourceSelectionResult[]> {
+    async selectResources(multiSelect = true, preSelectedTypes?: string[]): Promise<ResourceSelectionResult[]> {
         try {
-            const selectedTypes = await this.selectResourceTypes([], multiSelect)
-            if (!selectedTypes || selectedTypes.length === 0) {
-                return []
+            let selectedTypes: string[]
+
+            if (preSelectedTypes && preSelectedTypes.length > 0) {
+                selectedTypes = preSelectedTypes
+            } else {
+                const types = await this.selectResourceTypes([], multiSelect)
+                if (!types || types.length === 0) {
+                    return []
+                }
+                selectedTypes = types
             }
 
             const allSelections: ResourceSelectionResult[] = []
