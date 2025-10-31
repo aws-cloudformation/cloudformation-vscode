@@ -57,7 +57,8 @@ describe('ResourceTypeNode', function () {
             assert.strictEqual(emptyNode.description, '(0)')
 
             const children = await emptyNode.getChildren()
-            assert.strictEqual(children.length, 0)
+            assert.strictEqual(children.length, 1)
+            assert.strictEqual(children[0].label, 'No resources found')
         })
     })
 })
