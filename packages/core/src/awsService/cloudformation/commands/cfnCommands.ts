@@ -48,12 +48,12 @@ import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
 import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 
-export function dryRunTemplateCommand(
+export function validateDeploymentCommand(
     client: LanguageClient,
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager
 ) {
-    return commands.registerCommand(commandKey('api.dryRunTemplate'), async (templateUri?: string) => {
+    return commands.registerCommand(commandKey('api.validateDeployment'), async (templateUri?: string) => {
         try {
             const result = await changeSetSteps(client, documentManager, true, templateUri)
             if (!result) {

@@ -4832,8 +4832,8 @@
                 "category": "AWS CloudFormation"
             },
             {
-                "command": "aws.cloudformation.api.dryRunTemplate",
-                "title": "Dry Run Template",
+                "command": "aws.cloudformation.api.validateDeployment",
+                "title": "Validate Deployment",
                 "category": "AWS CloudFormation"
             },
             {
