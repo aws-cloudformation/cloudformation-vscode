@@ -5,7 +5,13 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { StackActionPhase, StackChange, StackActionState, ResourceToImport } from './stackActionRequestType'
+import {
+    StackActionPhase,
+    StackChange,
+    StackActionState,
+    ResourceToImport,
+    ChangeSetOptionalFlags,
+} from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
 import { setContext } from '../../../../shared/vscode/setContext'
@@ -42,6 +48,7 @@ export class Validation {
     private statusBarItem: StatusBarItem | undefined
     private shouldEnableDeployment: boolean
     private changeSetName?: string
+    private optionalFlags?: ChangeSetOptionalFlags
 
     constructor(
         uri: string,
@@ -51,7 +58,8 @@ export class Validation {
         parameters?: Parameter[],
         capabilities?: Capability[],
         resourcesToImport?: ResourceToImport[],
-        shouldEnableDeployment: boolean = false
+        shouldEnableDeployment: boolean = false,
+        optionalFlags?: ChangeSetOptionalFlags
     ) {
         this.id = uuidv4()
         this.uri = uri
@@ -62,6 +70,7 @@ export class Validation {
         this.capabilities = capabilities
         this.resourcesToImport = resourcesToImport
         this.shouldEnableDeployment = shouldEnableDeployment
+        this.optionalFlags = optionalFlags
     }
 
     async validate() {
@@ -79,7 +88,8 @@ export class Validation {
                     this.parameters,
                     this.capabilities,
                     this.resourcesToImport,
-                    this.shouldEnableDeployment
+                    this.shouldEnableDeployment,
+                    this.optionalFlags
                 )
             )
 

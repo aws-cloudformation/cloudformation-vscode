@@ -11,6 +11,8 @@ import {
     DetailedStatus,
     ResourceTargetDefinition,
     StackEvent,
+    OnStackFailure,
+    Tag,
 } from '@aws-sdk/client-cloudformation'
 import { Identifiable } from '../../lspTypes'
 
@@ -20,14 +22,22 @@ export type ResourceToImport = {
     ResourceIdentifier: Record<string, string>
 }
 
-export type CreateValidationParams = Identifiable & {
-    uri: string
-    stackName: string
-    parameters?: Parameter[]
-    capabilities?: Capability[]
-    resourcesToImport?: ResourceToImport[]
-    keepChangeSet?: boolean
+export type ChangeSetOptionalFlags = {
+    onStackFailure?: OnStackFailure
+    includeNestedStacks?: boolean
+    tags?: Tag[]
+    importExistingResources?: boolean
 }
+
+export type CreateValidationParams = Identifiable &
+    ChangeSetOptionalFlags & {
+        uri: string
+        stackName: string
+        parameters?: Parameter[]
+        capabilities?: Capability[]
+        resourcesToImport?: ResourceToImport[]
+        keepChangeSet?: boolean
+    }
 
 export type ChangeSetReference = {
     changeSetName: string
@@ -159,6 +169,12 @@ export type TemplateResource = {
 
 export type GetTemplateResourcesResult = {
     resources: TemplateResource[]
+}
+
+export enum OptionalFlagMode {
+    Skip = 'Skip Optional Flags',
+    Input = 'Input Optional Flags',
+    DevFriendly = 'Use Developer Friendly Flag Selections',
 }
 
 export type TemplateParameter = {

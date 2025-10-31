@@ -4,6 +4,7 @@
  */
 
 import {
+    ChangeSetOptionalFlags,
     CreateDeploymentParams,
     CreateValidationParams,
     DeleteChangeSetParams,
@@ -18,9 +19,10 @@ export function createValidationParams(
     parameters?: Parameter[],
     capabilities?: Capability[],
     resourcesToImport?: ResourceToImport[],
-    keepChangeSet?: boolean
+    keepChangeSet?: boolean,
+    optionalFlags?: ChangeSetOptionalFlags
 ): CreateValidationParams {
-    return { id, uri, stackName, parameters, capabilities, resourcesToImport, keepChangeSet }
+    return { id, uri, stackName, parameters, capabilities, resourcesToImport, keepChangeSet, ...optionalFlags }
 }
 
 export function createDeploymentParams(id: string, stackName: string, changeSetName: string): CreateDeploymentParams {
