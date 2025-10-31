@@ -4743,7 +4743,7 @@
             {
                 "command": "aws.cloudformation.api.importResourceState",
                 "title": "Import Resource State",
-                "icon": "$(cloud-download)",
+                "icon": "$(diff-added)",
                 "category": "AWS CloudFormation"
             },
             {
@@ -4796,7 +4796,7 @@
             {
                 "command": "aws.cloudformation.api.cloneResourceState",
                 "title": "Clone Resource State",
-                "icon": "$(copy)",
+                "icon": "$(symbol-enum)",
                 "category": "AWS CloudFormation"
             },
             {
