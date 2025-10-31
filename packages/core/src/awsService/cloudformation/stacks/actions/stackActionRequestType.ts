@@ -246,3 +246,21 @@ export type GetStackEventsResult = {
 export type ClearStackEventsParams = {
     stackName: string
 }
+
+export interface StackResourceSummary {
+    LogicalResourceId: string
+    PhysicalResourceId?: string
+    ResourceType: string
+    ResourceStatus: string
+    Timestamp?: string
+}
+
+export type ListStackResourcesResult = {
+    resources: StackResourceSummary[]
+    nextToken?: string
+}
+
+export interface GetStackResourcesParams {
+    stackName: string
+    nextToken?: string
+}
