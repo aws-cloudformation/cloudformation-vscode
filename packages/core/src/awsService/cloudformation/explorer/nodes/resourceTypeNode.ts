@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TreeItemCollapsibleState } from 'vscode'
+import { TreeItemCollapsibleState, ThemeIcon } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
 import { ResourceList } from '../../cfn/resourceRequestTypes'
 import { ResourceNode } from './resourceNode'
@@ -19,6 +19,14 @@ class LoadMoreResourcesNode extends AWSTreeNodeBase {
             command: commandKey('api.loadMoreResources'),
             arguments: [this.parent],
         }
+    }
+}
+
+class NoResourcesNode extends AWSTreeNodeBase {
+    public constructor() {
+        super('No resources found', TreeItemCollapsibleState.None)
+        this.contextValue = 'noResources'
+        this.iconPath = new ThemeIcon('info')
     }
 }
 
@@ -42,6 +50,10 @@ export class ResourceTypeNode extends AWSTreeNodeBase {
     }
 
     public override async getChildren(): Promise<AWSTreeNodeBase[]> {
+        if (this.resourceList.resourceIdentifiers.length === 0) {
+            return [new NoResourcesNode()]
+        }
+
         const nodes = this.resourceList.resourceIdentifiers.map(
             (identifier) => new ResourceNode(identifier, this.resourceList.typeName)
         )
