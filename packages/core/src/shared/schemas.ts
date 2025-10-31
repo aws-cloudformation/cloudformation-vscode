@@ -10,7 +10,7 @@ import * as pathutil from '../shared/utilities/pathUtils'
 import { getLogger } from './logger/logger'
 import { FileResourceFetcher } from './resourcefetcher/fileResourceFetcher'
 import { getPropertyFromJsonUrl, HttpResourceFetcher } from './resourcefetcher/httpResourceFetcher'
-import { Settings, Experiments } from './settings'
+import { Settings } from './settings'
 import { GlobalStorage } from './globalStorage'
 import { once } from './utilities/functionUtils'
 import { Any, ArrayConstructor } from './utilities/typeConstructors'
@@ -149,42 +149,7 @@ export async function getDefaultSchemas(): Promise<Schemas | undefined> {
     const devfileSchemaUri = GlobalStorage.devfileSchemaUri()
     const devfileSchemaVersion = await getPropertyFromJsonUrl(devfileManifestUrl, 'tag_name')
 
-    // Sam schema is a superset of Cfn schema, so we can use it for both
-    const samAndCfnSchemaDestinationUri = GlobalStorage.samAndCfnSchemaDestinationUri()
-
     const schemas: Schemas = {}
-
-    // Check if CloudFormation service is enabled via feature flag
-    const cloudFormationServiceEnabled = Experiments.instance.get('cloudFormationService', false)
-
-    if (!cloudFormationServiceEnabled) {
-        // Legacy behavior: load CFN/SAM schemas when CloudFormation service is disabled
-        try {
-            await updateSchemaFromRemoteETag({
-                destination: samAndCfnSchemaDestinationUri,
-                eTag: undefined,
-                url: samAndCfnSchemaUrl,
-                cacheKey: 'samAndCfnSchemaVersion',
-                title: schemaPrefix + 'cloudformation.schema.json',
-            })
-            schemas['cfn'] = samAndCfnSchemaDestinationUri
-        } catch (e) {
-            getLogger().verbose('Could not download sam/cfn schema: %s', (e as Error).message)
-        }
-
-        try {
-            await updateSchemaFromRemoteETag({
-                destination: samAndCfnSchemaDestinationUri,
-                eTag: undefined,
-                url: samAndCfnSchemaUrl,
-                cacheKey: 'samAndCfnSchemaVersion',
-                title: schemaPrefix + 'sam.schema.json',
-            })
-            schemas['sam'] = samAndCfnSchemaDestinationUri
-        } catch (e) {
-            getLogger().verbose('Could not download sam/cfn schema: %s', (e as Error).message)
-        }
-    }
 
     try {
         await updateSchemaFromRemote({
