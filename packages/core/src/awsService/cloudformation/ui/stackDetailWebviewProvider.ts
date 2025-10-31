@@ -56,17 +56,27 @@ export class StackDetailWebviewProvider implements WebviewViewProvider {
 
     resolveWebviewView(webviewView: WebviewView) {
         this._view = webviewView
+        this.setupWebview(webviewView)
+        this.setupMessageHandling(webviewView)
+        this.setupLifecycleHandlers(webviewView)
+    }
+
+    private setupWebview(webviewView: WebviewView) {
         webviewView.webview.options = { enableScripts: true }
         webviewView.webview.html = this.getHtmlContent()
+    }
 
+    private setupMessageHandling(webviewView: WebviewView) {
         webviewView.webview.onDidReceiveMessage(async (message: { command: string }) => {
             if (message.command === 'nextPage') {
-                await this.nextPage()
+                await this.loadNextPage()
             } else if (message.command === 'prevPage') {
-                await this.prevPage()
+                await this.loadPrevPage()
             }
         })
+    }
 
+    private setupLifecycleHandlers(webviewView: WebviewView) {
         webviewView.onDidChangeVisibility(() => {
             if (webviewView.visible) {
                 this.startAutoUpdate()
@@ -102,7 +112,7 @@ export class StackDetailWebviewProvider implements WebviewViewProvider {
         }
     }
 
-    private async nextPage(): Promise<void> {
+    private async loadNextPage(): Promise<void> {
         const totalPages = Math.ceil(this.allResources.length / ResourcesPerPage)
         const nextPageIndex = this.currentPage + 1
 
@@ -123,7 +133,7 @@ export class StackDetailWebviewProvider implements WebviewViewProvider {
         }
     }
 
-    private async prevPage(): Promise<void> {
+    private async loadPrevPage(): Promise<void> {
         // Don't proceed if we're already at the first page
         if (this.currentPage <= 0) {
             return
