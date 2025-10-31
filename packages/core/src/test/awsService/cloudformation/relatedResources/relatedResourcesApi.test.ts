@@ -58,7 +58,7 @@ describe('RelatedResourcesApi', function () {
 
     describe('getRelatedResourceTypes', function () {
         it('should send request with resource type and return related types', async function () {
-            const params = { resourceType: 'AWS::S3::Bucket' }
+            const params = { parentResourceType: 'AWS::S3::Bucket' }
             const expectedTypes = ['AWS::Lambda::Function', 'AWS::IAM::Role']
 
             mockClient.sendRequest.resolves(expectedTypes)
@@ -71,7 +71,7 @@ describe('RelatedResourcesApi', function () {
         })
 
         it('should return empty array when no related types found', async function () {
-            const params = { resourceType: 'AWS::Custom::Resource' }
+            const params = { parentResourceType: 'AWS::Custom::Resource' }
 
             mockClient.sendRequest.resolves([])
 
@@ -85,8 +85,8 @@ describe('RelatedResourcesApi', function () {
         it('should send request and return code action', async function () {
             const params = {
                 templateUri: 'file:///test/template.yaml',
-                resourceTypes: ['AWS::Lambda::Function'],
-                selectedResourceType: 'AWS::S3::Bucket',
+                relatedResourceTypes: ['AWS::Lambda::Function'],
+                parentResourceType: 'AWS::S3::Bucket',
             }
             const expectedAction = {
                 title: 'Insert 1 related resources',
@@ -114,8 +114,8 @@ describe('RelatedResourcesApi', function () {
         it('should handle multiple resource types', async function () {
             const params = {
                 templateUri: 'file:///test/template.yaml',
-                resourceTypes: ['AWS::Lambda::Function', 'AWS::IAM::Role'],
-                selectedResourceType: 'AWS::S3::Bucket',
+                relatedResourceTypes: ['AWS::Lambda::Function', 'AWS::IAM::Role'],
+                parentResourceType: 'AWS::S3::Bucket',
             }
             const expectedAction = {
                 title: 'Insert 2 related resources',

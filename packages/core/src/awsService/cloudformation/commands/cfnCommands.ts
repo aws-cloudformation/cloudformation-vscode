@@ -537,7 +537,7 @@ export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
 }
 
 export function addRelatedResourcesCommand(relatedResourcesManager: RelatedResourcesManager) {
-    return commands.registerCommand(commandKey('api.addRelatedResources'), async (node?: any) => {
+    return commands.registerCommand(commandKey('api.addRelatedResources'), async (node?: ResourceTypeNode) => {
         const selectedResourceType = node?.resourceList?.typeName
         await relatedResourcesManager.addRelatedResources(selectedResourceType)
     })

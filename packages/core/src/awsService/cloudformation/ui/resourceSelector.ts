@@ -104,7 +104,7 @@ export class ResourceSelector {
         return result[0]
     }
 
-    async getResourceIdentifiers(resourceType: string, cachedResources?: ResourceList[]): Promise<string[]> {
+    private async getResourceIdentifiers(resourceType: string, cachedResources?: ResourceList[]): Promise<string[]> {
         // First try to use cached resources from CfnPanel
         if (cachedResources) {
             const cachedResource = cachedResources.find((r) => r.typeName === resourceType)

@@ -23,7 +23,7 @@ export class RelatedResourceSelector {
         })
     }
 
-    async selectAction(): Promise<'create' | 'import' | undefined> {
+    async promptCreateOrImport(): Promise<'create' | 'import' | undefined> {
         const action = await window.showQuickPick(['Create new', 'Import existing'], {
             placeHolder: 'How would you like to add related resources?',
             canPickMany: false,

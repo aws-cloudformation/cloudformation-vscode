@@ -37,7 +37,7 @@ export class RelatedResourcesManager {
                 return
             }
 
-            const action = await this.selector.selectAction()
+            const action = await this.selector.promptCreateOrImport()
             if (!action) {
                 return
             }
