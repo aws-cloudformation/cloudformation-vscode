@@ -7,11 +7,12 @@ import { BaseLspInstaller } from '../../../shared/lsp/baseLspInstaller'
 import { GitHubManifestAdapter } from './githubManifestAdapter'
 import { CloudFrontManifestAdapter } from './cloudFrontManifestAdapter'
 import { fs } from '../../../shared/fs/fs'
-import { CfnLspName, CfnLspServerEnvType, CfnLspServerFile, CfnLspServerStorageName } from './lspServerConfig'
+import { CfnLspName, CfnLspServerEnvType, CfnLspServerFile } from './lspServerConfig'
 import { isAutomation, isBeta, isDebugInstance } from '../../../shared/vscode/env'
-import { dirname, join } from 'path'
+import { join } from 'path'
 import { getLogger } from '../../../shared/logger/logger'
 import { ResourcePaths } from '../../../shared/lsp/types'
+import { FileType } from 'vscode'
 import * as nodeFs from 'fs' // eslint-disable-line no-restricted-imports
 
 function determineEnvironment(): CfnLspServerEnvType {
@@ -67,7 +68,7 @@ export class CfnLspInstaller extends BaseLspInstaller {
     }
 
     protected async postInstall(assetDirectory: string): Promise<void> {
-        await this.migrateLmdbIfNeeded(assetDirectory)
+        await this.deleteZip(assetDirectory)
     }
 
     protected resourcePaths(assetDirectory?: string): ResourcePaths {
@@ -92,22 +93,12 @@ export class CfnLspInstaller extends BaseLspInstaller {
         }
     }
 
-    private async migrateLmdbIfNeeded(newVersionDir: string): Promise<void> {
-        const newDbPath = join(newVersionDir, CfnLspServerStorageName)
+    private async deleteZip(assetDirectory: string): Promise<void> {
+        const files = await fs.readdir(assetDirectory)
+        const zips = files.filter(([name, type]) => type === FileType.File && name.endsWith('.zip'))
 
-        if (await fs.existsDir(newDbPath)) {
-            return
-        }
-
-        const parentDir = dirname(newVersionDir)
-        const versions = await fs.readdir(parentDir)
-
-        for (const [versionDir] of versions) {
-            const oldDbPath = join(parentDir, versionDir, CfnLspServerStorageName)
-            if (await fs.existsDir(oldDbPath)) {
-                await fs.copy(oldDbPath, newDbPath)
-                break
-            }
+        for (const zip of zips) {
+            await fs.delete(join(assetDirectory, zip[0]))
         }
     }
 }
