@@ -112,7 +112,7 @@ export function deleteChangeSetCommand(client: LanguageClient) {
     })
 }
 
-export function viewChangeSetCommand(client: LanguageClient, stacks: StacksManager, diffProvider: DiffWebviewProvider) {
+export function viewChangeSetCommand(client: LanguageClient, diffProvider: DiffWebviewProvider) {
     return commands.registerCommand(commandKey('stacks.viewChangeSet'), async (params?: ChangeSetReference) => {
         try {
             params = params ?? (await promptForChangeSetReference())

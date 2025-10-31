@@ -268,7 +268,7 @@ export async function activate(context: ExtensionContext) {
                 deployTemplateCommand(client, diffProvider, documentManager),
                 executeChangeSetCommand(client),
                 deleteChangeSetCommand(client),
-                viewChangeSetCommand(client, stacksManager, diffProvider),
+                viewChangeSetCommand(client, diffProvider),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
                 selectRegionCommand(cfnExplorer),
