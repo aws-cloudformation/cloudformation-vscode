@@ -39,6 +39,7 @@ import {
     removeEnvironmentCommand,
     deleteChangeSetCommand,
     showStackEventsCommand,
+    showStackOutputsCommand,
     viewChangeSetCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
@@ -51,6 +52,7 @@ import { CloudFormationExplorer } from './explorer/explorer'
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
 import { StackOverviewWebviewProvider } from './ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from './ui/stackEventsWebviewProvider'
+import { StackOutputsWebviewProvider } from './ui/stackOutputsWebviewProvider'
 import { DiffWebviewProvider } from './ui/diffWebviewProvider'
 import { StackResourcesWebviewProvider } from './ui/stackResourcesWebviewProvider'
 import { DocumentManager } from './documents/documentManager'
@@ -60,7 +62,6 @@ import { ResourceSelector } from './ui/resourceSelector'
 import { RelatedResourcesManager } from './relatedResources/relatedResourcesManager'
 import { RelatedResourceSelector } from './ui/relatedResourceSelector'
 
-import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
 import { getClientId } from '../../shared/telemetry/util'
 import { SettingsLspServerProvider } from './lsp-server/settingsLspServerProvider'
@@ -221,16 +222,14 @@ export async function activate(context: ExtensionContext) {
             // Create stack events webview provider
             const eventsProvider = new StackEventsWebviewProvider(client)
 
+            // Create stack outputs webview provider
+            const outputsProvider = new StackOutputsWebviewProvider(client)
+
             const documentSelector = [
                 { scheme: 'file', language: 'cloudformation' },
                 { scheme: 'file', language: 'yaml' },
                 { scheme: 'file', language: 'json' },
             ]
-
-            const inlineCompletionProvider = languages.registerInlineCompletionItemProvider(
-                documentSelector,
-                new CfnInlineCompletionProvider(client)
-            )
 
             const codeLensProvider = languages.registerCodeLensProvider(
                 documentSelector,
@@ -239,7 +238,6 @@ export async function activate(context: ExtensionContext) {
 
             context.subscriptions.push(
                 clientDisposable,
-                inlineCompletionProvider,
                 codeLensProvider,
                 stacksManager,
                 window.createTreeView('aws.cloudformation', {
@@ -254,6 +252,7 @@ export async function activate(context: ExtensionContext) {
                 loadMoreChangeSetsCommand(cfnExplorer),
                 showStackOverviewCommand(overviewProvider),
                 showStackEventsCommand(eventsProvider),
+                showStackOutputsCommand(outputsProvider),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager),
@@ -266,6 +265,7 @@ export async function activate(context: ExtensionContext) {
                 window.registerWebviewViewProvider(commandKey('diff'), diffProvider),
                 window.registerWebviewViewProvider(commandKey('stack.events'), eventsProvider),
                 window.registerWebviewViewProvider(commandKey('detail'), resourcesProvider),
+                window.registerWebviewViewProvider(commandKey('stack.outputs'), outputsProvider),
                 viewStackDiffCommand(),
                 viewStackDetailCommand(resourcesProvider),
                 focusDiffCommand(),
