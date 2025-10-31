@@ -44,18 +44,16 @@ import { CloudFormationExplorer } from '../explorer/explorer'
 import { StacksNode } from '../explorer/nodes/stacksNode'
 import { ResourceTypeNode } from '../explorer/nodes/resourceTypeNode'
 import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
-import { StacksManager } from '../stacks/stacksManager'
 import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
 import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 
-export function validateTemplateCommand(
+export function validateDeploymentCommand(
     client: LanguageClient,
-    stacks: StacksManager,
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager
 ) {
-    return commands.registerCommand(commandKey('api.validateTemplate'), async (templateUri?: string) => {
+    return commands.registerCommand(commandKey('api.validateDeployment'), async (templateUri?: string) => {
         try {
             const result = await changeSetSteps(client, documentManager, true, templateUri)
             if (!result) {
@@ -75,14 +73,13 @@ export function validateTemplateCommand(
             setLastValidation(validation)
 
             await validation.validate()
-            stacks.startPolling()
         } catch (error) {
             showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
         }
     })
 }
 
-export function executeChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
+export function executeChangeSetCommand(client: LanguageClient) {
     return commands.registerCommand(
         commandKey('api.executeChangeSet'),
         async (stackName: string, changeSetName: string) => {
@@ -90,7 +87,6 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
                 const deployment = new Deployment(stackName, changeSetName, client)
 
                 await deployment.deploy()
-                stacks.startPolling()
             } catch (error) {
                 showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
             }
@@ -98,7 +94,7 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
     )
 }
 
-export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
+export function deleteChangeSetCommand(client: LanguageClient) {
     return commands.registerCommand(commandKey('stacks.deleteChangeSet'), async (params?: ChangeSetReference) => {
         try {
             params = params ?? (await promptForChangeSetReference())
@@ -116,7 +112,7 @@ export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksMan
     })
 }
 
-export function viewChangeSetCommand(client: LanguageClient, stacks: StacksManager, diffProvider: DiffWebviewProvider) {
+export function viewChangeSetCommand(client: LanguageClient, diffProvider: DiffWebviewProvider) {
     return commands.registerCommand(commandKey('stacks.viewChangeSet'), async (params?: ChangeSetReference) => {
         try {
             params = params ?? (await promptForChangeSetReference())
@@ -152,7 +148,6 @@ async function promptForChangeSetReference(): Promise<ChangeSetReference | undef
 
 export function deployTemplateCommand(
     client: LanguageClient,
-    stacks: StacksManager,
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager
 ) {
@@ -177,7 +172,6 @@ export function deployTemplateCommand(
             setLastValidation(validation)
 
             await validation.validate()
-            stacks.startPolling()
         } catch (error) {
             showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
         }
