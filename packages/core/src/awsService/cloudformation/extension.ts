@@ -11,7 +11,7 @@ import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
 import {
     deployTemplateCommand,
-    validateTemplateCommand,
+    validateDeploymentCommand,
     rerunLastValidationCommand,
     importResourceStateCommand,
     cloneResourceStateCommand,
@@ -21,6 +21,7 @@ import {
     refreshResourceListCommand,
     copyResourceIdentifierCommand,
     viewStackDiffCommand,
+    viewStackDetailCommand,
     focusDiffCommand,
     getStackManagementInfoCommand,
     extractToParameterPositionCursorCommand,
@@ -29,6 +30,7 @@ import {
     loadMoreStacksCommand,
     searchResourceCommand,
     executeChangeSetCommand,
+    addRelatedResourcesCommand,
     refreshChangeSetsCommand,
     loadMoreChangeSetsCommand,
     showStackOverviewCommand,
@@ -37,6 +39,7 @@ import {
     removeEnvironmentCommand,
     deleteChangeSetCommand,
     showStackEventsCommand,
+    viewChangeSetCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -46,13 +49,16 @@ import { commandKey } from './utils'
 import { CloudFormationExplorer } from './explorer/explorer'
 
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
-import { DiffWebviewProvider } from './ui/diffWebviewProvider'
 import { StackOverviewWebviewProvider } from './ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from './ui/stackEventsWebviewProvider'
+import { DiffWebviewProvider } from './ui/diffWebviewProvider'
+import { StackResourcesWebviewProvider } from './ui/stackResourcesWebviewProvider'
 import { DocumentManager } from './documents/documentManager'
 
 import { ResourcesManager } from './resources/resourcesManager'
 import { ResourceSelector } from './ui/resourceSelector'
+import { RelatedResourcesManager } from './relatedResources/relatedResourcesManager'
+import { RelatedResourceSelector } from './ui/relatedResourceSelector'
 
 import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
@@ -157,6 +163,13 @@ export async function activate(context: ExtensionContext) {
 
             const resourceSelector = new ResourceSelector(client)
             const resourcesManager = new ResourcesManager(client, resourceSelector)
+            const relatedResourceSelector = new RelatedResourceSelector(client)
+            const relatedResourcesManager = new RelatedResourcesManager(
+                client,
+                relatedResourceSelector,
+                resourceSelector,
+                resourcesManager.importResourceStates.bind(resourcesManager)
+            )
             const changeSetManager = new ChangeSetsManager(client)
             const environmentSelector = new EnvironmentSelector()
             const environmentManager = new EnvironmentManager(environmentSelector)
@@ -199,6 +212,8 @@ export async function activate(context: ExtensionContext) {
 
             // Create diff webview provider
             const diffProvider = new DiffWebviewProvider()
+
+            const resourcesProvider = new StackResourcesWebviewProvider(client)
 
             // Create stack overview webview provider
             const overviewProvider = new StackOverviewWebviewProvider()
@@ -250,13 +265,16 @@ export async function activate(context: ExtensionContext) {
                 getStackManagementInfoCommandPalette(resourcesManager),
                 window.registerWebviewViewProvider(commandKey('diff'), diffProvider),
                 window.registerWebviewViewProvider(commandKey('stack.events'), eventsProvider),
+                window.registerWebviewViewProvider(commandKey('detail'), resourcesProvider),
                 viewStackDiffCommand(),
+                viewStackDetailCommand(resourcesProvider),
                 focusDiffCommand(),
                 restartCommand(client),
-                validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
-                deployTemplateCommand(client, stacksManager, diffProvider, documentManager),
-                executeChangeSetCommand(client, stacksManager),
-                deleteChangeSetCommand(client, stacksManager),
+                validateDeploymentCommand(client, diffProvider, documentManager),
+                deployTemplateCommand(client, diffProvider, documentManager),
+                executeChangeSetCommand(client),
+                deleteChangeSetCommand(client),
+                viewChangeSetCommand(client, diffProvider),
                 refreshCommand(stacksManager),
                 openStackTemplateCommand(client),
                 selectRegionCommand(cfnExplorer),
@@ -266,6 +284,7 @@ export async function activate(context: ExtensionContext) {
                 createProjectCommand(cfnInitUiInterface),
                 addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller),
                 removeEnvironmentCommand(cfnInitCliCaller),
+                addRelatedResourcesCommand(relatedResourcesManager),
                 credentialsService,
                 serverProvider
             )

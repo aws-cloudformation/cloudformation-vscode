@@ -23,6 +23,10 @@ import {
     GetStackEventsParams,
     GetStackEventsResult,
     ClearStackEventsParams,
+    DescribeChangeSetParams,
+    DescribeChangeSetResult,
+    GetStackResourcesParams,
+    ListStackResourcesResult,
 } from './stackActionRequestType'
 
 export const CreateValidationRequest = new RequestType<CreateValidationParams, CreateStackActionResult, void>(
@@ -80,3 +84,11 @@ export const GetStackEventsRequest = new RequestType<GetStackEventsParams, GetSt
 )
 
 export const ClearStackEventsRequest = new RequestType<ClearStackEventsParams, void, void>('aws/cfn/stack/events/clear')
+
+export const DescribeChangeSetRequest = new RequestType<DescribeChangeSetParams, DescribeChangeSetResult, void>(
+    'aws/cfn/stack/changeSet/describe'
+)
+
+export const GetStackResourcesRequest = new RequestType<GetStackResourcesParams, ListStackResourcesResult, void>(
+    'aws/cfn/stack/resources'
+)

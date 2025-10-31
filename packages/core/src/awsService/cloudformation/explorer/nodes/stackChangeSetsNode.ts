@@ -79,6 +79,8 @@ export class ChangeSetNode extends AWSTreeNodeBase {
         this.contextValue = 'changeSet'
         this.tooltip = `${changeSet.changeSetName} [${changeSet.status}]`
         this.iconPath = this.getIconForStatus(changeSet.status)
+        this.stackName = stackName
+        this.changeSetName = changeSet.changeSetName
     }
 
     private getIconForStatus(status: string): ThemeIcon {

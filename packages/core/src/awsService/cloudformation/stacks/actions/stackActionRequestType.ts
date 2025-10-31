@@ -11,6 +11,8 @@ import {
     DetailedStatus,
     ResourceTargetDefinition,
     StackEvent,
+    OnStackFailure,
+    Tag,
 } from '@aws-sdk/client-cloudformation'
 import { Identifiable } from '../../lspTypes'
 
@@ -20,14 +22,22 @@ export type ResourceToImport = {
     ResourceIdentifier: Record<string, string>
 }
 
-export type CreateValidationParams = Identifiable & {
-    uri: string
-    stackName: string
-    parameters?: Parameter[]
-    capabilities?: Capability[]
-    resourcesToImport?: ResourceToImport[]
-    keepChangeSet?: boolean
+export type ChangeSetOptionalFlags = {
+    onStackFailure?: OnStackFailure
+    includeNestedStacks?: boolean
+    tags?: Tag[]
+    importExistingResources?: boolean
 }
+
+export type CreateValidationParams = Identifiable &
+    ChangeSetOptionalFlags & {
+        uri: string
+        stackName: string
+        parameters?: Parameter[]
+        capabilities?: Capability[]
+        resourcesToImport?: ResourceToImport[]
+        keepChangeSet?: boolean
+    }
 
 export type ChangeSetReference = {
     changeSetName: string
@@ -161,6 +171,12 @@ export type GetTemplateResourcesResult = {
     resources: TemplateResource[]
 }
 
+export enum OptionalFlagMode {
+    Skip = 'Skip Optional Flags',
+    Input = 'Input Optional Flags',
+    DevFriendly = 'Use Developer Friendly Flag Selections',
+}
+
 export type TemplateParameter = {
     name: string
     Type?: string
@@ -193,6 +209,13 @@ export type ListChangeSetsResult = {
     nextToken?: string
 }
 
+export type DescribeChangeSetParams = ChangeSetReference
+
+export type DescribeChangeSetResult = ChangeSetInfo & {
+    stackName: string
+    changes?: StackChange[]
+}
+
 export type StackInfo = {
     StackName: string
     StackId?: string
@@ -222,4 +245,22 @@ export type GetStackEventsResult = {
 
 export type ClearStackEventsParams = {
     stackName: string
+}
+
+export interface StackResourceSummary {
+    LogicalResourceId: string
+    PhysicalResourceId?: string
+    ResourceType: string
+    ResourceStatus: string
+    Timestamp?: string
+}
+
+export type ListStackResourcesResult = {
+    resources: StackResourceSummary[]
+    nextToken?: string
+}
+
+export interface GetStackResourcesParams {
+    stackName: string
+    nextToken?: string
 }

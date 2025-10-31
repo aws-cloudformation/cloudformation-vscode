@@ -8,8 +8,7 @@ import { commandKey, extractErrorMessage, findParameterDescriptionPosition } fro
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
-import { ChangeSetReference } from '../stacks/actions/stackActionRequestType'
-import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
+import { Parameter, Capability, OnStackFailure } from '@aws-sdk/client-cloudformation'
 import {
     getParameterValues,
     getStackName,
@@ -19,18 +18,36 @@ import {
     getResourcesToImport,
     getEnvironmentName,
     getChangeSetName,
+    chooseOptionalFlagSuggestion as chooseOptionalFlagMode,
+    getTags,
+    getOnStackFailure,
+    getIncludeNestedStacks,
+    getImportExistingResources,
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
+import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
+import { StackResourcesWebviewProvider } from '../ui/stackResourcesWebviewProvider'
 import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
-import { getParameters, getCapabilities, getTemplateResources } from '../stacks/actions/stackActionApi'
-import { TemplateParameter, ResourceToImport } from '../stacks/actions/stackActionRequestType'
+import {
+    getParameters,
+    getCapabilities,
+    getTemplateResources,
+    describeChangeSet,
+} from '../stacks/actions/stackActionApi'
+import {
+    ChangeSetOptionalFlags,
+    OptionalFlagMode,
+    TemplateParameter,
+    ResourceToImport,
+    ChangeSetReference,
+} from '../stacks/actions/stackActionRequestType'
 import { StackInfo } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
+import { RelatedResourcesManager } from '../relatedResources/relatedResourcesManager'
 import { DocumentManager } from '../documents/documentManager'
 
-import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
 import { ResourceContextValue } from '../explorer/contextValue'
@@ -39,18 +56,16 @@ import { CloudFormationExplorer } from '../explorer/explorer'
 import { StacksNode } from '../explorer/nodes/stacksNode'
 import { ResourceTypeNode } from '../explorer/nodes/resourceTypeNode'
 import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
-import { StacksManager } from '../stacks/stacksManager'
 import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
 import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 
-export function validateTemplateCommand(
+export function validateDeploymentCommand(
     client: LanguageClient,
-    stacks: StacksManager,
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager
 ) {
-    return commands.registerCommand(commandKey('api.validateTemplate'), async (templateUri?: string) => {
+    return commands.registerCommand(commandKey('api.validateDeployment'), async (templateUri?: string) => {
         try {
             const result = await changeSetSteps(client, documentManager, true, templateUri)
             if (!result) {
@@ -64,20 +79,21 @@ export function validateTemplateCommand(
                 diffProvider,
                 result.parameters,
                 result.capabilities,
-                result.resourcesToImport
+                result.resourcesToImport,
+                false,
+                result.optionalFlags
             )
 
             setLastValidation(validation)
 
             await validation.validate()
-            stacks.startPolling()
         } catch (error) {
             showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
         }
     })
 }
 
-export function executeChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
+export function executeChangeSetCommand(client: LanguageClient) {
     return commands.registerCommand(
         commandKey('api.executeChangeSet'),
         async (stackName: string, changeSetName: string) => {
@@ -85,7 +101,6 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
                 const deployment = new Deployment(stackName, changeSetName, client)
 
                 await deployment.deploy()
-                stacks.startPolling()
             } catch (error) {
                 showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
             }
@@ -93,24 +108,16 @@ export function executeChangeSetCommand(client: LanguageClient, stacks: StacksMa
     )
 }
 
-export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksManager) {
+export function deleteChangeSetCommand(client: LanguageClient) {
     return commands.registerCommand(commandKey('stacks.deleteChangeSet'), async (params?: ChangeSetReference) => {
         try {
-            let stackName: string
-            let changeSetName: string
+            params = params ?? (await promptForChangeSetReference())
 
-            if (params) {
-                stackName = params.stackName
-                changeSetName = params.changeSetName
-            } else {
-                stackName = (await getStackName()) ?? ''
-                changeSetName = (await getChangeSetName()) ?? ''
-                if (!stackName || !changeSetName) {
-                    return
-                }
+            if (!params) {
+                return
             }
 
-            const changeSetDeletion = new ChangeSetDeletion(stackName, changeSetName, client)
+            const changeSetDeletion = new ChangeSetDeletion(params.stackName, params.changeSetName, client)
 
             await changeSetDeletion.delete()
         } catch (error) {
@@ -119,9 +126,42 @@ export function deleteChangeSetCommand(client: LanguageClient, stacks: StacksMan
     })
 }
 
+export function viewChangeSetCommand(client: LanguageClient, diffProvider: DiffWebviewProvider) {
+    return commands.registerCommand(commandKey('stacks.viewChangeSet'), async (params?: ChangeSetReference) => {
+        try {
+            params = params ?? (await promptForChangeSetReference())
+
+            if (!params) {
+                return
+            }
+
+            const describeChangeSetResult = await describeChangeSet(client, {
+                changeSetName: params.changeSetName,
+                stackName: params.stackName,
+            })
+
+            void setContext('aws.cloudformation.stacks.diffVisible', true)
+
+            diffProvider.updateData(params.stackName, describeChangeSetResult.changes, params.changeSetName, true)
+            void commands.executeCommand(commandKey('diff.focus'))
+        } catch (error) {
+            showErrorMessage(`Error viewing change set: ${extractErrorMessage(error)}`)
+        }
+    })
+}
+
+async function promptForChangeSetReference(): Promise<ChangeSetReference | undefined> {
+    const stackName = await getStackName()
+    const changeSetName = await getChangeSetName()
+    if (!stackName || !changeSetName) {
+        return undefined
+    }
+
+    return { stackName: stackName, changeSetName: changeSetName }
+}
+
 export function deployTemplateCommand(
     client: LanguageClient,
-    stacks: StacksManager,
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager
 ) {
@@ -140,13 +180,13 @@ export function deployTemplateCommand(
                 result.parameters,
                 result.capabilities,
                 result.resourcesToImport,
-                true // Confirm deployment following successful validation
+                true, // Confirm deployment following successful validation
+                result.optionalFlags
             )
 
             setLastValidation(validation)
 
             await validation.validate()
-            stacks.startPolling()
         } catch (error) {
             showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
         }
@@ -171,12 +211,38 @@ async function promptForResourceImport(client: LanguageClient, templateUri: stri
     return resourcesToImport
 }
 
+async function promptForOptionalFlags(): Promise<ChangeSetOptionalFlags | undefined> {
+    const optionSelection = await chooseOptionalFlagMode()
+
+    switch (optionSelection) {
+        case OptionalFlagMode.Skip:
+            return undefined
+        case OptionalFlagMode.Input:
+            return {
+                onStackFailure: await getOnStackFailure(),
+                includeNestedStacks: await getIncludeNestedStacks(),
+                tags: await getTags(),
+                importExistingResources: await getImportExistingResources(),
+            }
+        case OptionalFlagMode.DevFriendly:
+            return {
+                onStackFailure: OnStackFailure.DO_NOTHING,
+                includeNestedStacks: true,
+                tags: await getTags(),
+                importExistingResources: true,
+            }
+        default:
+            return undefined
+    }
+}
+
 type UserInputtedTemplateParameters = {
     templateUri: string
     stackName: string
     parameters: Parameter[] | undefined
     capabilities: Capability[]
     resourcesToImport: ResourceToImport[] | undefined
+    optionalFlags: ChangeSetOptionalFlags | undefined
 }
 
 async function changeSetSteps(
@@ -216,12 +282,15 @@ async function changeSetSteps(
     if (paramDefinition.length > 0 && !parameters) {
         return
     }
+
+    const optionalFlags = await promptForOptionalFlags()
+
     const capabilitiesResult = await getCapabilities(client, templateUri)
     const capabilities = await confirmCapabilities(capabilitiesResult.capabilities)
     if (capabilities === undefined) {
         return
     } // User cancelled
-    return { templateUri, stackName, parameters, capabilities, resourcesToImport }
+    return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags }
 }
 
 export function rerunLastValidationCommand() {
@@ -342,7 +411,18 @@ export function refreshResourceListCommand(resourcesManager: ResourcesManager) {
 export function viewStackDiffCommand() {
     return commands.registerCommand(commandKey('stacks.viewDiff'), () => {
         void setContext('aws.cloudformation.stacks.diffVisible', true)
-        void commands.executeCommand('aws.cloudformation.diff.focus')
+        void commands.executeCommand(commandKey('diff.focus'))
+    })
+}
+
+export function viewStackDetailCommand(resourcesProvider: StackResourcesWebviewProvider) {
+    return commands.registerCommand(commandKey('stacks.viewDetail'), async (node?: any) => {
+        void setContext('aws.cloudformation.stacks.detailVisible', true)
+
+        const stackName = node?.stackName || 'Unknown Stack'
+
+        await resourcesProvider.updateData(stackName)
+        void commands.executeCommand(commandKey('detail.focus'))
     })
 }
 
@@ -502,5 +582,12 @@ export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
         } catch (error) {
             showErrorMessage(`Error removing environment: ${error}`)
         }
+    })
+}
+
+export function addRelatedResourcesCommand(relatedResourcesManager: RelatedResourcesManager) {
+    return commands.registerCommand(commandKey('api.addRelatedResources'), async (node?: ResourceTypeNode) => {
+        const selectedResourceType = node?.resourceList?.typeName
+        await relatedResourcesManager.addRelatedResources(selectedResourceType)
     })
 }
