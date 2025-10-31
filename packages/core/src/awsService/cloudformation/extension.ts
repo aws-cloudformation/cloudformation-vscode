@@ -62,7 +62,6 @@ import { ResourceSelector } from './ui/resourceSelector'
 import { RelatedResourcesManager } from './relatedResources/relatedResourcesManager'
 import { RelatedResourceSelector } from './ui/relatedResourceSelector'
 
-import { CfnInlineCompletionProvider } from './inlineCompletion/inlineCompletionProvider'
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
 import { getClientId } from '../../shared/telemetry/util'
 import { SettingsLspServerProvider } from './lsp-server/settingsLspServerProvider'
@@ -232,11 +231,6 @@ export async function activate(context: ExtensionContext) {
                 { scheme: 'file', language: 'json' },
             ]
 
-            const inlineCompletionProvider = languages.registerInlineCompletionItemProvider(
-                documentSelector,
-                new CfnInlineCompletionProvider(client)
-            )
-
             const codeLensProvider = languages.registerCodeLensProvider(
                 documentSelector,
                 new StackActionCodeLensProvider(client)
@@ -244,7 +238,6 @@ export async function activate(context: ExtensionContext) {
 
             context.subscriptions.push(
                 clientDisposable,
-                inlineCompletionProvider,
                 codeLensProvider,
                 stacksManager,
                 window.createTreeView('aws.cloudformation', {
