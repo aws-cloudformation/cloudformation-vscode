@@ -8,7 +8,7 @@ import { commandKey, extractErrorMessage, findParameterDescriptionPosition } fro
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
-import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
+import { Parameter, Capability, OnStackFailure } from '@aws-sdk/client-cloudformation'
 import {
     getParameterValues,
     getStackName,
@@ -18,6 +18,11 @@ import {
     getResourcesToImport,
     getEnvironmentName,
     getChangeSetName,
+    chooseOptionalFlagSuggestion as chooseOptionalFlagMode,
+    getTags,
+    getOnStackFailure,
+    getIncludeNestedStacks,
+    getImportExistingResources,
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
 import { showErrorMessage } from '../ui/message'
@@ -28,7 +33,13 @@ import {
     getTemplateResources,
     describeChangeSet,
 } from '../stacks/actions/stackActionApi'
-import { TemplateParameter, ResourceToImport, ChangeSetReference } from '../stacks/actions/stackActionRequestType'
+import {
+    ChangeSetOptionalFlags,
+    OptionalFlagMode,
+    TemplateParameter,
+    ResourceToImport,
+    ChangeSetReference,
+} from '../stacks/actions/stackActionRequestType'
 import { StackInfo } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
@@ -67,7 +78,9 @@ export function validateDeploymentCommand(
                 diffProvider,
                 result.parameters,
                 result.capabilities,
-                result.resourcesToImport
+                result.resourcesToImport,
+                false,
+                result.optionalFlags
             )
 
             setLastValidation(validation)
@@ -166,7 +179,8 @@ export function deployTemplateCommand(
                 result.parameters,
                 result.capabilities,
                 result.resourcesToImport,
-                true // Confirm deployment following successful validation
+                true, // Confirm deployment following successful validation
+                result.optionalFlags
             )
 
             setLastValidation(validation)
@@ -196,12 +210,38 @@ async function promptForResourceImport(client: LanguageClient, templateUri: stri
     return resourcesToImport
 }
 
+async function promptForOptionalFlags(): Promise<ChangeSetOptionalFlags | undefined> {
+    const optionSelection = await chooseOptionalFlagMode()
+
+    switch (optionSelection) {
+        case OptionalFlagMode.Skip:
+            return undefined
+        case OptionalFlagMode.Input:
+            return {
+                onStackFailure: await getOnStackFailure(),
+                includeNestedStacks: await getIncludeNestedStacks(),
+                tags: await getTags(),
+                importExistingResources: await getImportExistingResources(),
+            }
+        case OptionalFlagMode.DevFriendly:
+            return {
+                onStackFailure: OnStackFailure.DO_NOTHING,
+                includeNestedStacks: true,
+                tags: await getTags(),
+                importExistingResources: true,
+            }
+        default:
+            return undefined
+    }
+}
+
 type UserInputtedTemplateParameters = {
     templateUri: string
     stackName: string
     parameters: Parameter[] | undefined
     capabilities: Capability[]
     resourcesToImport: ResourceToImport[] | undefined
+    optionalFlags: ChangeSetOptionalFlags | undefined
 }
 
 async function changeSetSteps(
@@ -241,12 +281,15 @@ async function changeSetSteps(
     if (paramDefinition.length > 0 && !parameters) {
         return
     }
+
+    const optionalFlags = await promptForOptionalFlags()
+
     const capabilitiesResult = await getCapabilities(client, templateUri)
     const capabilities = await confirmCapabilities(capabilitiesResult.capabilities)
     if (capabilities === undefined) {
         return
     } // User cancelled
-    return { templateUri, stackName, parameters, capabilities, resourcesToImport }
+    return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags }
 }
 
 export function rerunLastValidationCommand() {
