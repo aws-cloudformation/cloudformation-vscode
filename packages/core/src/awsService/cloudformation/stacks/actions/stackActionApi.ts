@@ -17,6 +17,8 @@ import {
     DescribeDeploymentStatusResult,
     DeleteChangeSetParams,
     DescribeDeletionStatusResult,
+    DescribeChangeSetParams,
+    DescribeChangeSetResult,
 } from './stackActionRequestType'
 import {
     GetParametersRequest,
@@ -31,6 +33,7 @@ import {
     DeleteChangeSetRequest,
     GetChangeSetDeletionStatusRequest,
     DescribeChangeSetDeletionStatusRequest,
+    DescribeChangeSetRequest,
 } from './stackActionProtocol'
 import { Identifiable } from '../../lspTypes'
 
@@ -105,4 +108,11 @@ export async function getCapabilities(client: LanguageClient, params: TemplateUr
 export async function getTemplateResources(client: LanguageClient, params: TemplateUri): Promise<TemplateResource[]> {
     const result = await client.sendRequest(GetTemplateResourcesRequest, params)
     return result.resources
+}
+
+export async function describeChangeSet(
+    client: LanguageClient,
+    params: DescribeChangeSetParams
+): Promise<DescribeChangeSetResult> {
+    return await client.sendRequest(DescribeChangeSetRequest, params)
 }

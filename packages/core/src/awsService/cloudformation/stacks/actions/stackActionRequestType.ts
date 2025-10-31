@@ -193,6 +193,13 @@ export type ListChangeSetsResult = {
     nextToken?: string
 }
 
+export type DescribeChangeSetParams = ChangeSetReference
+
+export type DescribeChangeSetResult = ChangeSetInfo & {
+    stackName: string
+    changes?: StackChange[]
+}
+
 export type StackInfo = {
     StackName: string
     StackId?: string
