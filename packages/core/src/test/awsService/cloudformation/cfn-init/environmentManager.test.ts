@@ -220,10 +220,10 @@ describe('EnvironmentManager', () => {
             assert.deepStrictEqual(fileDetails[0].compatibleParameters, [
                 { ParameterKey: 'Param1', ParameterValue: 'value1' },
             ])
-            assert.deepStrictEqual(fileDetails[0].tags, [{ Key: 'Tag1', Value: 'value1' }])
-            assert.deepStrictEqual(fileDetails[0].includeNestedStacks, false),
-                assert.deepStrictEqual(fileDetails[0].importExistingResources, true),
-                assert.deepStrictEqual(fileDetails[0].onStackFailure, OnStackFailure.DO_NOTHING),
+            assert.deepStrictEqual(fileDetails[0].optionalFlags?.tags, [{ Key: 'Tag1', Value: 'value1' }])
+            assert.deepStrictEqual(fileDetails[0].optionalFlags?.includeNestedStacks, false),
+                assert.deepStrictEqual(fileDetails[0].optionalFlags?.importExistingResources, true),
+                assert.deepStrictEqual(fileDetails[0].optionalFlags?.onStackFailure, OnStackFailure.DO_NOTHING),
                 // Check params2.yaml
                 assert.strictEqual(fileDetails[1].fileName, 'params2.yaml')
             assert.strictEqual(fileDetails[1].hasMatchingTemplatePath, true)

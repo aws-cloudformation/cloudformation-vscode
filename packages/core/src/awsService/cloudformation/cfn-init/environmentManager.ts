@@ -184,10 +184,12 @@ export class EnvironmentManager implements Disposable {
                 hasMatchingTemplatePath:
                     workspace.asRelativePath(Uri.parse(templateUri)) === deploymentFile.templateFilePath,
                 compatibleParameters: compatibleParams,
-                tags: deploymentFile.tags ? this.convertTagsToCloudFormation(deploymentFile.tags) : undefined,
-                includeNestedStacks: deploymentFile.includeNestedStacks,
-                importExistingResources: deploymentFile.importExistingResources,
-                onStackFailure: deploymentFile.onStackFailure,
+                optionalFlags: {
+                    tags: deploymentFile.tags ? this.convertTagsToCloudFormation(deploymentFile.tags) : undefined,
+                    includeNestedStacks: deploymentFile.includeNestedStacks,
+                    importExistingResources: deploymentFile.importExistingResources,
+                    onStackFailure: deploymentFile.onStackFailure,
+                }
             }
         } catch (error) {
             getLogger().warn(`Failed to parse parameter file ${fileName}:`, error)

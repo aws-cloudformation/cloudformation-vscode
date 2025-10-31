@@ -67,6 +67,7 @@ import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
 import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
 import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
+import { DeploymentFileDetails } from '../cfn-init/cfnProjectTypes'
 
 export function validateDeploymentCommand(
     client: LanguageClient,
@@ -223,24 +224,33 @@ async function promptForResourceImport(client: LanguageClient, templateUri: stri
     return resourcesToImport
 }
 
-async function promptForOptionalFlags(): Promise<ChangeSetOptionalFlags | undefined> {
+async function promptForOptionalFlags(fileFlags?: ChangeSetOptionalFlags): Promise<ChangeSetOptionalFlags | undefined> {
+    if (fileFlags && Object.values(fileFlags).every(v => v !== undefined)) {
+        return fileFlags
+    }
+
     const optionSelection = await chooseOptionalFlagMode()
 
     switch (optionSelection) {
         case OptionalFlagMode.Skip:
-            return undefined
+            return {
+                onStackFailure: fileFlags?.onStackFailure,
+                includeNestedStacks: fileFlags?.includeNestedStacks,
+                tags: fileFlags?.tags,
+                importExistingResources: fileFlags?.importExistingResources,
+            }
         case OptionalFlagMode.Input:
             return {
-                onStackFailure: await getOnStackFailure(),
-                includeNestedStacks: await getIncludeNestedStacks(),
-                tags: await getTags(),
-                importExistingResources: await getImportExistingResources(),
+                onStackFailure: fileFlags?.onStackFailure ?? await getOnStackFailure(),
+                includeNestedStacks: fileFlags?.includeNestedStacks ?? await getIncludeNestedStacks(),
+                tags: fileFlags?.tags ?? await getTags(),
+                importExistingResources: fileFlags?.importExistingResources ?? await getImportExistingResources(),
             }
         case OptionalFlagMode.DevFriendly:
             return {
                 onStackFailure: OnStackFailure.DO_NOTHING,
                 includeNestedStacks: true,
-                tags: await getTags(),
+                tags: fileFlags?.tags ?? await getTags(),
                 importExistingResources: true,
             }
         default:
@@ -347,7 +357,7 @@ async function changeSetSteps(
         return
     }
 
-    const optionalFlags = await promptForOptionalFlags()
+    const optionalFlags = await promptForOptionalFlags(deploymentFileDetail?.optionalFlags)
 
     const capabilitiesResult = await getCapabilities(client, templateUri)
     const capabilities = await confirmCapabilities(capabilitiesResult.capabilities)

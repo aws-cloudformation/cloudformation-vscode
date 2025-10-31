@@ -4,6 +4,7 @@
  */
 
 import { OnStackFailure, Parameter, Tag } from '@aws-sdk/client-cloudformation'
+import { ChangeSetOptionalFlags } from '../stacks/actions/stackActionRequestType'
 
 export type EnvironmentConfig = {
     name: string
@@ -34,8 +35,5 @@ export type DeploymentFileDetails = {
     fileName: string
     hasMatchingTemplatePath?: boolean
     compatibleParameters?: Parameter[]
-    tags?: Tag[]
-    includeNestedStacks?: boolean
-    importExistingResources?: boolean
-    onStackFailure?: OnStackFailure
+    optionalFlags?: ChangeSetOptionalFlags
 }
