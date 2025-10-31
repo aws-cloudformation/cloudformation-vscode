@@ -3,19 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TreeItemCollapsibleState, ThemeIcon } from 'vscode'
+import { TreeItemCollapsibleState, ThemeIcon, Command } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
-import { getLogger } from '../../../../shared/logger/logger'
 
 export class StackOutputsNode extends AWSTreeNodeBase {
     public constructor(private readonly stackName: string) {
         super('Outputs', TreeItemCollapsibleState.None)
         this.contextValue = 'stackOutputs'
         this.iconPath = new ThemeIcon('output')
+        this.command = this.getCommand()
     }
 
-    public override async getChildren(): Promise<AWSTreeNodeBase[]> {
-        getLogger().info(`StackOutputs getChildren: ${this.stackName}`)
-        return []
+    private getCommand(): Command {
+        return {
+            title: 'Show Stack Outputs',
+            command: 'aws.cloudformation.stack.outputs.show',
+            arguments: [this.stackName],
+        }
     }
 }

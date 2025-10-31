@@ -39,6 +39,7 @@ import {
     removeEnvironmentCommand,
     deleteChangeSetCommand,
     showStackEventsCommand,
+    showStackOutputsCommand,
     viewChangeSetCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
@@ -51,6 +52,7 @@ import { CloudFormationExplorer } from './explorer/explorer'
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
 import { StackOverviewWebviewProvider } from './ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from './ui/stackEventsWebviewProvider'
+import { StackOutputsWebviewProvider } from './ui/stackOutputsWebviewProvider'
 import { DiffWebviewProvider } from './ui/diffWebviewProvider'
 import { StackResourcesWebviewProvider } from './ui/stackResourcesWebviewProvider'
 import { DocumentManager } from './documents/documentManager'
@@ -221,6 +223,9 @@ export async function activate(context: ExtensionContext) {
             // Create stack events webview provider
             const eventsProvider = new StackEventsWebviewProvider(client)
 
+            // Create stack outputs webview provider
+            const outputsProvider = new StackOutputsWebviewProvider(client)
+
             const documentSelector = [
                 { scheme: 'file', language: 'cloudformation' },
                 { scheme: 'file', language: 'yaml' },
@@ -254,6 +259,7 @@ export async function activate(context: ExtensionContext) {
                 loadMoreChangeSetsCommand(cfnExplorer),
                 showStackOverviewCommand(overviewProvider),
                 showStackEventsCommand(eventsProvider),
+                showStackOutputsCommand(outputsProvider),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager),
@@ -266,6 +272,7 @@ export async function activate(context: ExtensionContext) {
                 window.registerWebviewViewProvider(commandKey('diff'), diffProvider),
                 window.registerWebviewViewProvider(commandKey('stack.events'), eventsProvider),
                 window.registerWebviewViewProvider(commandKey('detail'), resourcesProvider),
+                window.registerWebviewViewProvider(commandKey('stack.outputs'), outputsProvider),
                 viewStackDiffCommand(),
                 viewStackDetailCommand(resourcesProvider),
                 focusDiffCommand(),
