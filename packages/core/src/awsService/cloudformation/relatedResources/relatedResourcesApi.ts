@@ -6,10 +6,11 @@
 import { LanguageClient } from 'vscode-languageclient'
 import {
     GetAuthoredResourceTypesRequest,
+    GetRelatedResourceTypesParams,
     GetRelatedResourceTypesRequest,
+    InsertRelatedResourcesParams,
     InsertRelatedResourcesRequest,
     RelatedResourcesCodeAction,
-    ResourceTypeRequest,
     TemplateUri,
 } from './relatedResourcesProtocol'
 
@@ -17,13 +18,16 @@ export async function getAuthoredResourceTypes(client: LanguageClient, templateU
     return client.sendRequest(GetAuthoredResourceTypesRequest, templateUri)
 }
 
-export async function getRelatedResourceTypes(client: LanguageClient, params: ResourceTypeRequest): Promise<string[]> {
+export async function getRelatedResourceTypes(
+    client: LanguageClient,
+    params: GetRelatedResourceTypesParams
+): Promise<string[]> {
     return client.sendRequest(GetRelatedResourceTypesRequest, params)
 }
 
 export async function insertRelatedResources(
     client: LanguageClient,
-    params: InsertRelatedResourcesRequest
+    params: InsertRelatedResourcesParams
 ): Promise<RelatedResourcesCodeAction> {
     return client.sendRequest(InsertRelatedResourcesRequest, params)
 }

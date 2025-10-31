@@ -37,7 +37,7 @@ export class RelatedResourceSelector {
     }
 
     async selectRelatedResourceTypes(selectedResourceType: string): Promise<string[] | undefined> {
-        const relatedTypes = await getRelatedResourceTypes(this.client, { resourceType: selectedResourceType })
+        const relatedTypes = await getRelatedResourceTypes(this.client, { parentResourceType: selectedResourceType })
 
         if (relatedTypes.length === 0) {
             void window.showInformationMessage(`No related resources found for ${selectedResourceType}`)

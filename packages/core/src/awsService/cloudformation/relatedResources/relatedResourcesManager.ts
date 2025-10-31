@@ -69,8 +69,8 @@ export class RelatedResourcesManager {
         const templateUri = activeEditor.document.uri.toString()
         const result = await insertRelatedResources(this.client, {
             templateUri,
-            resourceTypes: selectedRelatedTypes,
-            selectedResourceType,
+            relatedResourceTypes: selectedRelatedTypes,
+            parentResourceType: selectedResourceType,
         })
 
         await this.applyCodeAction(result)
@@ -92,15 +92,15 @@ export class RelatedResourcesManager {
             const workspaceEdit = new WorkspaceEdit()
 
             for (const [uri, textEdits] of Object.entries(codeAction.edit.changes)) {
-                const vsCodeUri = Uri.parse(uri)
-                const vsCodeEdits = textEdits.map((edit) => {
+                const docUri = Uri.parse(uri)
+                const docEdits = textEdits.map((edit) => {
                     const range = new Range(
                         new Position(edit.range.start.line, edit.range.start.character),
                         new Position(edit.range.end.line, edit.range.end.character)
                     )
                     return new TextEdit(range, edit.newText)
                 })
-                workspaceEdit.set(vsCodeUri, vsCodeEdits)
+                workspaceEdit.set(docUri, docEdits)
             }
 
             await workspace.applyEdit(workspaceEdit)
