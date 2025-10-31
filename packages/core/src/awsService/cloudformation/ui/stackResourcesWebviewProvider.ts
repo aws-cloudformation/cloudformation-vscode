@@ -5,34 +5,13 @@
 
 import { WebviewView, WebviewViewProvider } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
-import { RequestType } from 'vscode-languageserver-protocol'
 import { showErrorMessage } from './message'
-
-interface StackResourceSummary {
-    LogicalResourceId: string
-    PhysicalResourceId?: string
-    ResourceType: string
-    ResourceStatus: string
-    Timestamp?: string
-}
-
-export type ListStackResourcesResult = {
-    resources: StackResourceSummary[]
-    nextToken?: string
-}
-
-interface GetStackResourcesParams {
-    stackName: string
-    nextToken?: string
-}
-
-const GetStackResourcesRequest = new RequestType<GetStackResourcesParams, ListStackResourcesResult, void>(
-    'aws/cfn/stack/resources'
-)
+import { GetStackResourcesRequest } from '../stacks/actions/stackActionProtocol'
+import { StackResourceSummary, GetStackResourcesParams } from '../stacks/actions/stackActionRequestType'
 
 const ResourcesPerPage = 50
 
-export class StackDetailWebviewProvider implements WebviewViewProvider {
+export class StackResourcesWebviewProvider implements WebviewViewProvider {
     private _view?: WebviewView
     private stackName = ''
     private allResources: StackResourceSummary[] = []

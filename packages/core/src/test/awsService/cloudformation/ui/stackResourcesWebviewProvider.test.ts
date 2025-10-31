@@ -5,11 +5,11 @@
 
 import assert from 'assert'
 import * as sinon from 'sinon'
-import { StackDetailWebviewProvider } from '../../../../awsService/cloudformation/ui/stackDetailWebviewProvider'
+import { StackResourcesWebviewProvider } from '../../../../awsService/cloudformation/ui/stackResourcesWebviewProvider'
 
-describe('StackDetailWebviewProvider', function () {
+describe('StackResourcesWebviewProvider', function () {
     let sandbox: sinon.SinonSandbox
-    let provider: StackDetailWebviewProvider
+    let provider: StackResourcesWebviewProvider
     let mockClient: any
 
     beforeEach(function () {
@@ -17,7 +17,7 @@ describe('StackDetailWebviewProvider', function () {
         mockClient = {
             sendRequest: sandbox.stub(),
         }
-        provider = new StackDetailWebviewProvider(mockClient)
+        provider = new StackResourcesWebviewProvider(mockClient)
     })
 
     afterEach(function () {
@@ -57,7 +57,11 @@ describe('StackDetailWebviewProvider', function () {
     describe('updateData', function () {
         it('should update stack name and fetch resources', async function () {
             const mockResources = createMockResources(1)
-            const mockWebview = await setupProviderWithResources('test-stack', mockResources)
+            mockClient.sendRequest.resolves({ resources: mockResources })
+
+            const mockWebview = createMockWebview()
+            provider.resolveWebviewView(mockWebview as any)
+            await provider.updateData('test-stack')
 
             assert.ok(mockClient.sendRequest.calledOnce)
             const [, params] = mockClient.sendRequest.firstCall.args
@@ -251,7 +255,7 @@ describe('StackDetailWebviewProvider', function () {
         })
 
         it('should return early if no client or stack name', async function () {
-            const providerWithoutClient = new StackDetailWebviewProvider(undefined as any)
+            const providerWithoutClient = new StackResourcesWebviewProvider(undefined as any)
             const mockWebview = createMockWebview()
             providerWithoutClient.resolveWebviewView(mockWebview as any)
 

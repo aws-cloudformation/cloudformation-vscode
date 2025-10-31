@@ -26,7 +26,7 @@ import {
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
-import { StackDetailWebviewProvider } from '../ui/stackDetailWebviewProvider'
+import { StackResourcesWebviewProvider } from '../ui/stackResourcesWebviewProvider'
 import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
 import {
@@ -415,13 +415,13 @@ export function viewStackDiffCommand() {
     })
 }
 
-export function viewStackDetailCommand(detailProvider: StackDetailWebviewProvider) {
+export function viewStackDetailCommand(resourcesProvider: StackResourcesWebviewProvider) {
     return commands.registerCommand(commandKey('stacks.viewDetail'), async (node?: any) => {
         void setContext('aws.cloudformation.stacks.detailVisible', true)
 
         const stackName = node?.stackName || 'Unknown Stack'
 
-        await detailProvider.updateData(stackName)
+        await resourcesProvider.updateData(stackName)
         void commands.executeCommand(commandKey('detail.focus'))
     })
 }
