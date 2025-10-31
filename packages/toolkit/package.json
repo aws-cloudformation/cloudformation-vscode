@@ -901,6 +901,11 @@
                     "name": "Stack Resources",
                     "type": "webview",
                     "when": "aws.cloudformation.stacks.detailVisible"
+                },
+                {
+                    "id": "aws.cloudformation.stack.outputs",
+                    "name": "Stack Outputs",
+                    "type": "webview"
                 }
             ],
             "explorer": [

@@ -50,6 +50,7 @@ import { DocumentManager } from '../documents/documentManager'
 
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
+import { StackOutputsWebviewProvider } from '../ui/stackOutputsWebviewProvider'
 import { ResourceContextValue } from '../explorer/contextValue'
 import { getLogger } from '../../../shared/logger/logger'
 import { CloudFormationExplorer } from '../explorer/explorer'
@@ -528,7 +529,14 @@ export function showStackOverviewCommand(overviewProvider: StackOverviewWebviewP
 export function showStackEventsCommand(eventsProvider: StackEventsWebviewProvider) {
     return commands.registerCommand(commandKey('stack.events.show'), async (stackName: string) => {
         await eventsProvider.showStackEvents(stackName)
-        await commands.executeCommand('workbench.view.extension.cfn-diff')
+        await commands.executeCommand(commandKey('stack.events.focus'))
+    })
+}
+
+export function showStackOutputsCommand(outputsProvider: StackOutputsWebviewProvider) {
+    return commands.registerCommand(commandKey('stack.outputs.show'), async (stackName: string) => {
+        await outputsProvider.showOutputs(stackName)
+        await commands.executeCommand(commandKey('stack.outputs.focus'))
     })
 }
 

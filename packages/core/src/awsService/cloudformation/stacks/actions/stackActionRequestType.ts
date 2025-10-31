@@ -13,6 +13,7 @@ import {
     StackEvent,
     OnStackFailure,
     Tag,
+    Output,
 } from '@aws-sdk/client-cloudformation'
 import { Identifiable } from '../../lspTypes'
 
@@ -245,6 +246,14 @@ export type GetStackEventsResult = {
 
 export type ClearStackEventsParams = {
     stackName: string
+}
+
+export type GetStackOutputsParams = {
+    stackName: string
+}
+
+export type GetStackOutputsResult = {
+    outputs: Output[]
 }
 
 export interface StackResourceSummary {
