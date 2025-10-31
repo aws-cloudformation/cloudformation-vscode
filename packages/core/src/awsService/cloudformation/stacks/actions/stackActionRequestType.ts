@@ -38,6 +38,7 @@ export type CreateValidationParams = Identifiable &
         capabilities?: Capability[]
         resourcesToImport?: ResourceToImport[]
         keepChangeSet?: boolean
+        s3Url?: string
     }
 
 export type ChangeSetReference = {

@@ -49,6 +49,7 @@ export class Validation {
     private shouldEnableDeployment: boolean
     private changeSetName?: string
     private optionalFlags?: ChangeSetOptionalFlags
+    private s3Url?: string
 
     constructor(
         uri: string,
@@ -59,7 +60,8 @@ export class Validation {
         capabilities?: Capability[],
         resourcesToImport?: ResourceToImport[],
         shouldEnableDeployment: boolean = false,
-        optionalFlags?: ChangeSetOptionalFlags
+        optionalFlags?: ChangeSetOptionalFlags,
+        s3Url?: string
     ) {
         this.id = uuidv4()
         this.uri = uri
@@ -71,6 +73,7 @@ export class Validation {
         this.resourcesToImport = resourcesToImport
         this.shouldEnableDeployment = shouldEnableDeployment
         this.optionalFlags = optionalFlags
+        this.s3Url = s3Url
     }
 
     async validate() {
@@ -89,7 +92,8 @@ export class Validation {
                     this.capabilities,
                     this.resourcesToImport,
                     this.shouldEnableDeployment,
-                    this.optionalFlags
+                    this.optionalFlags,
+                    this.s3Url
                 )
             )
 
