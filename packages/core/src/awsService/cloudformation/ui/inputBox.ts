@@ -9,8 +9,13 @@ import {
     validateParameterValue,
     validateChangeSetName,
 } from '../stacks/actions/stackActionInputValidation'
-import { Parameter, Capability } from '@aws-sdk/client-cloudformation'
-import { TemplateParameter, ResourceToImport, TemplateResource } from '../stacks/actions/stackActionRequestType'
+import { Parameter, Capability, Tag, OnStackFailure } from '@aws-sdk/client-cloudformation'
+import {
+    TemplateParameter,
+    ResourceToImport,
+    TemplateResource,
+    OptionalFlagMode,
+} from '../stacks/actions/stackActionRequestType'
 import { DocumentManager } from '../documents/documentManager'
 import path from 'path'
 import fs from '../../../shared/fs/fs'
@@ -137,6 +142,79 @@ export async function shouldImportResources(): Promise<boolean> {
     })
 
     return choice === 'Import existing resources'
+}
+
+export async function chooseOptionalFlagSuggestion(): Promise<string | undefined> {
+    const choice = await window.showQuickPick(
+        [OptionalFlagMode.Skip, OptionalFlagMode.Input, OptionalFlagMode.DevFriendly],
+        {
+            placeHolder: 'Enter optional change set flags?',
+            ignoreFocusOut: true,
+        }
+    )
+
+    return choice
+}
+
+export async function getTags(): Promise<Tag[]> {
+    const input = await window.showInputBox({
+        prompt: 'Enter CloudFormation tags (key=value pairs, comma-separated). Enter empty for no tags',
+        placeHolder: 'key1=value1,key2=value2,key3=value3',
+        validateInput: (value) => {
+            if (!value) {
+                return undefined
+            }
+            const isValid = /^[^=,]+=[^=,]+(,[^=,]+=[^=,]+)*$/.test(value.trim())
+            return isValid ? undefined : 'Format: key1=value1,key2=value2'
+        },
+        ignoreFocusOut: true,
+    })
+
+    if (!input) {
+        return []
+    }
+
+    return input.split(',').map((pair) => {
+        const [key, value] = pair.split('=').map((s) => s.trim())
+        return { Key: key, Value: value }
+    })
+}
+
+export async function getIncludeNestedStacks(): Promise<boolean | undefined> {
+    return (
+        await window.showQuickPick(
+            [
+                { label: 'Yes', value: true },
+                { label: 'No', value: false },
+            ],
+            { placeHolder: 'Include nested stacks?', ignoreFocusOut: true }
+        )
+    )?.value
+}
+
+export async function getImportExistingResources(): Promise<boolean | undefined> {
+    return (
+        await window.showQuickPick(
+            [
+                { label: 'Yes', value: true },
+                { label: 'No', value: false },
+            ],
+            { placeHolder: 'Import existing resources?', ignoreFocusOut: true }
+        )
+    )?.value
+}
+
+export async function getOnStackFailure(): Promise<OnStackFailure | undefined> {
+    return (
+        await window.showQuickPick(
+            [
+                { label: 'Delete', description: 'Delete the stack on failure', value: OnStackFailure.DELETE },
+                { label: 'Do Nothing', description: 'Leave stack in failed state', value: OnStackFailure.DO_NOTHING },
+                { label: 'Rollback', description: 'Rollback to previous state', value: OnStackFailure.ROLLBACK },
+            ],
+            { placeHolder: 'What to do on stack failure?', ignoreFocusOut: true }
+        )
+    )?.value
 }
 
 export async function getResourcesToImport(
