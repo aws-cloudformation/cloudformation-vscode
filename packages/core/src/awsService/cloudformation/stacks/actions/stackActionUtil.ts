@@ -20,9 +20,10 @@ export function createValidationParams(
     capabilities?: Capability[],
     resourcesToImport?: ResourceToImport[],
     keepChangeSet?: boolean,
-    optionalFlags?: ChangeSetOptionalFlags
+    optionalFlags?: ChangeSetOptionalFlags,
+    s3Url?: string
 ): CreateValidationParams {
-    return { id, uri, stackName, parameters, capabilities, resourcesToImport, keepChangeSet, ...optionalFlags }
+    return { id, uri, stackName, parameters, capabilities, resourcesToImport, keepChangeSet, s3Url, ...optionalFlags }
 }
 
 export function createDeploymentParams(id: string, stackName: string, changeSetName: string): CreateDeploymentParams {
