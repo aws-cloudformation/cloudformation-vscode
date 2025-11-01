@@ -444,6 +444,21 @@
                     "type": "string",
                     "default": "",
                     "description": "Path to custom cfn-guard rules file. If empty, uses default rule packs."
+                },
+                "aws.cloudformation.s3": {
+                    "type": "string",
+                    "enum": [
+                        "alwaysAsk",
+                        "alwaysUpload",
+                        "neverUpload"
+                    ],
+                    "enumDescriptions": [
+                        "Always ask during validation and deploy workflow",
+                        "Always upload to S3 for both validation and deployment",
+                        "Never upload to S3 (only works for template smaller than 51200 bytes)"
+                    ],
+                    "default": "alwaysAsk",
+                    "description": "Configure S3 upload behavior for CloudFormation templates"
                 }
             }
         },

@@ -7,6 +7,9 @@ import { commands, env, Uri, window, workspace, Range, Selection, TextEditorReve
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
+import { RequestType } from 'vscode-languageclient'
+
+const UploadFileRequest = new RequestType<{ localFilePath: string; s3Url: string }, void, void>('aws/s3/file/upload')
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
 import { Parameter, Capability, OnStackFailure } from '@aws-sdk/client-cloudformation'
 import {
@@ -23,6 +26,9 @@ import {
     getOnStackFailure,
     getIncludeNestedStacks,
     getImportExistingResources,
+    shouldUploadToS3,
+    getS3Bucket,
+    getS3Key,
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
@@ -82,7 +88,8 @@ export function validateDeploymentCommand(
                 result.capabilities,
                 result.resourcesToImport,
                 false,
-                result.optionalFlags
+                result.optionalFlags,
+                result.s3Url
             )
 
             setLastValidation(validation)
@@ -182,7 +189,8 @@ export function deployTemplateCommand(
                 result.capabilities,
                 result.resourcesToImport,
                 true, // Confirm deployment following successful validation
-                result.optionalFlags
+                result.optionalFlags,
+                result.s3Url
             )
 
             setLastValidation(validation)
@@ -244,6 +252,7 @@ type UserInputtedTemplateParameters = {
     capabilities: Capability[]
     resourcesToImport: ResourceToImport[] | undefined
     optionalFlags: ChangeSetOptionalFlags | undefined
+    s3Url?: string
 }
 
 async function changeSetSteps(
@@ -258,6 +267,41 @@ async function changeSetSteps(
     }
 
     await ensureFileIsOpen(templateUri)
+
+    // Ask user if they want to upload to S3
+    let s3Url: string | undefined
+    const uploadChoice = await shouldUploadToS3()
+    if (uploadChoice === undefined) {
+        return // User chose to configure settings, exit command
+    }
+    if (uploadChoice) {
+        const bucket = await getS3Bucket()
+        if (!bucket) {
+            return
+        }
+
+        const fileName = templateUri.split('/').pop()
+        const timestamp = Date.now()
+        const fileNameWithTimestamp = fileName
+            ? `${fileName.split('.')[0]}-${timestamp}.${fileName.split('.').pop()}`
+            : `template-${timestamp}.yaml`
+        const key = await getS3Key(fileNameWithTimestamp)
+        if (!key) {
+            return
+        }
+
+        s3Url = `s3://${bucket}/${key}`
+
+        try {
+            await client.sendRequest(UploadFileRequest, {
+                localFilePath: templateUri,
+                s3Url: s3Url,
+            })
+        } catch (error) {
+            showErrorMessage(`Failed to upload to S3: ${extractErrorMessage(error)}`)
+            return
+        }
+    }
 
     let stackName
     if (isValidation) {
@@ -291,7 +335,7 @@ async function changeSetSteps(
     if (capabilities === undefined) {
         return
     } // User cancelled
-    return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags }
+    return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags, s3Url }
 }
 
 export function rerunLastValidationCommand() {

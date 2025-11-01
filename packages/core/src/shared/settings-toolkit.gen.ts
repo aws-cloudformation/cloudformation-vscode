@@ -67,7 +67,8 @@ export const toolkitSettings = {
     "aws.cloudformation.diagnostics.cfnGuard.enabled": {},
     "aws.cloudformation.diagnostics.cfnGuard.validateOnChange": {},
     "aws.cloudformation.diagnostics.cfnGuard.enabledRulePacks": {},
-    "aws.cloudformation.diagnostics.cfnGuard.rulesFile": {}
+    "aws.cloudformation.diagnostics.cfnGuard.rulesFile": {},
+    "aws.cloudformation.s3": {}
 }
 
 export default toolkitSettings

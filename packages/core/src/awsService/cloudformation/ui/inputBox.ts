@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { window, workspace, Uri } from 'vscode'
+import { window, workspace, Uri, commands } from 'vscode'
 import {
     validateStackName,
     validateParameterValue,
@@ -367,6 +367,80 @@ export async function getEnvironmentName() {
             }
             if (!/^[a-zA-Z0-9_-]{1,32}$/.test(v.trim())) {
                 return 'Must be 1-32 characters, alphanumeric with hyphens and underscores only'
+            }
+            return undefined
+        },
+    })
+}
+
+export async function shouldUploadToS3(): Promise<boolean | undefined> {
+    const config = workspace.getConfiguration('aws.cloudformation')
+    const currentSetting = config.get<string>('s3', 'alwaysAsk')
+
+    if (currentSetting === 'alwaysUpload') {
+        return true
+    }
+    if (currentSetting === 'neverUpload') {
+        return false
+    }
+
+    const choice = await window.showQuickPick(
+        [
+            {
+                label: 'Upload to S3',
+                description: 'Upload template to S3',
+                value: 'upload',
+            },
+            {
+                label: 'Do not upload to S3',
+                description: 'Do not upload template to S3',
+                value: 'skip',
+            },
+            {
+                label: 'Configure in Settings',
+                description: 'Open CloudFormation S3 settings',
+                value: 'configure',
+            },
+        ],
+        {
+            placeHolder: 'Choose S3 upload option for CloudFormation template',
+        }
+    )
+
+    if (!choice) {
+        return false
+    }
+
+    if (choice.value === 'configure') {
+        await commands.executeCommand('workbench.action.openSettings', 'aws.cloudformation.s3')
+        return undefined // Exit command, let user configure first
+    }
+
+    return choice.value === 'upload'
+}
+
+export async function getS3Bucket(): Promise<string | undefined> {
+    return await window.showInputBox({
+        prompt: 'Enter S3 bucket name',
+        validateInput: (value) => {
+            if (!value.trim()) {
+                return 'Bucket name is required'
+            }
+            if (!/^[a-z0-9.-]{3,63}$/.test(value)) {
+                return 'Invalid bucket name format'
+            }
+            return undefined
+        },
+    })
+}
+
+export async function getS3Key(prefill?: string): Promise<string | undefined> {
+    return await window.showInputBox({
+        prompt: 'Enter S3 object key',
+        value: prefill,
+        validateInput: (value) => {
+            if (!value.trim()) {
+                return 'Object key is required'
             }
             return undefined
         },
