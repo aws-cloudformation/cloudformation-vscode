@@ -99,29 +99,33 @@ export class DiffWebviewProvider implements WebviewViewProvider {
             `
         }
 
+        // Check if any resource has drift
+        // TODO: adapt if we do real backend pagination
+        const hasDrift = changes.some(
+            (change) =>
+                change.resourceChange?.resourceDriftStatus ||
+                change.resourceChange?.details?.some(
+                    (detail) => detail.Target?.Drift || detail.Target?.LiveResourceDrift
+                )
+        )
+
         let tableHtml = `
             <table style="width: 100%; border-collapse: collapse; border: 1px solid var(--vscode-panel-border);">
                 <tr>
-                    <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Action</th>
-                    <th style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">LogicalResourceId</th>
-                    <th style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">PhysicalResourceId</th>
-                    <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">ResourceType</th>
-                    <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Replacement</th>
-                    <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Scope</th>
-                    <th colspan="7" style="text-align: center; width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Details</th>
-                </tr>
-                <tr>
-                    <th colspan="6" style="border: 1px solid var(--vscode-panel-border); background-color: var(--vscode-editor-background);"></th>
-                    <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">Name</th>
-                    <th style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">RequiresRecreation</th>
-                    <th style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">BeforeValue</th>
-                    <th style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">AfterValue</th>
-                    <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">AttributeChangeType</th>
-                    <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">ChangeSource</th>
-                    <th style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);">CausingEntity</th>
+                    <th style="width: 5%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);"></th>
+                    <th style="width: ${hasDrift ? '8' : '10'}%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);" title="The action that CloudFormation takes on the resource (Add, Modify, Remove, Import, or Dynamic)">Action</th>
+                    <th style="width: ${hasDrift ? '18' : '20'}%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);" title="The logical name of the resource as defined in the template">LogicalResourceId</th>
+                    <th style="width: ${hasDrift ? '25' : '30'}%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);" title="The physical name or unique identifier of the resource">PhysicalResourceId</th>
+                    <th style="width: ${hasDrift ? '18' : '20'}%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);" title="The type of CloudFormation resource (e.g., AWS::S3::Bucket)">ResourceType</th>
+                    <th style="width: ${hasDrift ? '10' : '15'}%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);" title="Indicates whether CloudFormation will replace the resource (True, False, Conditional, or N/A)">Replacement</th>${
+                        hasDrift
+                            ? `
+                    <th style="width: 16%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground); background-color: var(--vscode-editor-background);" title="Indicates if the live resource has drifted from the template">Drift Status</th>`
+                            : ''
+                    }
                 </tr>`
 
-        for (const change of displayedChanges) {
+        for (const [changeIndex, change] of displayedChanges.entries()) {
             const rc = change.resourceChange
             if (!rc) {
                 continue
@@ -136,41 +140,88 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                         ? 'var(--vscode-gitDecoration-modifiedResourceForeground)'
                         : 'transparent'
 
-            const detailCount = rc.details?.length || 1
-            tableHtml += `<tr style="border-left: 4px solid ${borderColor}; color: var(--vscode-foreground);">
-                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; font-weight: bold; vertical-align: middle;">${rc.action ?? 'Unknown'}</td>
-                <td rowspan="${detailCount}" style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;"><a href="#" onclick="openDiffToResource('${rc.logicalResourceId}'); return false;" style="color: var(--vscode-textLink-foreground); cursor: pointer; font-weight: bold; text-decoration: underline;">${rc.logicalResourceId ?? 'Unknown'}</a></td>
-                <td rowspan="${detailCount}" style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.physicalResourceId ?? ' '}</td>
-                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.resourceType ?? 'Unknown'}</td>
-                <td rowspan="${detailCount}" style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.replacement ?? 'N/A'}</td>
-                <td rowspan="${detailCount}" style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; vertical-align: middle;">${rc.scope?.join(', ') ?? ' '}</td>`
+            const hasDetails = rc.details && rc.details.length > 0
+            const expandIcon = hasDetails ? '▶' : ''
 
-            if (rc.details && rc.details.length > 0) {
-                for (const [index, detail] of rc.details.entries()) {
-                    const target = detail.Target
-                    if (index > 0) {
-                        tableHtml += `<tr style="border-left: 4px solid ${borderColor}; color: var(--vscode-foreground);">`
-                    }
-                    tableHtml += `
-                        <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.Name ?? ' '}</td>
-                        <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.RequiresRecreation ?? 'Unknown'}</td>
-                        <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.BeforeValue ?? ' '}</td>
-                        <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.AfterValue ?? ' '}</td>
-                        <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${target?.AttributeChangeType ?? ' '}</td>
-                        <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${detail?.ChangeSource ?? ' '}</td>
-                        <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;">${detail?.CausingEntity ?? ' '}</td>`
-                    tableHtml += `</tr>`
+            const driftStatus = rc.resourceDriftStatus
+            const hasDriftDetails = rc.details?.some(
+                (detail) => detail.Target?.Drift || detail.Target?.LiveResourceDrift
+            )
+            let driftDisplay = ''
+            if (driftStatus === 'DELETED') {
+                driftDisplay = '⚠️ Deleted'
+            } else if (hasDriftDetails) {
+                driftDisplay = '⚠️ Modified'
+            } else if (driftStatus && driftStatus !== 'IN_SYNC') {
+                driftDisplay = `⚠️ ${driftStatus}`
+            }
+
+            tableHtml += `<tr style="border-left: 4px solid ${borderColor}; color: var(--vscode-foreground);">
+                <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; cursor: ${hasDetails ? 'pointer' : 'default'};" ${hasDetails ? `onclick="toggleDetails(${changeIndex})"` : ''}>
+                    <span id="expand-icon-${changeIndex}">${expandIcon}</span>
+                </td>
+                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; font-weight: bold;">${rc.action ?? 'Unknown'}</td>
+                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center;"><a href="#" onclick="openDiffToResource('${rc.logicalResourceId}'); return false;" style="color: var(--vscode-textLink-foreground); cursor: pointer; font-weight: bold; text-decoration: underline;">${rc.logicalResourceId ?? 'Unknown'}</a></td>
+                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center;">${rc.physicalResourceId ?? ' '}</td>
+                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center;">${rc.resourceType ?? 'Unknown'}</td>
+                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center;">${rc.replacement ?? 'N/A'}</td>${
+                    hasDrift
+                        ? `
+                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; color: ${driftDisplay ? 'var(--vscode-editorWarning-foreground)' : 'var(--vscode-foreground)'}; font-weight: ${driftDisplay ? 'bold' : 'normal'};">${driftDisplay || '-'}</td>`
+                        : ''
                 }
-            } else {
-                tableHtml += `
-                    <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 10%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 20%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                    <td style="width: 15%; word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px;"></td>
-                </tr>`
+            </tr>`
+
+            if (hasDetails) {
+                tableHtml += `<tr id="details-${changeIndex}" style="display: none;">
+                    <td colspan="${hasDrift ? '7' : '6'}" style="border: 1px solid var(--vscode-panel-border); padding: 8px; background-color: var(--vscode-sideBar-background);">
+                        <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                            <tr style="background-color: var(--vscode-sideBarSectionHeader-background);">
+                                <th style="width: ${hasDriftDetails ? '10' : '12'}%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The type of change to the attribute (Add, Remove, or Modify)">Attribute Change Type</th>
+                                <th style="width: ${hasDriftDetails ? '12' : '15'}%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The name of the resource property that is changing">Name</th>
+                                <th style="width: ${hasDriftDetails ? '10' : '12'}%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="Indicates whether changing this property requires resource recreation (Never, Conditionally, or Always)">Requires Recreation</th>
+                                <th style="width: ${hasDriftDetails ? '15' : '18'}%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The value of the property before the change">Before Value</th>
+                                <th style="width: ${hasDriftDetails ? '15' : '18'}%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The value of the property after the change">After Value</th>
+                                <th style="width: ${hasDriftDetails ? '10' : '12'}%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The source of the change (ResourceReference, ParameterReference, ResourceAttribute, DirectModification, or Automatic)">Change Source</th>
+                                <th style="width: ${hasDriftDetails ? '11' : '13'}%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The identity of the entity that triggered this change (parameter name, resource logical ID, etc.)">Causing Entity</th>${
+                                    hasDriftDetails
+                                        ? `
+                                <th style="width: 9%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The previous value from the last deployment">Drift: Previous</th>
+                                <th style="width: 8%; border: 1px solid var(--vscode-panel-border); padding: 4px; color: var(--vscode-foreground);" title="The actual value in the live AWS resource">Drift: Actual</th>`
+                                        : ''
+                                }
+                            </tr>`
+
+                for (const detail of rc.details || []) {
+                    const target = detail.Target
+                    const attrChangeType = target?.AttributeChangeType ?? ' '
+                    const attrBorderColor =
+                        attrChangeType === 'Add'
+                            ? 'var(--vscode-gitDecoration-addedResourceForeground)'
+                            : attrChangeType === 'Remove'
+                              ? 'var(--vscode-gitDecoration-deletedResourceForeground)'
+                              : attrChangeType === 'Modify'
+                                ? 'var(--vscode-gitDecoration-modifiedResourceForeground)'
+                                : borderColor
+                    const drift = target?.Drift || target?.LiveResourceDrift
+                    tableHtml += `<tr style="border-left: 4px solid ${attrBorderColor}; color: var(--vscode-foreground);">
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; font-weight: bold; color: var(--vscode-foreground);">${attrChangeType}</td>
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; word-wrap: break-word; color: var(--vscode-foreground);">${target?.Name ?? ' '}</td>
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; color: var(--vscode-foreground);">${target?.RequiresRecreation ?? 'Unknown'}</td>
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; word-wrap: break-word; color: var(--vscode-foreground);">${target?.BeforeValue ?? ' '}</td>
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; word-wrap: break-word; color: var(--vscode-foreground);">${target?.AfterValue ?? ' '}</td>
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; color: var(--vscode-foreground);">${detail?.ChangeSource ?? ' '}</td>
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; word-wrap: break-word; color: var(--vscode-foreground);">${detail?.CausingEntity ?? ' '}</td>${
+                            hasDriftDetails
+                                ? `
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; word-wrap: break-word; color: ${drift ? 'var(--vscode-editorWarning-foreground)' : 'var(--vscode-foreground)'};">${drift?.PreviousValue ?? '-'}</td>
+                        <td style="border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; word-wrap: break-word; color: ${drift ? 'var(--vscode-editorWarning-foreground)' : 'var(--vscode-foreground)'}; font-weight: ${drift ? 'bold' : 'normal'};">${drift?.ActualValue ?? '-'}</td>`
+                                : ''
+                        }
+                    </tr>`
+                }
+
+                tableHtml += `</table></td></tr>`
             }
         }
 
@@ -300,6 +351,17 @@ export class DiffWebviewProvider implements WebviewViewProvider {
                     }
                     function deleteChangeSet() {
                         vscode.postMessage({ command: 'deleteChangeSet' });
+                    }
+                    function toggleDetails(index) {
+                        const detailsRow = document.getElementById('details-' + index);
+                        const icon = document.getElementById('expand-icon-' + index);
+                        if (detailsRow.style.display === 'none') {
+                            detailsRow.style.display = 'table-row';
+                            icon.textContent = '▼';
+                        } else {
+                            detailsRow.style.display = 'none';
+                            icon.textContent = '▶';
+                        }
                     }
                     function nextPage() {
                         vscode.postMessage({ command: 'nextPage' });
