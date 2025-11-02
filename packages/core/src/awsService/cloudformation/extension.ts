@@ -41,6 +41,9 @@ import {
     showStackEventsCommand,
     showStackOutputsCommand,
     viewChangeSetCommand,
+    validateDeploymentFromStackCommand,
+    deployTemplateFromStackCommand,
+    deployTemplateFromStacksMenuCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -272,6 +275,9 @@ export async function activate(context: ExtensionContext) {
                 restartCommand(client),
                 validateDeploymentCommand(client, diffProvider, documentManager),
                 deployTemplateCommand(client, diffProvider, documentManager),
+                validateDeploymentFromStackCommand(),
+                deployTemplateFromStackCommand(),
+                deployTemplateFromStacksMenuCommand(),
                 executeChangeSetCommand(client),
                 deleteChangeSetCommand(client),
                 viewChangeSetCommand(client, diffProvider),
