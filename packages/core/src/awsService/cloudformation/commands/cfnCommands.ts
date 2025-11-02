@@ -225,7 +225,7 @@ async function promptForResourceImport(client: LanguageClient, templateUri: stri
 }
 
 async function promptForOptionalFlags(fileFlags?: ChangeSetOptionalFlags): Promise<ChangeSetOptionalFlags | undefined> {
-    if (fileFlags && Object.values(fileFlags).every(v => v !== undefined)) {
+    if (fileFlags && Object.values(fileFlags).every((v) => v !== undefined)) {
         return fileFlags
     }
 
@@ -241,16 +241,16 @@ async function promptForOptionalFlags(fileFlags?: ChangeSetOptionalFlags): Promi
             }
         case OptionalFlagMode.Input:
             return {
-                onStackFailure: fileFlags?.onStackFailure ?? await getOnStackFailure(),
-                includeNestedStacks: fileFlags?.includeNestedStacks ?? await getIncludeNestedStacks(),
-                tags: fileFlags?.tags ?? await getTags(),
-                importExistingResources: fileFlags?.importExistingResources ?? await getImportExistingResources(),
+                onStackFailure: fileFlags?.onStackFailure ?? (await getOnStackFailure()),
+                includeNestedStacks: fileFlags?.includeNestedStacks ?? (await getIncludeNestedStacks()),
+                tags: fileFlags?.tags ?? (await getTags()),
+                importExistingResources: fileFlags?.importExistingResources ?? (await getImportExistingResources()),
             }
         case OptionalFlagMode.DevFriendly:
             return {
                 onStackFailure: OnStackFailure.DO_NOTHING,
                 includeNestedStacks: true,
-                tags: fileFlags?.tags ?? await getTags(),
+                tags: fileFlags?.tags ?? (await getTags()),
                 importExistingResources: true,
             }
         default:

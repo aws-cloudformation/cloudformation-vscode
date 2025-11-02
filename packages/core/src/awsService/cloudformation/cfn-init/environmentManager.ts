@@ -189,7 +189,7 @@ export class EnvironmentManager implements Disposable {
                     includeNestedStacks: deploymentFile.includeNestedStacks,
                     importExistingResources: deploymentFile.importExistingResources,
                     onStackFailure: deploymentFile.onStackFailure,
-                }
+                },
             }
         } catch (error) {
             getLogger().warn(`Failed to parse parameter file ${fileName}:`, error)

@@ -14,7 +14,7 @@ import { EnvironmentSelector } from '../../../../awsService/cloudformation/ui/en
 import { DeploymentFileSelector } from '../../../../awsService/cloudformation/ui/deploymentFileSelector'
 import { OnStackFailure } from '@aws-sdk/client-cloudformation'
 
-describe('EnvironmentManager', () => {
+describe.only('EnvironmentManager', () => {
     let environmentManager: EnvironmentManager
     let mockAuth: sinon.SinonStubbedInstance<Auth>
     let mockWorkspaceState: any
