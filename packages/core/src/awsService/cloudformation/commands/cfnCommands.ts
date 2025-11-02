@@ -72,6 +72,7 @@ import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 import { fs } from '../../../shared/fs/fs'
 import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
+import { StackNode } from '../explorer/nodes/stackNode'
 
 export function validateDeploymentCommand(
     client: LanguageClient,
@@ -79,32 +80,53 @@ export function validateDeploymentCommand(
     documentManager: DocumentManager,
     environmentManager: EnvironmentManager
 ) {
-    return commands.registerCommand(commandKey('api.validateDeployment'), async (templateUri?: string) => {
-        try {
-            const result = await changeSetSteps(client, documentManager, environmentManager, true, templateUri)
-            if (!result) {
-                return
+    return commands.registerCommand(
+        commandKey('api.validateDeployment'),
+        async (templateUri?: string, stackName?: string) => {
+            try {
+                const result = await changeSetSteps(client, documentManager, environmentManager, true, templateUri, stackName)
+                if (!result) {
+                    return
+                }
+
+                const validation = new Validation(
+                    result.templateUri,
+                    result.stackName,
+                    client,
+                    diffProvider,
+                    result.parameters,
+                    result.capabilities,
+                    result.resourcesToImport,
+                    false,
+                    result.optionalFlags,
+                    result.s3Url
+                )
+
+                setLastValidation(validation)
+
+                await validation.validate()
+            } catch (error) {
+                showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
             }
-
-            const validation = new Validation(
-                result.templateUri,
-                result.stackName,
-                client,
-                diffProvider,
-                result.parameters,
-                result.capabilities,
-                result.resourcesToImport,
-                false,
-                result.optionalFlags,
-                result.s3Url
-            )
-
-            setLastValidation(validation)
-
-            await validation.validate()
-        } catch (error) {
-            showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
         }
+    )
+}
+
+export function deployTemplateFromStacksMenuCommand() {
+    return commands.registerCommand(commandKey('api.deployTemplateFromStacksMenu'), async () => {
+        return commands.executeCommand(commandKey('api.deployTemplate'))
+    })
+}
+
+export function validateDeploymentFromStackCommand() {
+    return commands.registerCommand(commandKey('api.validateDeploymentFromStack'), async (stackNode?: StackNode) => {
+        return commands.executeCommand(commandKey('api.validateDeployment'), undefined, stackNode?.stack.StackName)
+    })
+}
+
+export function deployTemplateFromStackCommand() {
+    return commands.registerCommand(commandKey('api.deployTemplateFromStack'), async (stackNode?: StackNode) => {
+        return commands.executeCommand(commandKey('api.deployTemplate'), undefined, stackNode?.stack.StackName)
     })
 }
 
@@ -181,33 +203,36 @@ export function deployTemplateCommand(
     documentManager: DocumentManager,
     environmentManager: EnvironmentManager
 ) {
-    return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
-        try {
-            const result = await changeSetSteps(client, documentManager, environmentManager, false, templateUri)
-            if (!result) {
-                return
+    return commands.registerCommand(
+        commandKey('api.deployTemplate'),
+        async (templateUri?: string, stackName?: string) => {
+            try {
+                const result = await changeSetSteps(client, documentManager, environmentManager, false, templateUri, stackName)
+                if (!result) {
+                    return
+                }
+
+                const validation = new Validation(
+                    result.templateUri,
+                    result.stackName,
+                    client,
+                    diffProvider,
+                    result.parameters,
+                    result.capabilities,
+                    result.resourcesToImport,
+                    true, // Confirm deployment following successful validation
+                    result.optionalFlags,
+                    result.s3Url
+                )
+
+                setLastValidation(validation)
+
+                await validation.validate()
+            } catch (error) {
+                showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
             }
-
-            const validation = new Validation(
-                result.templateUri,
-                result.stackName,
-                client,
-                diffProvider,
-                result.parameters,
-                result.capabilities,
-                result.resourcesToImport,
-                true, // Confirm deployment following successful validation
-                result.optionalFlags,
-                result.s3Url
-            )
-
-            setLastValidation(validation)
-
-            await validation.validate()
-        } catch (error) {
-            showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
         }
-    })
+    )
 }
 
 async function promptForResourceImport(client: LanguageClient, templateUri: string) {
@@ -359,7 +384,8 @@ async function changeSetSteps(
     documentManager: DocumentManager,
     environmentManager: EnvironmentManager,
     isValidation: boolean,
-    templateUri: string | undefined
+    templateUri: string | undefined,
+    stackName: string | undefined
 ): Promise<UserInputtedTemplateParameters | undefined> {
     templateUri ??= await getTemplatePath(documentManager)
     if (!templateUri) {
@@ -403,14 +429,16 @@ async function changeSetSteps(
         }
     }
 
-    let stackName
-    if (isValidation) {
-        stackName = await getStackName(getLastValidation()?.stackName)
-    } else {
-        stackName = await getStackName()
-    }
     if (!stackName) {
-        return
+        if (isValidation) {
+            stackName = await getStackName(getLastValidation()?.stackName)
+        } else {
+            stackName = await getStackName()
+        }
+        // User cancelled
+        if (!stackName) {
+            return
+        }
     }
 
     const resourcesToImport = await promptForResourceImport(client, templateUri)
