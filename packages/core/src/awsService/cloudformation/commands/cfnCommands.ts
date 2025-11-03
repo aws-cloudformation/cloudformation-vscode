@@ -573,8 +573,7 @@ export function refreshAllResourcesCommand(resourcesManager: ResourcesManager) {
 
 export function refreshResourceListCommand(resourcesManager: ResourcesManager) {
     return commands.registerCommand(RefreshResourceListCommand.command, (resourceTypeNode: ResourceTypeNode) => {
-        const resourceType = resourceTypeNode.resourceList.typeName
-        resourcesManager.refreshResourceList(resourceType)
+        resourcesManager.refreshResourceList(resourceTypeNode.typeName)
     })
 }
 
@@ -764,7 +763,7 @@ export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
 
 export function addRelatedResourcesCommand(relatedResourcesManager: RelatedResourcesManager) {
     return commands.registerCommand(commandKey('api.addRelatedResources'), async (node?: ResourceTypeNode) => {
-        const selectedResourceType = node?.resourceList?.typeName
+        const selectedResourceType = node?.typeName
         await relatedResourcesManager.addRelatedResources(selectedResourceType)
     })
 }
