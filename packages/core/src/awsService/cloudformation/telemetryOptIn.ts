@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ExtensionContext, window } from 'vscode'
+import { ExtensionContext, env, Uri, window } from 'vscode'
 import { CloudFormationTelemetrySettings } from './extensionConfig'
 
 /* eslint-disable aws-toolkits/no-banned-usages */
@@ -28,10 +28,26 @@ export async function promptTelemetryOptIn(
         return telemetryEnabled
     }
 
-    const message =
-        'Help improve the AWS CloudFormation Language Server by sharing anonymous usage data with AWS. You can change this preference at any time in Settings.'
+    const message = 'Enable telemetry for AWS CloudFormation Language Server?'
+    const detail =
+        'Help improve the language server by sharing anonymous usage data with AWS. You can change this preference at any time in Settings.'
 
-    const response = await window.showInformationMessage(message, 'Allow', 'Not Now', 'Never')
+    const learnMore = 'Learn More'
+    const response = await window.showInformationMessage(
+        message,
+        { modal: true, detail },
+        'Allow',
+        'Not Now',
+        'Never',
+        learnMore
+    )
+
+    if (response === learnMore) {
+        await env.openExternal(
+            Uri.parse('https://github.com/aws-cloudformation/cloudformation-languageserver/tree/main/src/telemetry')
+        )
+        return promptTelemetryOptIn(context, cfnTelemetrySettings)
+    }
 
     if (response === 'Allow') {
         await cfnTelemetrySettings.update('enabled', true)
@@ -44,9 +60,6 @@ export async function promptTelemetryOptIn(
     } else if (response === 'Not Now') {
         await cfnTelemetrySettings.update('enabled', false)
         await context.globalState.update('aws.cloudformation.telemetry.lastPromptDate', now)
-        void window.showInformationMessage(
-            'You can change your telemetry preference at any time in Settings > AWS CloudFormation > Telemetry'
-        )
         return false
     }
 
