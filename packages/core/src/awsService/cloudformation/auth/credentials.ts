@@ -5,6 +5,8 @@
 
 import { Disposable } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient'
+import { StacksManager } from '../stacks/stacksManager'
+import { ResourcesManager } from '../resources/resourcesManager'
 import { CloudFormationRegionManager } from '../explorer/regionManager'
 import globals from '../../../shared/extensionGlobals'
 import * as jose from 'jose'
@@ -17,8 +19,8 @@ export class AwsCredentialsService implements Disposable {
     private client: LanguageClient | undefined
 
     constructor(
-        private stacksManager: any,
-        private resourcesManager: any,
+        private stacksManager: StacksManager,
+        private resourcesManager: ResourcesManager,
         private regionManager: CloudFormationRegionManager
     ) {
         this.authChangeListener = globals.awsContext.onDidChangeContext(() => {

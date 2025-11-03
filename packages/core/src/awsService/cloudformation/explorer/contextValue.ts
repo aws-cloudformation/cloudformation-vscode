@@ -5,5 +5,7 @@
 
 export const ResourceSectionContextValue = 'resourceSection'
 export const ResourceTypeContextValue = 'resourceType'
+export const ResourceTypeWithMoreContextValue = 'resourceTypeWithMore'
+export const LoadMoreResourcesContextValue = 'loadMoreResources'
 export const ResourceContextValue = 'resource'
 export const RegionSelectorContextValue = 'regionSelector'
