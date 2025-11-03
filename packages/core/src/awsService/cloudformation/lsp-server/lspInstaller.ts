@@ -71,11 +71,12 @@ export class CfnLspInstaller extends BaseLspInstaller {
         await this.deleteZip(assetDirectory)
 
         const resourcePaths = this.resourcePaths(assetDirectory)
-        const binPath = join(dirname(resourcePaths.lsp), 'bin', 'cfn-init')
+        const binaryName = process.platform === 'win32' ? 'cfn-init.exe' : 'cfn-init'
+        const binPath = join(dirname(resourcePaths.lsp), 'bin', binaryName)
         try {
             await fs.chmod(binPath, 0o755)
         } catch (error) {
-            this.log.error(`Failed to add permissions on cfn-init binary`, error)
+            this.log.error(`Failed to add permissions on ${binaryName} binary`, error)
         }
     }
 
