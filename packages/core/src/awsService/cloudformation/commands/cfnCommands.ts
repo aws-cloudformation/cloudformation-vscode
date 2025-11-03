@@ -82,15 +82,17 @@ export function validateDeploymentCommand(
 ) {
     return commands.registerCommand(
         commandKey('api.validateDeployment'),
-        async (templateUri?: string, stackName?: string) => {
+        async (changeSetParams?: string | StackNode | StacksNode) => {
             try {
                 const result = await changeSetSteps(
                     client,
                     documentManager,
                     environmentManager,
                     true,
-                    templateUri,
-                    stackName
+                    typeof changeSetParams === 'string' ? changeSetParams : undefined,
+                    typeof changeSetParams === 'object' && 'stack' in changeSetParams
+                        ? changeSetParams?.stack.StackName
+                        : undefined
                 )
                 if (!result) {
                     return
@@ -122,24 +124,6 @@ export function validateDeploymentCommand(
 export function deployTemplateFromStacksMenuCommand() {
     return commands.registerCommand(commandKey('api.deployTemplateFromStacksMenu'), async () => {
         return commands.executeCommand(commandKey('api.deployTemplate'))
-    })
-}
-
-export function validateDeploymentFromStacksMenuCommand() {
-    return commands.registerCommand(commandKey('api.validateDeploymentFromStacksMenu'), async () => {
-        return commands.executeCommand(commandKey('api.validateDeployment'))
-    })
-}
-
-export function validateDeploymentFromStackCommand() {
-    return commands.registerCommand(commandKey('api.validateDeploymentFromStack'), async (stackNode?: StackNode) => {
-        return commands.executeCommand(commandKey('api.validateDeployment'), undefined, stackNode?.stack.StackName)
-    })
-}
-
-export function deployTemplateFromStackCommand() {
-    return commands.registerCommand(commandKey('api.deployTemplateFromStack'), async (stackNode?: StackNode) => {
-        return commands.executeCommand(commandKey('api.deployTemplate'), undefined, stackNode?.stack.StackName)
     })
 }
 
@@ -216,43 +200,40 @@ export function deployTemplateCommand(
     documentManager: DocumentManager,
     environmentManager: EnvironmentManager
 ) {
-    return commands.registerCommand(
-        commandKey('api.deployTemplate'),
-        async (templateUri?: string, stackName?: string) => {
-            try {
-                const result = await changeSetSteps(
-                    client,
-                    documentManager,
-                    environmentManager,
-                    false,
-                    templateUri,
-                    stackName
-                )
-                if (!result) {
-                    return
-                }
-
-                const validation = new Validation(
-                    result.templateUri,
-                    result.stackName,
-                    client,
-                    diffProvider,
-                    result.parameters,
-                    result.capabilities,
-                    result.resourcesToImport,
-                    true, // Confirm deployment following successful validation
-                    result.optionalFlags,
-                    result.s3Url
-                )
-
-                setLastValidation(validation)
-
-                await validation.validate()
-            } catch (error) {
-                showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
+    return commands.registerCommand(commandKey('api.deployTemplate'), async (changeSetParams?: string | StackNode) => {
+        try {
+            const result = await changeSetSteps(
+                client,
+                documentManager,
+                environmentManager,
+                false,
+                typeof changeSetParams === 'string' ? changeSetParams : undefined,
+                typeof changeSetParams === 'object' ? changeSetParams?.stack.StackName : undefined
+            )
+            if (!result) {
+                return
             }
+
+            const validation = new Validation(
+                result.templateUri,
+                result.stackName,
+                client,
+                diffProvider,
+                result.parameters,
+                result.capabilities,
+                result.resourcesToImport,
+                true, // Confirm deployment following successful validation
+                result.optionalFlags,
+                result.s3Url
+            )
+
+            setLastValidation(validation)
+
+            await validation.validate()
+        } catch (error) {
+            showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
         }
-    )
+    })
 }
 
 async function promptForResourceImport(client: LanguageClient, templateUri: string) {

@@ -42,10 +42,7 @@ import {
     showStackEventsCommand,
     showStackOutputsCommand,
     viewChangeSetCommand,
-    validateDeploymentFromStackCommand,
-    deployTemplateFromStackCommand,
     deployTemplateFromStacksMenuCommand,
-    validateDeploymentFromStacksMenuCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -288,10 +285,7 @@ export async function activate(context: ExtensionContext) {
                 restartCommand(client),
                 validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),
                 deployTemplateCommand(client, diffProvider, documentManager, environmentManager),
-                validateDeploymentFromStackCommand(),
-                deployTemplateFromStackCommand(),
                 deployTemplateFromStacksMenuCommand(),
-                validateDeploymentFromStacksMenuCommand(),
                 executeChangeSetCommand(client),
                 deleteChangeSetCommand(client),
                 viewChangeSetCommand(client, diffProvider),
