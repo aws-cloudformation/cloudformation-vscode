@@ -1490,6 +1490,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "aws.cloudformation.api.validateDeploymentFromStacksMenu",
+                    "when": "false"
+                },
+                {
                     "command": "aws.cloudformation.api.deployTemplateFromStack",
                     "when": "false"
                 }
@@ -2647,10 +2651,20 @@
                 {
                     "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
                     "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
-                    "group": "inline@2"
+                    "group": "inline@3"
                 },
                 {
                     "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
+                    "group": "1@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.validateDeploymentFromStacksMenu",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.validateDeploymentFromStacksMenu",
                     "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
                     "group": "1@1"
                 },
@@ -4931,9 +4945,15 @@
             },
             {
                 "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
-                "title": "Deploy New Stack from Template",
+                "title": "Deploy Stack from Template",
                 "category": "AWS CloudFormation",
                 "icon": "$(plus)"
+            },
+            {
+                "command": "aws.cloudformation.api.validateDeploymentFromStacksMenu",
+                "title": "Validate Deployment",
+                "category": "AWS CloudFormation",
+                "icon": "$(go-to-file)"
             },
             {
                 "command": "aws.cloudformation.api.validateDeploymentFromStack",

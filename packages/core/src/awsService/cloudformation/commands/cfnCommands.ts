@@ -118,6 +118,12 @@ export function deployTemplateFromStacksMenuCommand() {
     })
 }
 
+export function validateDeploymentFromStacksMenuCommand() {
+    return commands.registerCommand(commandKey('api.validateDeploymentFromStacksMenu'), async () => {
+        return commands.executeCommand(commandKey('api.validateDeployment'))
+    })
+}
+
 export function validateDeploymentFromStackCommand() {
     return commands.registerCommand(commandKey('api.validateDeploymentFromStack'), async (stackNode?: StackNode) => {
         return commands.executeCommand(commandKey('api.validateDeployment'), undefined, stackNode?.stack.StackName)
