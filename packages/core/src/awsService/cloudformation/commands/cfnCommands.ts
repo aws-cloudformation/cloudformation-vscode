@@ -525,29 +525,25 @@ export function addResourceTypesCommand(resourcesManager: ResourcesManager) {
 }
 
 export function importResourceStateCommand(resourcesManager: ResourcesManager) {
-    const handler = async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
-        const nodes = selectedNodes ?? (node ? [node] : [])
-        const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
-        await resourcesManager.importResourceStates(resourceNodes)
-    }
-
-    return [
-        commands.registerCommand(commandKey('api.importResourceState'), handler),
-        commands.registerCommand(commandKey('api.importResourceState.palette'), () => handler()),
-    ]
+    return commands.registerCommand(
+        commandKey('api.importResourceState'),
+        async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
+            const nodes = selectedNodes ?? (node ? [node] : [])
+            const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
+            await resourcesManager.importResourceStates(resourceNodes)
+        }
+    )
 }
 
 export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
-    const handler = async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
-        const nodes = selectedNodes ?? (node ? [node] : [])
-        const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
-        await resourcesManager.cloneResourceStates(resourceNodes)
-    }
-
-    return [
-        commands.registerCommand(commandKey('api.cloneResourceState'), handler),
-        commands.registerCommand(commandKey('api.cloneResourceState.palette'), () => handler()),
-    ]
+    return commands.registerCommand(
+        commandKey('api.cloneResourceState'),
+        async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
+            const nodes = selectedNodes ?? (node ? [node] : [])
+            const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
+            await resourcesManager.cloneResourceStates(resourceNodes)
+        }
+    )
 }
 
 export const RefreshResourceListCommand: Command = {
@@ -631,12 +627,6 @@ export function extractToParameterPositionCursorCommand() {
             }
         }
     )
-}
-
-export function getStackManagementInfoCommandPalette(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(commandKey('api.getStackManagementInfo.palette'), async () => {
-        await resourcesManager.getStackManagementInfo()
-    })
 }
 
 export function loadMoreResourcesCommand(explorer: CloudFormationExplorer) {
