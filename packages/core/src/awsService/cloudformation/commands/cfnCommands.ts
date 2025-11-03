@@ -84,7 +84,14 @@ export function validateDeploymentCommand(
         commandKey('api.validateDeployment'),
         async (templateUri?: string, stackName?: string) => {
             try {
-                const result = await changeSetSteps(client, documentManager, environmentManager, true, templateUri, stackName)
+                const result = await changeSetSteps(
+                    client,
+                    documentManager,
+                    environmentManager,
+                    true,
+                    templateUri,
+                    stackName
+                )
                 if (!result) {
                     return
                 }
@@ -213,7 +220,14 @@ export function deployTemplateCommand(
         commandKey('api.deployTemplate'),
         async (templateUri?: string, stackName?: string) => {
             try {
-                const result = await changeSetSteps(client, documentManager, environmentManager, false, templateUri, stackName)
+                const result = await changeSetSteps(
+                    client,
+                    documentManager,
+                    environmentManager,
+                    false,
+                    templateUri,
+                    stackName
+                )
                 if (!result) {
                     return
                 }
