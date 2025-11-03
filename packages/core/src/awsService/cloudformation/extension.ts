@@ -77,6 +77,7 @@ import { EnvironmentSelector } from './ui/environmentSelector'
 import { selectEnvironmentCommand } from './commands/environmentCommands'
 import { CfnInitUiInterface } from './cfn-init/cfnInitUiInterface'
 import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
+import { EnvironmentFileSelector } from './ui/environmentFileSelector'
 
 let client: LanguageClient
 
@@ -185,7 +186,8 @@ export async function activate(context: ExtensionContext) {
             )
             const changeSetManager = new ChangeSetsManager(client)
             const environmentSelector = new EnvironmentSelector()
-            const environmentManager = new EnvironmentManager(environmentSelector)
+            const environmentFileSelector = new EnvironmentFileSelector()
+            const environmentManager = new EnvironmentManager(client, environmentSelector, environmentFileSelector)
 
             const cfnInitCliCaller = new CfnInitCliCaller(serverRootDir)
             const cfnInitUiInterface = new CfnInitUiInterface(cfnInitCliCaller)
@@ -282,8 +284,8 @@ export async function activate(context: ExtensionContext) {
                 viewStackDetailCommand(resourcesProvider),
                 focusDiffCommand(),
                 restartCommand(client),
-                validateDeploymentCommand(client, diffProvider, documentManager),
-                deployTemplateCommand(client, diffProvider, documentManager),
+                validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),
+                deployTemplateCommand(client, diffProvider, documentManager, environmentManager),
                 executeChangeSetCommand(client),
                 deleteChangeSetCommand(client),
                 viewChangeSetCommand(client, diffProvider),

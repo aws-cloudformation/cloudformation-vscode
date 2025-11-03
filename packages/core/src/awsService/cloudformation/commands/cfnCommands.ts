@@ -8,6 +8,7 @@ import { commandKey, extractErrorMessage, findParameterDescriptionPosition } fro
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
 import { RequestType } from 'vscode-languageclient'
+import * as yaml from 'js-yaml'
 
 const UploadFileRequest = new RequestType<{ localFilePath: string; s3Url: string }, void, void>('aws/s3/file/upload')
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
@@ -29,6 +30,8 @@ import {
     shouldUploadToS3,
     getS3Bucket,
     getS3Key,
+    shouldSaveFlagsToFile,
+    getFilePath,
 } from '../ui/inputBox'
 import { setContext } from '../../../shared/vscode/setContext'
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
@@ -53,6 +56,7 @@ import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
 import { RelatedResourcesManager } from '../relatedResources/relatedResourcesManager'
 import { DocumentManager } from '../documents/documentManager'
+import { EnvironmentManager } from '../cfn-init/environmentManager'
 
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
@@ -66,15 +70,18 @@ import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
 import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
 import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
+import { fs } from '../../../shared/fs/fs'
+import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
 
 export function validateDeploymentCommand(
     client: LanguageClient,
     diffProvider: DiffWebviewProvider,
-    documentManager: DocumentManager
+    documentManager: DocumentManager,
+    environmentManager: EnvironmentManager
 ) {
     return commands.registerCommand(commandKey('api.validateDeployment'), async (templateUri?: string) => {
         try {
-            const result = await changeSetSteps(client, documentManager, true, templateUri)
+            const result = await changeSetSteps(client, documentManager, environmentManager, true, templateUri)
             if (!result) {
                 return
             }
@@ -171,11 +178,12 @@ async function promptForChangeSetReference(): Promise<ChangeSetReference | undef
 export function deployTemplateCommand(
     client: LanguageClient,
     diffProvider: DiffWebviewProvider,
-    documentManager: DocumentManager
+    documentManager: DocumentManager,
+    environmentManager: EnvironmentManager
 ) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
         try {
-            const result = await changeSetSteps(client, documentManager, false, templateUri)
+            const result = await changeSetSteps(client, documentManager, environmentManager, false, templateUri)
             if (!result) {
                 return
             }
@@ -220,28 +228,119 @@ async function promptForResourceImport(client: LanguageClient, templateUri: stri
     return resourcesToImport
 }
 
-async function promptForOptionalFlags(): Promise<ChangeSetOptionalFlags | undefined> {
+type OptionalFlagSelection = ChangeSetOptionalFlags & {
+    shouldSaveOptions?: boolean
+}
+
+export async function promptForOptionalFlags(
+    fileFlags?: ChangeSetOptionalFlags
+): Promise<OptionalFlagSelection | undefined> {
+    if (fileFlags && Object.values(fileFlags).every((v) => v !== undefined)) {
+        return {
+            ...fileFlags,
+            shouldSaveOptions: false,
+        }
+    }
+
+    let optionalFlags: OptionalFlagSelection | undefined
+
     const optionSelection = await chooseOptionalFlagMode()
 
     switch (optionSelection) {
         case OptionalFlagMode.Skip:
-            return undefined
-        case OptionalFlagMode.Input:
-            return {
-                onStackFailure: await getOnStackFailure(),
-                includeNestedStacks: await getIncludeNestedStacks(),
-                tags: await getTags(),
-                importExistingResources: await getImportExistingResources(),
+            optionalFlags = {
+                onStackFailure: fileFlags?.onStackFailure,
+                includeNestedStacks: fileFlags?.includeNestedStacks,
+                tags: fileFlags?.tags,
+                importExistingResources: fileFlags?.importExistingResources,
+                shouldSaveOptions: false,
             }
+
+            break
+        case OptionalFlagMode.Input:
+            optionalFlags = {
+                onStackFailure: fileFlags?.onStackFailure ?? (await getOnStackFailure()),
+                includeNestedStacks: fileFlags?.includeNestedStacks ?? (await getIncludeNestedStacks()),
+                tags: fileFlags?.tags ?? (await getTags()),
+                importExistingResources: fileFlags?.importExistingResources ?? (await getImportExistingResources()),
+            }
+
+            if (!fileFlags && Object.values(optionalFlags).some((val) => val !== undefined)) {
+                optionalFlags.shouldSaveOptions = true
+            }
+
+            break
         case OptionalFlagMode.DevFriendly:
-            return {
+            optionalFlags = {
                 onStackFailure: OnStackFailure.DO_NOTHING,
                 includeNestedStacks: true,
-                tags: await getTags(),
+                tags: fileFlags?.tags ?? (await getTags()),
                 importExistingResources: true,
             }
+
+            if (!fileFlags && optionalFlags.tags) {
+                optionalFlags.shouldSaveOptions = true
+            }
+
+            break
         default:
-            return undefined
+            optionalFlags = undefined
+    }
+
+    return optionalFlags
+}
+
+export async function promptToSaveToFile(
+    environmentDir: string,
+    optionalFlags?: ChangeSetOptionalFlags,
+    parameters?: Parameter[]
+): Promise<void> {
+    const shouldSave = await shouldSaveFlagsToFile()
+
+    if (!shouldSave) {
+        return
+    }
+
+    const filePath = await getFilePath(environmentDir)
+
+    if (!filePath) {
+        return
+    }
+
+    const data = {
+        parameters: parameters ? convertParametersToRecord(parameters) : undefined,
+        tags: optionalFlags?.tags ? convertTagsToRecord(optionalFlags?.tags) : undefined,
+        'on-stack-failure': optionalFlags?.onStackFailure,
+        'include-nested-stacks': optionalFlags?.includeNestedStacks,
+        'import-existing-resources': optionalFlags?.importExistingResources,
+    }
+
+    // Determine file type and format accordingly
+    const isJsonFile = filePath.endsWith('.json')
+    const config = workspace.getConfiguration('editor')
+    const tabSize = config.get<number>('tabSize', 2)
+    const insertSpaces = config.get<boolean>('insertSpaces', true)
+    let content: string
+
+    try {
+        if (isJsonFile) {
+            // JSON allows both tabs and spaces - respect user preference
+            const indent = insertSpaces ? tabSize : '\t'
+            content = JSON.stringify(data, undefined, indent)
+        } else {
+            // YAML spec requires spaces for indentation - always use spaces
+            content = yaml.dump(data, { indent: tabSize, noRefs: true, sortKeys: true })
+        }
+    } catch (error) {
+        showErrorMessage(`Failed to format deployment options: ${extractErrorMessage(error)}`)
+        return
+    }
+
+    try {
+        await fs.writeFile(filePath, content)
+        void window.showInformationMessage(`options saved to: ${filePath}`)
+    } catch (error) {
+        showErrorMessage(`Failed to save deployment options file: ${extractErrorMessage(error)}`)
     }
 }
 
@@ -258,6 +357,7 @@ type UserInputtedTemplateParameters = {
 async function changeSetSteps(
     client: LanguageClient,
     documentManager: DocumentManager,
+    environmentManager: EnvironmentManager,
     isValidation: boolean,
     templateUri: string | undefined
 ): Promise<UserInputtedTemplateParameters | undefined> {
@@ -317,18 +417,43 @@ async function changeSetSteps(
 
     const paramDefinition = await getTemplateParameters(client, templateUri)
     let parameters: Parameter[] | undefined
+
+    const environmentFile = await environmentManager.selectEnvironmentFile(templateUri, paramDefinition)
+
     if (paramDefinition.length > 0) {
-        if (isValidation) {
-            parameters = await getParameterValues(paramDefinition, getLastValidation()?.parameters)
-        } else {
-            parameters = await getParameterValues(paramDefinition)
+        parameters = environmentFile?.compatibleParameters
+
+        // Prompt for any remaining parameters not provided by file
+        const providedParamNames = parameters?.map((p) => p.ParameterKey) ?? []
+        const remainingParams = paramDefinition.filter((p) => !providedParamNames.includes(p.name))
+
+        if (remainingParams.length > 0) {
+            const additionalParams = isValidation
+                ? await getParameterValues(remainingParams, getLastValidation()?.parameters)
+                : await getParameterValues(remainingParams)
+
+            if (!additionalParams) {
+                return
+            }
+
+            parameters = [...(parameters ?? []), ...additionalParams]
         }
     }
     if (paramDefinition.length > 0 && !parameters) {
         return
     }
 
-    const optionalFlags = await promptForOptionalFlags()
+    const optionalFlags = await promptForOptionalFlags(environmentFile?.optionalFlags)
+    const shouldSaveParameters = parameters && parameters.length > 0 && !environmentFile
+    const selectedEnvironment = environmentManager.getSelectedEnvironmentName()
+
+    if (selectedEnvironment && (shouldSaveParameters || optionalFlags?.shouldSaveOptions)) {
+        await promptToSaveToFile(
+            await environmentManager.getEnvironmentDir(selectedEnvironment),
+            optionalFlags,
+            parameters
+        )
+    }
 
     const capabilitiesResult = await getCapabilities(client, templateUri)
     const capabilities = await confirmCapabilities(capabilitiesResult.capabilities)

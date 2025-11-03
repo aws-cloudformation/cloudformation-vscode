@@ -156,7 +156,7 @@ export async function chooseOptionalFlagSuggestion(): Promise<string | undefined
     return choice
 }
 
-export async function getTags(): Promise<Tag[]> {
+export async function getTags(): Promise<Tag[] | undefined> {
     const input = await window.showInputBox({
         prompt: 'Enter CloudFormation tags (key=value pairs, comma-separated). Enter empty for no tags',
         placeHolder: 'key1=value1,key2=value2,key3=value3',
@@ -171,7 +171,7 @@ export async function getTags(): Promise<Tag[]> {
     })
 
     if (!input) {
-        return []
+        return undefined
     }
 
     return input.split(',').map((pair) => {
@@ -371,6 +371,92 @@ export async function getEnvironmentName() {
             return undefined
         },
     })
+}
+
+export async function shouldSaveFlagsToFile(): Promise<boolean | undefined> {
+    const config = workspace.getConfiguration('aws.cloudformation')
+    const currentSetting = config.get<string>('environment.saveOptions', 'alwaysAsk')
+
+    if (currentSetting === 'alwaysSave') {
+        return true
+    }
+    if (currentSetting === 'neverSave') {
+        return false
+    }
+
+    const choice = await window.showQuickPick(
+        [
+            {
+                label: 'Save Options to file',
+                description: 'Save the deployment options to a file in your environment',
+                value: 'save',
+            },
+            {
+                label: 'Do not save options to file',
+                description: 'Do not save options to environment file',
+                value: 'skip',
+            },
+            {
+                label: 'Configure in Settings',
+                description:
+                    'Open CloudFormation Environment settings (settings will not affect this current deployment)',
+                value: 'configure',
+            },
+        ],
+        {
+            placeHolder: 'Choose deployment options configuration for CloudFormation template',
+            ignoreFocusOut: true,
+        }
+    )
+
+    if (!choice) {
+        return false
+    }
+
+    if (choice.value === 'configure') {
+        await commands.executeCommand('workbench.action.openSettings', 'aws.cloudformation.environment.saveOptions')
+        return undefined // Exit command, let user configure first
+    }
+
+    return choice.value === 'save'
+}
+
+export async function getFilePath(environmentDir: string) {
+    while (true) {
+        const input = await window.showInputBox({
+            prompt: 'Enter File Name to save options to (must be .json, .yaml, or .yml)',
+            ignoreFocusOut: true,
+            validateInput: (v) => {
+                if (!v.trim()) {
+                    return 'Required'
+                }
+                if (!/^[a-zA-Z0-9_-]{1,32}\.(json|yaml|yml)$/.test(v.trim())) {
+                    return 'Must be 1-32 characters (alphanumeric with hyphens and underscores) and end with .json, .yaml, or .yml'
+                }
+                return undefined
+            },
+        })
+
+        if (input === undefined) {
+            return undefined
+        } // User cancelled
+
+        // Validate after input
+        try {
+            const resolvedPath = path.resolve(path.join(environmentDir, input.trim()))
+
+            const parentPathExists = await fs.existsFile(resolvedPath)
+            if (parentPathExists) {
+                void window.showErrorMessage('File already exists. Please try again.')
+                continue // Ask again
+            }
+
+            return resolvedPath
+        } catch (error) {
+            void window.showErrorMessage('Environment directory was not found')
+            return
+        }
+    }
 }
 
 export async function shouldUploadToS3(): Promise<boolean | undefined> {
