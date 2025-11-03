@@ -9,6 +9,8 @@ import { CloseAction, ErrorAction } from 'vscode-languageclient'
 import { formatMessage, toString } from './utils'
 import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
+import { getServiceEnvVarConfig } from '../../shared/vscode/env'
+import { DevSettings } from '../../shared/settings'
 import {
     deployTemplateCommand,
     validateDeploymentCommand,
@@ -79,9 +81,14 @@ import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
 let client: LanguageClient
 
 export async function activate(context: ExtensionContext) {
+    const cfnLspConfig = {
+        ...DevSettings.instance.getServiceConfig('cloudformationLsp', {}),
+        ...getServiceEnvVarConfig('cloudformationLsp', ['path', 'cloudformationEndpoint']),
+    }
+
     const serverProvider = new LspServerProvider([
         new DevLspServerProvider(context),
-        new SettingsLspServerProvider(),
+        new SettingsLspServerProvider(cfnLspConfig),
         new RemoteLspServerProvider(),
     ])
     const serverFile = await serverProvider.serverExecutable()
@@ -134,6 +141,11 @@ export async function activate(context: ExtensionContext) {
                     clientId: getClientId(globals.globalState, globals.telemetry.telemetryEnabled),
                 },
                 telemetryEnabled: globals.telemetry.telemetryEnabled,
+                ...(cfnLspConfig.cloudformationEndpoint && {
+                    cloudformation: {
+                        endpoint: cfnLspConfig.cloudformationEndpoint,
+                    },
+                }),
             },
             encryption: {
                 key: encryptionKey.toString('base64'),
