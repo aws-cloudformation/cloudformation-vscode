@@ -31,13 +31,13 @@ export async function promptTelemetryOptIn(
     const message =
         'Help improve the AWS CloudFormation Language Server by sharing anonymous usage data with AWS. You can change this preference at any time in Settings.'
 
-    const response = await window.showInformationMessage(message, 'Allow', 'Deny', 'Not Now')
+    const response = await window.showInformationMessage(message, 'Allow', 'Not Now', 'Never')
 
     if (response === 'Allow') {
         await cfnTelemetrySettings.update('enabled', true)
         await context.globalState.update('aws.cloudformation.telemetry.hasResponded', true)
         return true
-    } else if (response === 'Deny') {
+    } else if (response === 'Never') {
         await cfnTelemetrySettings.update('enabled', false)
         await context.globalState.update('aws.cloudformation.telemetry.hasResponded', true)
         return false
