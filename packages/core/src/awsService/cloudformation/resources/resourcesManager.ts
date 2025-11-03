@@ -62,6 +62,10 @@ export class ResourcesManager {
         await globals.globalState.update(ResourcesManager.resourceTypesKey, types)
     }
 
+    getSelectedResourceTypes(): string[] {
+        return this.selectedResourceTypes
+    }
+
     get(): ResourceList[] {
         return Array.from(this.resources.values())
     }
@@ -91,6 +95,21 @@ export class ResourcesManager {
             this.resources.clear()
         } finally {
             this.notifyAllListeners()
+        }
+    }
+
+    async loadResourceType(resourceType: string): Promise<void> {
+        try {
+            const response = await this.client.sendRequest(ListResourcesRequest, {
+                resources: [{ resourceType }],
+            })
+
+            if (response.resources.length > 0) {
+                this.resources.set(resourceType, response.resources[0])
+                this.notifyAllListeners()
+            }
+        } catch (error) {
+            getLogger().error(`Failed to load resource type ${resourceType}: ${error}`)
         }
     }
 
@@ -196,7 +215,16 @@ export class ResourcesManager {
         const selectedTypes = await this.resourceSelector.selectResourceTypes(this.selectedResourceTypes)
         if (selectedTypes !== undefined) {
             await this.setSelectedResourceTypes(selectedTypes)
-            await this.loadResources()
+
+            // Remove resources that are no longer selected
+            const selectedSet = new Set(selectedTypes)
+            for (const typeName of this.resources.keys()) {
+                if (!selectedSet.has(typeName)) {
+                    this.resources.delete(typeName)
+                }
+            }
+
+            this.notifyAllListeners()
         }
     }
 
@@ -399,7 +427,8 @@ export class ResourcesManager {
     }
 
     reload() {
-        void this.refreshAllResources()
+        this.resources.clear()
+        this.notifyAllListeners()
     }
 
     async getStackManagementInfo(resourceNode?: ResourceNode): Promise<void> {

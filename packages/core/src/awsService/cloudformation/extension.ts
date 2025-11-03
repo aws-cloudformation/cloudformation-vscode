@@ -9,6 +9,8 @@ import { CloseAction, ErrorAction } from 'vscode-languageclient'
 import { formatMessage, toString } from './utils'
 import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
+import { getServiceEnvVarConfig } from '../../shared/vscode/env'
+import { DevSettings } from '../../shared/settings'
 import {
     deployTemplateCommand,
     validateDeploymentCommand,
@@ -75,13 +77,19 @@ import { EnvironmentSelector } from './ui/environmentSelector'
 import { selectEnvironmentCommand } from './commands/environmentCommands'
 import { CfnInitUiInterface } from './cfn-init/cfnInitUiInterface'
 import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
+import { EnvironmentFileSelector } from './ui/environmentFileSelector'
 
 let client: LanguageClient
 
 export async function activate(context: ExtensionContext) {
+    const cfnLspConfig = {
+        ...DevSettings.instance.getServiceConfig('cloudformationLsp', {}),
+        ...getServiceEnvVarConfig('cloudformationLsp', ['path', 'cloudformationEndpoint']),
+    }
+
     const serverProvider = new LspServerProvider([
         new DevLspServerProvider(context),
-        new SettingsLspServerProvider(),
+        new SettingsLspServerProvider(cfnLspConfig),
         new RemoteLspServerProvider(),
     ])
     const serverFile = await serverProvider.serverExecutable()
@@ -134,6 +142,11 @@ export async function activate(context: ExtensionContext) {
                     clientId: getClientId(globals.globalState, globals.telemetry.telemetryEnabled),
                 },
                 telemetryEnabled: globals.telemetry.telemetryEnabled,
+                ...(cfnLspConfig.cloudformationEndpoint && {
+                    cloudformation: {
+                        endpoint: cfnLspConfig.cloudformationEndpoint,
+                    },
+                }),
             },
             encryption: {
                 key: encryptionKey.toString('base64'),
@@ -173,7 +186,8 @@ export async function activate(context: ExtensionContext) {
             )
             const changeSetManager = new ChangeSetsManager(client)
             const environmentSelector = new EnvironmentSelector()
-            const environmentManager = new EnvironmentManager(environmentSelector)
+            const environmentFileSelector = new EnvironmentFileSelector()
+            const environmentManager = new EnvironmentManager(client, environmentSelector, environmentFileSelector)
 
             const cfnInitCliCaller = new CfnInitCliCaller(serverRootDir)
             const cfnInitUiInterface = new CfnInitUiInterface(cfnInitCliCaller)
@@ -270,8 +284,8 @@ export async function activate(context: ExtensionContext) {
                 viewStackDetailCommand(resourcesProvider),
                 focusDiffCommand(),
                 restartCommand(client),
-                validateDeploymentCommand(client, diffProvider, documentManager),
-                deployTemplateCommand(client, diffProvider, documentManager),
+                validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),
+                deployTemplateCommand(client, diffProvider, documentManager, environmentManager),
                 executeChangeSetCommand(client),
                 deleteChangeSetCommand(client),
                 viewChangeSetCommand(client, diffProvider),

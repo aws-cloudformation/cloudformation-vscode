@@ -5,25 +5,14 @@
 
 import { dirname, join } from 'path'
 import { LspServerProviderI } from './lspServerProvider'
-import { DevSettings } from '../../../shared/settings'
-import { getServiceEnvVarConfig, isDebugInstance } from '../../../shared/vscode/env'
+import { isDebugInstance } from '../../../shared/vscode/env'
 import { CfnLspServerFile } from './lspServerConfig'
 
 export class SettingsLspServerProvider implements LspServerProviderI {
     private readonly path?: string
 
-    constructor() {
-        const config = {
-            ...DevSettings.instance.getServiceConfig('cloudformationLsp', {}),
-            ...getServiceEnvVarConfig(
-                'cloudformationLsp',
-                Object.keys({
-                    path: undefined,
-                })
-            ),
-        }
-
-        this.path = config.path
+    constructor(config?: { path?: string }) {
+        this.path = config?.path
     }
 
     canProvide(): boolean {
