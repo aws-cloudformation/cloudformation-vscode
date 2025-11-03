@@ -459,6 +459,21 @@
                     ],
                     "default": "alwaysAsk",
                     "description": "Configure S3 upload behavior for CloudFormation templates"
+                },
+                "aws.cloudformation.environment.saveOptions": {
+                    "type": "string",
+                    "enum": [
+                        "alwaysAsk",
+                        "alwaysSave",
+                        "neverSave"
+                    ],
+                    "enumDescriptions": [
+                        "Always ask during validation and deploy workflow",
+                        "Always save to file for both validation and deployment",
+                        "Never save to file"
+                    ],
+                    "default": "alwaysAsk",
+                    "description": "Configure optional changeset flags for CloudFormation templates"
                 }
             }
         },
