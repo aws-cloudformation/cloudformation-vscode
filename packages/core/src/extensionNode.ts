@@ -154,13 +154,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
         await activateCloudFormationTemplateRegistry(context)
 
-        // Feature flag for CloudFormation service activation
-        const enableCloudFormationService = experiments.get('cloudFormationService', false)
-        await setContext('aws.cloudFormation.serviceEnabled', enableCloudFormationService)
-
-        if (enableCloudFormationService) {
-            await activateCloudFormation(context)
-        }
+        await activateCloudFormation(context)
 
         await activateAwsExplorer({
             context: extContext,
