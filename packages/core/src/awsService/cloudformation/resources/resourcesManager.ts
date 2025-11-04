@@ -219,7 +219,8 @@ export class ResourcesManager {
 
     private async executeResourceStateOperation(
         resourceNodes: ResourceNode[] | undefined,
-        purpose: ResourceStatePurpose
+        purpose: ResourceStatePurpose,
+        parentResourceType?: string
     ): Promise<void> {
         const editor = window.activeTextEditor
         if (!editor) {
@@ -243,6 +244,7 @@ export class ResourcesManager {
                 textDocument: { uri: editor.document.uri.toString() },
                 resourceSelections: resourceSelectionsArray,
                 purpose,
+                parentResourceType,
             }
 
             const title =
@@ -276,8 +278,8 @@ export class ResourcesManager {
         }
     }
 
-    async importResourceStates(resourceNodes?: ResourceNode[]): Promise<void> {
-        await this.executeResourceStateOperation(resourceNodes, ResourceStatePurpose.Import)
+    async importResourceStates(resourceNodes?: ResourceNode[], parentResourceType?: string): Promise<void> {
+        await this.executeResourceStateOperation(resourceNodes, ResourceStatePurpose.Import, parentResourceType)
     }
 
     private getResourcesToImportInput(selections: ResourceSelectionResult[]): ResourceSelection[] {
