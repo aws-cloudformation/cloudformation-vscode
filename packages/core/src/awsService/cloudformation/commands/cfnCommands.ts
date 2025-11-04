@@ -12,7 +12,7 @@ import * as yaml from 'js-yaml'
 
 const UploadFileRequest = new RequestType<{ localFilePath: string; s3Url: string }, void, void>('aws/s3/file/upload')
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
-import { Parameter, Capability, OnStackFailure } from '@aws-sdk/client-cloudformation'
+import { Parameter, Capability, OnStackFailure, Stack } from '@aws-sdk/client-cloudformation'
 import {
     getParameterValues,
     getStackName,
@@ -73,6 +73,7 @@ import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 import { fs } from '../../../shared/fs/fs'
 import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
 import { StackNode } from '../explorer/nodes/stackNode'
+import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
 
 export function validateDeploymentCommand(
     client: LanguageClient,
@@ -259,7 +260,8 @@ type OptionalFlagSelection = ChangeSetOptionalFlags & {
 }
 
 export async function promptForOptionalFlags(
-    fileFlags?: ChangeSetOptionalFlags
+    fileFlags?: ChangeSetOptionalFlags,
+    stackDetails?: Stack
 ): Promise<OptionalFlagSelection | undefined> {
     if (fileFlags && Object.values(fileFlags).every((v) => v !== undefined)) {
         return {
@@ -287,7 +289,7 @@ export async function promptForOptionalFlags(
             optionalFlags = {
                 onStackFailure: fileFlags?.onStackFailure ?? (await getOnStackFailure()),
                 includeNestedStacks: fileFlags?.includeNestedStacks ?? (await getIncludeNestedStacks()),
-                tags: fileFlags?.tags ?? (await getTags()),
+                tags: fileFlags?.tags ?? (await getTags(stackDetails?.Tags)),
                 importExistingResources: fileFlags?.importExistingResources ?? (await getImportExistingResources()),
             }
 
@@ -300,7 +302,7 @@ export async function promptForOptionalFlags(
             optionalFlags = {
                 onStackFailure: OnStackFailure.DO_NOTHING,
                 includeNestedStacks: true,
-                tags: fileFlags?.tags ?? (await getTags()),
+                tags: fileFlags?.tags ?? (await getTags(stackDetails?.Tags)),
                 importExistingResources: true,
             }
 
@@ -442,6 +444,8 @@ async function changeSetSteps(
         }
     }
 
+    const stackDetails = await getStackDetails(client, stackName)
+
     const resourcesToImport = await promptForResourceImport(client, templateUri)
 
     const paramDefinition = await getTemplateParameters(client, templateUri)
@@ -457,9 +461,15 @@ async function changeSetSteps(
         const remainingParams = paramDefinition.filter((p) => !providedParamNames.includes(p.name))
 
         if (remainingParams.length > 0) {
-            const additionalParams = isValidation
-                ? await getParameterValues(remainingParams, getLastValidation()?.parameters)
-                : await getParameterValues(remainingParams)
+            let prefilledParams: Parameter[] | undefined
+
+            if (stackDetails) {
+                prefilledParams = stackDetails.Parameters
+            } else if (isValidation) {
+                prefilledParams = getLastValidation()?.parameters
+            }
+
+            const additionalParams = await getParameterValues(remainingParams, prefilledParams)
 
             if (!additionalParams) {
                 return
@@ -472,7 +482,7 @@ async function changeSetSteps(
         return
     }
 
-    const optionalFlags = await promptForOptionalFlags(environmentFile?.optionalFlags)
+    const optionalFlags = await promptForOptionalFlags(environmentFile?.optionalFlags, stackDetails)
     const shouldSaveParameters = parameters && parameters.length > 0 && !environmentFile
     const selectedEnvironment = environmentManager.getSelectedEnvironmentName()
 
@@ -521,6 +531,26 @@ async function ensureFileIsOpen(templateUri: string): Promise<void> {
             throw error
         }
     }
+}
+
+async function getStackDetails(client: LanguageClient, stackName: string) {
+    let stackDetails: Stack | undefined
+
+    try {
+        stackDetails = (
+            await client.sendRequest(DescribeStackRequest, {
+                stackName: stackName,
+            })
+        ).stack
+    } catch (error) {
+        const errorMessage = extractErrorMessage(error)
+
+        if (!errorMessage.toLowerCase().includes('does not exist')) {
+            showErrorMessage(`Encountered error while extracting stack details: ${errorMessage}`)
+        }
+    }
+
+    return stackDetails
 }
 
 async function getTemplateParameters(client: LanguageClient, templateUri: string): Promise<TemplateParameter[]> {
