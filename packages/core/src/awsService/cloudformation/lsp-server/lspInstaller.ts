@@ -9,7 +9,7 @@ import { CloudFrontManifestAdapter } from './cloudFrontManifestAdapter'
 import { fs } from '../../../shared/fs/fs'
 import { CfnLspName, CfnLspServerEnvType, CfnLspServerFile } from './lspServerConfig'
 import { isAutomation, isBeta, isDebugInstance } from '../../../shared/vscode/env'
-import { join } from 'path'
+import { dirname, join } from 'path'
 import { getLogger } from '../../../shared/logger/logger'
 import { ResourcePaths } from '../../../shared/lsp/types'
 import { FileType } from 'vscode'
@@ -69,6 +69,15 @@ export class CfnLspInstaller extends BaseLspInstaller {
 
     protected async postInstall(assetDirectory: string): Promise<void> {
         await this.deleteZip(assetDirectory)
+
+        const resourcePaths = this.resourcePaths(assetDirectory)
+        const binaryName = process.platform === 'win32' ? 'cfn-init.exe' : 'cfn-init'
+        const binPath = join(dirname(resourcePaths.lsp), 'bin', binaryName)
+        try {
+            await fs.chmod(binPath, 0o755)
+        } catch (error) {
+            this.log.error(`Failed to add permissions on ${binaryName} binary`, error)
+        }
     }
 
     protected resourcePaths(assetDirectory?: string): ResourcePaths {
