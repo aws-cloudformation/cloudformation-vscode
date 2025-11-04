@@ -83,7 +83,7 @@ export function validateDeploymentCommand(
 ) {
     return commands.registerCommand(
         commandKey('api.validateDeployment'),
-        async (changeSetParams?: string | StackNode | StacksNode) => {
+        async (changeSetParams: string | StackNode | StacksNode) => {
             try {
                 const result = await changeSetSteps(
                     client,
@@ -91,9 +91,7 @@ export function validateDeploymentCommand(
                     environmentManager,
                     true,
                     typeof changeSetParams === 'string' ? changeSetParams : undefined,
-                    typeof changeSetParams === 'object' && 'stack' in changeSetParams
-                        ? changeSetParams?.stack.StackName
-                        : undefined
+                    changeSetParams instanceof StackNode ? changeSetParams?.stack.StackName : undefined
                 )
                 if (!result) {
                     return
