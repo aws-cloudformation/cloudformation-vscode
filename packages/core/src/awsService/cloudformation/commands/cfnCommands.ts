@@ -42,6 +42,7 @@ import {
     getParameters,
     getCapabilities,
     getTemplateResources,
+    getTemplateArtifacts,
     describeChangeSet,
 } from '../stacks/actions/stackActionApi'
 import {
@@ -107,7 +108,8 @@ export function validateDeploymentCommand(
                     result.resourcesToImport,
                     false,
                     result.optionalFlags,
-                    result.s3Url
+                    result.s3Bucket,
+                    result.s3Key
                 )
 
                 setLastValidation(validation)
@@ -223,7 +225,8 @@ export function deployTemplateCommand(
                 result.resourcesToImport,
                 true, // Confirm deployment following successful validation
                 result.optionalFlags,
-                result.s3Url
+                result.s3Bucket,
+                result.s3Key
             )
 
             setLastValidation(validation)
@@ -370,6 +373,31 @@ export async function promptToSaveToFile(
     }
 }
 
+async function validateArtifactPaths(client: LanguageClient, templateUri: string): Promise<boolean | undefined> {
+    try {
+        const artifactsResult = await getTemplateArtifacts(client, templateUri)
+        if (artifactsResult.artifacts.length === 0) {
+            return false
+        }
+        console.log('ARTIFACTS: ', artifactsResult.artifacts)
+
+        for (const artifact of artifactsResult.artifacts) {
+            const artifactPath = artifact.filePath.startsWith('/')
+                ? artifact.filePath
+                : Uri.joinPath(Uri.parse(templateUri), '..', artifact.filePath).fsPath
+
+            if (!(await fs.exists(artifactPath))) {
+                showErrorMessage(`Artifact path does not exist: ${artifact.filePath}`)
+                return undefined
+            }
+        }
+        return true
+    } catch (error) {
+        getLogger().warn(`Failed to check for artifacts: ${error}`)
+        return false
+    }
+}
+
 type UserInputtedTemplateParameters = {
     templateUri: string
     stackName: string
@@ -377,7 +405,8 @@ type UserInputtedTemplateParameters = {
     capabilities: Capability[]
     resourcesToImport: ResourceToImport[] | undefined
     optionalFlags: ChangeSetOptionalFlags | undefined
-    s3Url?: string
+    s3Bucket?: string
+    s3Key?: string
 }
 
 async function changeSetSteps(
@@ -395,15 +424,22 @@ async function changeSetSteps(
 
     await ensureFileIsOpen(templateUri)
 
+    // Check for artifacts first
+    const hasArtifacts = await validateArtifactPaths(client, templateUri)
+    if (hasArtifacts === undefined) {
+        return // Error occurred during validation
+    }
+
     // Ask user if they want to upload to S3
-    let s3Url: string | undefined
+    let s3Bucket: string | undefined
+    let s3Key: string | undefined
     const uploadChoice = await shouldUploadToS3()
     if (uploadChoice === undefined) {
         return // User chose to configure settings, exit command
     }
     if (uploadChoice) {
-        const bucket = await getS3Bucket()
-        if (!bucket) {
+        s3Bucket = await getS3Bucket()
+        if (!s3Bucket) {
             return
         }
 
@@ -412,12 +448,12 @@ async function changeSetSteps(
         const fileNameWithTimestamp = fileName
             ? `${fileName.split('.')[0]}-${timestamp}.${fileName.split('.').pop()}`
             : `template-${timestamp}.yaml`
-        const key = await getS3Key(fileNameWithTimestamp)
-        if (!key) {
+        s3Key = await getS3Key(fileNameWithTimestamp)
+        if (!s3Key) {
             return
         }
 
-        s3Url = `s3://${bucket}/${key}`
+        const s3Url = `s3://${s3Bucket}/${s3Key}`
 
         try {
             await client.sendRequest(UploadFileRequest, {
@@ -426,6 +462,14 @@ async function changeSetSteps(
             })
         } catch (error) {
             showErrorMessage(`Failed to upload to S3: ${extractErrorMessage(error)}`)
+            return
+        }
+    } else if (hasArtifacts) {
+        console.log('Template CONTAINS ARTIFACT')
+        s3Bucket = await getS3Bucket(
+            'S3 bucket is required because template contains artifacts that need to be uploaded to S3'
+        )
+        if (!s3Bucket) {
             return
         }
     }
@@ -497,7 +541,8 @@ async function changeSetSteps(
     if (capabilities === undefined) {
         return
     } // User cancelled
-    return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags, s3Url }
+    console.log('S3BUCKET: ', s3Bucket, 'KEY:', s3Key)
+    return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags, s3Bucket, s3Key }
 }
 
 export function rerunLastValidationCommand() {

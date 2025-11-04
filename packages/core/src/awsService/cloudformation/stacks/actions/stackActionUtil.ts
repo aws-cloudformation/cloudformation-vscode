@@ -21,9 +21,24 @@ export function createValidationParams(
     resourcesToImport?: ResourceToImport[],
     keepChangeSet?: boolean,
     optionalFlags?: ChangeSetOptionalFlags,
-    s3Url?: string
+    s3Bucket?: string,
+    s3Key?: string
 ): CreateValidationParams {
-    return { id, uri, stackName, parameters, capabilities, resourcesToImport, keepChangeSet, s3Url, ...optionalFlags }
+    return {
+        id,
+        uri,
+        stackName,
+        parameters,
+        capabilities,
+        resourcesToImport,
+        keepChangeSet,
+        onStackFailure: optionalFlags?.onStackFailure,
+        includeNestedStacks: optionalFlags?.includeNestedStacks,
+        tags: optionalFlags?.tags,
+        importExistingResources: optionalFlags?.importExistingResources,
+        s3Bucket,
+        s3Key,
+    }
 }
 
 export function createDeploymentParams(id: string, stackName: string, changeSetName: string): CreateDeploymentParams {
