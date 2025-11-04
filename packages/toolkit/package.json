@@ -325,7 +325,7 @@
                 "aws.cloudformation.telemetry.enabled": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Configure anonymous telemetry collection (cannot disable unless it is a production release)"
+                    "description": "Configure anonymous telemetry collection for AWS CloudFormation Language Server"
                 },
                 "aws.cloudformation.telemetry.logLevel": {
                     "type": "string",
@@ -336,7 +336,7 @@
                         "error"
                     ],
                     "default": "info",
-                    "description": "Configure the client messaging level"
+                    "description": "Configure the AWS CloudFormation Language Server log level"
                 },
                 "aws.cloudformation.hover.enabled": {
                     "type": "boolean",
