@@ -2767,11 +2767,6 @@
                     "group": "1@1"
                 },
                 {
-                    "command": "aws.cloudformation.api.addRelatedResources",
-                    "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore)",
-                    "group": "1@3"
-                },
-                {
                     "command": "aws.cloudformation.api.addResourceTypes",
                     "when": "view == aws.cloudformation && viewItem == resourceSection && !aws.cloudformation.refreshingAllResources",
                     "group": "1@1"
