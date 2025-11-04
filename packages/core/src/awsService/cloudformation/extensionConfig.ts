@@ -10,7 +10,7 @@ export const ExtensionName = 'AWS CloudFormation'
 export const Version = '1.0.0'
 export const ExtensionConfigKey = 'aws.cloudformation'
 
-export class CloudFormationTelemetrySettings extends fromExtensionManifest('aws.cloudformation.telemetry', {
+export class CloudFormationTelemetrySettings extends fromExtensionManifest(`${ExtensionConfigKey}.telemetry`, {
     enabled: Boolean,
     logLevel: String,
 }) {}

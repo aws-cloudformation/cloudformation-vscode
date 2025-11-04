@@ -33,13 +33,16 @@ export async function promptTelemetryOptIn(
     const detail =
         'Help improve the language server by sharing anonymous usage data with AWS. You can change this preference at any time in Settings.'
 
+    const allow = 'Allow'
+    const later = 'Not Now'
+    const never = 'Never'
     const learnMore = 'Learn More'
     const response = await window.showInformationMessage(
         message,
         { modal: true, detail },
-        'Allow',
-        'Not Now',
-        'Never',
+        allow,
+        later,
+        never,
         learnMore
     )
 
@@ -50,15 +53,15 @@ export async function promptTelemetryOptIn(
         return promptTelemetryOptIn(context, cfnTelemetrySettings)
     }
 
-    if (response === 'Allow') {
+    if (response === allow) {
         await cfnTelemetrySettings.update('enabled', true)
         await context.globalState.update(commandKey('telemetry.hasResponded'), true)
         return true
-    } else if (response === 'Never') {
+    } else if (response === never) {
         await cfnTelemetrySettings.update('enabled', false)
         await context.globalState.update(commandKey('telemetry.hasResponded'), true)
         return false
-    } else if (response === 'Not Now') {
+    } else if (response === later) {
         await cfnTelemetrySettings.update('enabled', false)
         await context.globalState.update(commandKey('telemetry.lastPromptDate'), now)
         return false
