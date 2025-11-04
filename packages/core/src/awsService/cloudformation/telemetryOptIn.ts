@@ -6,6 +6,7 @@
 import { ExtensionContext, env, Uri, window } from 'vscode'
 import { CloudFormationTelemetrySettings } from './extensionConfig'
 import { commandKey } from './utils'
+import { isAutomation } from '../../shared/vscode/env'
 
 /* eslint-disable aws-toolkits/no-banned-usages */
 export async function promptTelemetryOptIn(
@@ -13,6 +14,10 @@ export async function promptTelemetryOptIn(
     cfnTelemetrySettings: CloudFormationTelemetrySettings
 ): Promise<boolean> {
     const telemetryEnabled = cfnTelemetrySettings.get('enabled', false)
+    if (isAutomation()) {
+        return telemetryEnabled
+    }
+
     const hasResponded = context.globalState.get<boolean>(commandKey('telemetry.hasResponded'), false)
     const lastPromptDate = context.globalState.get<number>(commandKey('telemetry.lastPromptDate'), 0)
     const now = Date.now()
