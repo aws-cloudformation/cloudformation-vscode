@@ -12,21 +12,21 @@ export type DocumentInfo = {
     fileName: string
 }
 
-export type ParsedEnvironmentFile = {
+export type ParsedCfnEnvironmentFile = {
     deploymentConfig: DeploymentConfig
     fileName: string
 }
 
-export type ParseEnvironmentFilesParams = {
+export type ParseCfnEnvironmentFilesParams = {
     documents: DocumentInfo[]
 }
 
-export type ParseEnvironmentFilesResult = {
-    parsedFiles: ParsedEnvironmentFile[]
+export type ParseCfnEnvironmentFilesResult = {
+    parsedFiles: ParsedCfnEnvironmentFile[]
 }
 
-export const ParseEnvironmentFilesRequest = new RequestType<
-    ParseEnvironmentFilesParams,
-    ParseEnvironmentFilesResult,
+export const ParseCfnEnvironmentFilesRequest = new RequestType<
+    ParseCfnEnvironmentFilesParams,
+    ParseCfnEnvironmentFilesResult,
     void
 >('aws/cfn/environment/files/parse')

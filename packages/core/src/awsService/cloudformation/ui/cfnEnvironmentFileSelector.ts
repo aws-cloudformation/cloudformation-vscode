@@ -4,13 +4,13 @@
  */
 
 import { window } from 'vscode'
-import { EnvironmentFileSelectorItem } from '../cfn-init/cfnProjectTypes'
+import { CfnEnvironmentFileSelectorItem } from '../cfn-init/cfnProjectTypes'
 
-export class EnvironmentFileSelector {
+export class CfnEnvironmentFileSelector {
     public async selectEnvironmentFile(
-        files: EnvironmentFileSelectorItem[],
+        files: CfnEnvironmentFileSelectorItem[],
         requiredParameterCount: number
-    ): Promise<EnvironmentFileSelectorItem | undefined> {
+    ): Promise<CfnEnvironmentFileSelectorItem | undefined> {
         // Sort files: matching template path first, then by compatible parameter count (descending)
         const sortedFiles = files.sort((a, b) => {
             // First sort by hasMatchingTemplatePath (true first)

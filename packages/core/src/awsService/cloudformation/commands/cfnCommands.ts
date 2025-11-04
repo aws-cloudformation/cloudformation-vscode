@@ -56,7 +56,7 @@ import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
 import { RelatedResourcesManager } from '../relatedResources/relatedResourcesManager'
 import { DocumentManager } from '../documents/documentManager'
-import { EnvironmentManager } from '../cfn-init/environmentManager'
+import { CfnEnvironmentManager } from '../cfn-init/cfnEnvironmentManager'
 
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
 import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
@@ -79,7 +79,7 @@ export function validateDeploymentCommand(
     client: LanguageClient,
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager,
-    environmentManager: EnvironmentManager
+    environmentManager: CfnEnvironmentManager
 ) {
     return commands.registerCommand(
         commandKey('api.validateDeployment'),
@@ -199,7 +199,7 @@ export function deployTemplateCommand(
     client: LanguageClient,
     diffProvider: DiffWebviewProvider,
     documentManager: DocumentManager,
-    environmentManager: EnvironmentManager
+    environmentManager: CfnEnvironmentManager
 ) {
     return commands.registerCommand(commandKey('api.deployTemplate'), async (changeSetParams?: string | StackNode) => {
         try {
@@ -385,7 +385,7 @@ type UserInputtedTemplateParameters = {
 async function changeSetSteps(
     client: LanguageClient,
     documentManager: DocumentManager,
-    environmentManager: EnvironmentManager,
+    environmentManager: CfnEnvironmentManager,
     isValidation: boolean,
     templateUri: string | undefined,
     stackName: string | undefined

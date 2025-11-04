@@ -8,27 +8,27 @@ import { Auth } from '../../../auth/auth'
 import { extractErrorMessage, formatMessage, toString } from '../utils'
 import {
     CfnConfig,
-    EnvironmentConfig,
-    EnvironmentLookup,
+    CfnEnvironmentConfig,
+    CfnEnvironmentLookup,
     DeploymentConfig,
-    EnvironmentFileSelectorItem as DeploymentFileDetail,
-    EnvironmentFileSelectorItem,
+    CfnEnvironmentFileSelectorItem as DeploymentFileDetail,
+    CfnEnvironmentFileSelectorItem,
 } from './cfnProjectTypes'
 import path from 'path'
 import fs from '../../../shared/fs/fs'
-import { EnvironmentSelector } from '../ui/environmentSelector'
-import { EnvironmentFileSelector } from '../ui/environmentFileSelector'
+import { CfnEnvironmentSelector } from '../ui/cfnEnvironmentSelector'
+import { CfnEnvironmentFileSelector } from '../ui/cfnEnvironmentFileSelector'
 import globals from '../../../shared/extensionGlobals'
 import { TemplateParameter } from '../stacks/actions/stackActionRequestType'
 import { validateParameterValue } from '../stacks/actions/stackActionInputValidation'
 import { getLogger } from '../../../shared/logger/logger'
-import { DocumentInfo } from './environmentRequestType'
-import { parseEnvironmentFiles } from './environmentApi'
+import { DocumentInfo } from './cfnEnvironmentRequestType'
+import { parseCfnEnvironmentFiles } from './cfnEnvironmentApi'
 import { LanguageClient } from 'vscode-languageclient'
 import { Parameter } from '@aws-sdk/client-cloudformation'
 import { convertRecordToParameters, convertRecordToTags } from './utils'
 
-export class EnvironmentManager implements Disposable {
+export class CfnEnvironmentManager implements Disposable {
     private readonly cfnProjectPath = 'cfn-project'
     private readonly configFile = 'cfn-config.json'
     private readonly environmentsDirectory = 'environments'
@@ -38,8 +38,8 @@ export class EnvironmentManager implements Disposable {
 
     constructor(
         private readonly client: LanguageClient,
-        private readonly environmentSelector: EnvironmentSelector,
-        private readonly environmentFileSelector: EnvironmentFileSelector
+        private readonly environmentSelector: CfnEnvironmentSelector,
+        private readonly environmentFileSelector: CfnEnvironmentFileSelector
     ) {}
 
     public addListener(listener: () => void): void {
@@ -57,7 +57,7 @@ export class EnvironmentManager implements Disposable {
     }
 
     public async selectEnvironment(): Promise<void> {
-        let environmentLookup: EnvironmentLookup
+        let environmentLookup: CfnEnvironmentLookup
 
         try {
             environmentLookup = await this.fetchAvailableEnvironments()
@@ -75,7 +75,10 @@ export class EnvironmentManager implements Disposable {
         }
     }
 
-    private async setSelectedEnvironment(environmentName: string, environmentLookup: EnvironmentLookup): Promise<void> {
+    private async setSelectedEnvironment(
+        environmentName: string,
+        environmentLookup: CfnEnvironmentLookup
+    ): Promise<void> {
         const environment = environmentLookup[environmentName]
 
         if (environment) {
@@ -87,7 +90,7 @@ export class EnvironmentManager implements Disposable {
         this.notifyListeners()
     }
 
-    private async syncEnvironmentWithProfile(environment: EnvironmentConfig) {
+    private async syncEnvironmentWithProfile(environment: CfnEnvironmentConfig) {
         const profileName = environment.profile
 
         const currentConnection = await this.auth.getConnection({ id: `profile:${profileName}` })
@@ -100,7 +103,7 @@ export class EnvironmentManager implements Disposable {
         await this.auth.useConnection(currentConnection)
     }
 
-    public async fetchAvailableEnvironments(): Promise<EnvironmentLookup> {
+    public async fetchAvailableEnvironments(): Promise<CfnEnvironmentLookup> {
         const configPath = await this.getConfigPath()
         const config = JSON.parse(await fs.readFileText(configPath)) as CfnConfig
 
@@ -110,9 +113,9 @@ export class EnvironmentManager implements Disposable {
     public async selectEnvironmentFile(
         templateUri: string,
         requiredParameters: TemplateParameter[]
-    ): Promise<EnvironmentFileSelectorItem | undefined> {
+    ): Promise<CfnEnvironmentFileSelectorItem | undefined> {
         const environmentName = this.getSelectedEnvironmentName()
-        const selectorItems: EnvironmentFileSelectorItem[] = []
+        const selectorItems: CfnEnvironmentFileSelectorItem[] = []
 
         if (!environmentName) {
             return undefined
@@ -141,7 +144,7 @@ export class EnvironmentManager implements Disposable {
                     })
             )
 
-            const environmentFiles = await parseEnvironmentFiles(this.client, { documents: filesToParse })
+            const environmentFiles = await parseCfnEnvironmentFiles(this.client, { documents: filesToParse })
 
             for (const deploymentFile of environmentFiles) {
                 const item = await this.createEnvironmentFileSelectorItem(
