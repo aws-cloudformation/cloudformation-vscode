@@ -91,9 +91,7 @@ export function validateDeploymentCommand(
                     environmentManager,
                     true,
                     typeof changeSetParams === 'string' ? changeSetParams : undefined,
-                    changeSetParams instanceof StackNode
-                        ? changeSetParams?.stack.StackName
-                        : undefined
+                    changeSetParams instanceof StackNode ? changeSetParams?.stack.StackName : undefined
                 )
                 if (!result) {
                     return
