@@ -23,15 +23,15 @@ import { ResourcesManager } from '../resources/resourcesManager'
 
 import { DocumentManager } from '../documents/documentManager'
 import { ChangeSetsManager } from '../stacks/changeSetsManager'
-import { EnvironmentManager } from '../cfn-init/environmentManager'
-import { EnvironmentsNode } from './nodes/environmentsNode'
+import { CfnEnvironmentManager } from '../cfn-init/cfnEnvironmentManager'
+import { CfnEnvironmentsNode } from './nodes/cfnEnvironmentsNode'
 
 export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNodeBase>, RefreshableAwsTreeProvider {
     public viewProviderId: string = 'aws.cloudformation'
     public readonly onDidChangeTreeData: vscode.Event<AWSTreeNodeBase | undefined>
     private readonly _onDidChangeTreeData: vscode.EventEmitter<AWSTreeNodeBase | undefined>
     public readonly regionManager: CloudFormationRegionManager
-    public readonly environmentManager: EnvironmentManager
+    public readonly environmentManager: CfnEnvironmentManager
     private readonly documentsNode: DocumentsNode
     private credentialsService: AwsCredentialsService | undefined
 
@@ -41,7 +41,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
         private readonly changeSetsManager: ChangeSetsManager,
         documentManager: DocumentManager,
         regionProvider: RegionProvider,
-        environmentManager: EnvironmentManager
+        environmentManager: CfnEnvironmentManager
     ) {
         this._onDidChangeTreeData = new vscode.EventEmitter<AWSTreeNodeBase | undefined>()
         this.onDidChangeTreeData = this._onDidChangeTreeData.event
@@ -90,7 +90,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
 
             const children: AWSTreeNodeBase[] = [
                 new RegionSelectorNode(this.regionManager),
-                new EnvironmentsNode(this.environmentManager),
+                new CfnEnvironmentsNode(this.environmentManager),
                 this.documentsNode,
                 new StacksNode(this.stacksManager, this.changeSetsManager),
                 new ResourcesNode(this.resourcesManager),

@@ -4,11 +4,11 @@
  */
 
 import { window } from 'vscode'
-import { EnvironmentConfig, EnvironmentLookup } from '../cfn-init/cfnProjectTypes'
+import { CfnEnvironmentConfig, CfnEnvironmentLookup } from '../cfn-init/cfnProjectTypes'
 import { formatMessage } from '../utils'
 
-export class EnvironmentSelector {
-    public async selectEnvironment(environmentLookup: EnvironmentLookup): Promise<string | undefined> {
+export class CfnEnvironmentSelector {
+    public async selectEnvironment(environmentLookup: CfnEnvironmentLookup): Promise<string | undefined> {
         if (Object.keys(environmentLookup).length === 0) {
             void window.showWarningMessage(formatMessage('No environments found. Initialize a CFN project first.'))
             return
@@ -16,7 +16,7 @@ export class EnvironmentSelector {
 
         const items = [
             { label: 'None', description: 'No environment selected' },
-            ...Object.values(environmentLookup).map((env: EnvironmentConfig) => ({
+            ...Object.values(environmentLookup).map((env: CfnEnvironmentConfig) => ({
                 label: env.name,
                 description: `AWS Profile: ${env.profile}`,
             })),
