@@ -72,7 +72,12 @@ export async function getParameterValues(
     const parameters: Parameter[] = []
 
     for (const param of templateParameters) {
-        const prefillValue = prefillParameters?.find((p) => p.ParameterKey === param.name)?.ParameterValue
+        const prefillCandidate = prefillParameters?.find((p) => p.ParameterKey === param.name)?.ParameterValue
+
+        // If we are using a previous parameter value, we must ensure that it is compatible with possibly modified template
+        const prefillValue =
+            prefillCandidate && !validateParameterValue(prefillCandidate, param) ? prefillCandidate : undefined
+
         const value = await getParameterValue(param, prefillValue)
         if (value) {
             parameters.push(value)
@@ -156,10 +161,16 @@ export async function chooseOptionalFlagSuggestion(): Promise<string | undefined
     return choice
 }
 
-export async function getTags(): Promise<Tag[] | undefined> {
+export async function getTags(previousTags?: Tag[]): Promise<Tag[] | undefined> {
+    const prefill = previousTags
+        ?.filter((tag) => tag.Key && tag.Value)
+        .map((tag) => `${tag.Key}=${tag.Value}`)
+        .join(',')
+
     const input = await window.showInputBox({
         prompt: 'Enter CloudFormation tags (key=value pairs, comma-separated). Enter empty for no tags',
         placeHolder: 'key1=value1,key2=value2,key3=value3',
+        value: prefill,
         validateInput: (value) => {
             if (!value) {
                 return undefined

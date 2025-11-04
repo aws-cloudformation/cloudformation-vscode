@@ -7,7 +7,7 @@ import { WebviewView, WebviewViewProvider, Disposable } from 'vscode'
 import { Output } from '@aws-sdk/client-cloudformation'
 import { LanguageClient } from 'vscode-languageclient'
 import { extractErrorMessage } from '../utils'
-import { GetStackOutputsRequest } from '../stacks/actions/stackActionProtocol'
+import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
 
 export class StackOutputsWebviewProvider implements WebviewViewProvider, Disposable {
     private view?: WebviewView
@@ -40,11 +40,11 @@ export class StackOutputsWebviewProvider implements WebviewViewProvider, Disposa
         }
 
         try {
-            const result = await this.client.sendRequest(GetStackOutputsRequest, {
+            const result = await this.client.sendRequest(DescribeStackRequest, {
                 stackName: this.stackName,
             })
 
-            this.outputs = result.outputs
+            this.outputs = result.stack?.Outputs ?? []
             this.render()
         } catch (error) {
             this.renderError(`Failed to load outputs: ${extractErrorMessage(error)}`)
