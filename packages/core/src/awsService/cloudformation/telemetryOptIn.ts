@@ -5,6 +5,7 @@
 
 import { ExtensionContext, env, Uri, window } from 'vscode'
 import { CloudFormationTelemetrySettings } from './extensionConfig'
+import { commandKey } from './utils'
 
 /* eslint-disable aws-toolkits/no-banned-usages */
 export async function promptTelemetryOptIn(
@@ -12,8 +13,8 @@ export async function promptTelemetryOptIn(
     cfnTelemetrySettings: CloudFormationTelemetrySettings
 ): Promise<boolean> {
     const telemetryEnabled = cfnTelemetrySettings.get('enabled', false)
-    const hasResponded = context.globalState.get<boolean>('aws.cloudformation.telemetry.hasResponded', false)
-    const lastPromptDate = context.globalState.get<number>('aws.cloudformation.telemetry.lastPromptDate', 0)
+    const hasResponded = context.globalState.get<boolean>(commandKey('telemetry.hasResponded'), false)
+    const lastPromptDate = context.globalState.get<number>(commandKey('telemetry.lastPromptDate'), 0)
     const now = Date.now()
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000
 
@@ -51,19 +52,19 @@ export async function promptTelemetryOptIn(
 
     if (response === 'Allow') {
         await cfnTelemetrySettings.update('enabled', true)
-        await context.globalState.update('aws.cloudformation.telemetry.hasResponded', true)
+        await context.globalState.update(commandKey('telemetry.hasResponded'), true)
         return true
     } else if (response === 'Never') {
         await cfnTelemetrySettings.update('enabled', false)
-        await context.globalState.update('aws.cloudformation.telemetry.hasResponded', true)
+        await context.globalState.update(commandKey('telemetry.hasResponded'), true)
         return false
     } else if (response === 'Not Now') {
         await cfnTelemetrySettings.update('enabled', false)
-        await context.globalState.update('aws.cloudformation.telemetry.lastPromptDate', now)
+        await context.globalState.update(commandKey('telemetry.lastPromptDate'), now)
         return false
     }
 
     // User dismissed the prompt - treat as "Not Now"
-    await context.globalState.update('aws.cloudformation.telemetry.lastPromptDate', now)
+    await context.globalState.update(commandKey('telemetry.lastPromptDate'), now)
     return false
 }
