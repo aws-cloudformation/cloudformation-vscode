@@ -606,19 +606,27 @@ export function getStackManagementInfoCommand(resourcesManager: ResourcesManager
 export function extractToParameterPositionCursorCommand() {
     return commands.registerCommand(
         'aws.cloudformation.extractToParameter.positionCursor',
-        async (documentUri: string, parameterName: string, documentType: string) => {
+        async (
+            documentUri: string,
+            parameterName: string,
+            documentType: string,
+            trackingCommand?: string,
+            actionType?: string
+        ) => {
             try {
-                // Open the document if it's not already open
+                // Track code action acceptance if tracking parameters provided
+                if (trackingCommand && actionType) {
+                    await commands.executeCommand(trackingCommand, actionType)
+                }
+
                 const uri = Uri.parse(documentUri)
                 const document = await workspace.openTextDocument(uri)
                 const editor = await window.showTextDocument(document)
 
-                // Find the parameter definition in the document
                 const text = document.getText()
                 const position = findParameterDescriptionPosition(text, parameterName, documentType)
 
                 if (position) {
-                    // Position cursor at the description value (between the quotes)
                     editor.selection = new Selection(position, position)
                     editor.revealRange(new Range(position, position), TextEditorRevealType.InCenter)
                 }
