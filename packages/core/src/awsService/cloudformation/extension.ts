@@ -47,9 +47,10 @@ import {
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
 import { AwsCredentialsService, encryptionKey } from './auth/credentials'
-import { ExtensionId, ExtensionName, Version } from './extensionConfig'
+import { ExtensionId, ExtensionName, Version, CloudFormationTelemetrySettings } from './extensionConfig'
 import { commandKey } from './utils'
 import { CloudFormationExplorer } from './explorer/explorer'
+import { promptTelemetryOptIn } from './telemetryOptIn'
 
 import { refreshCommand, StacksManager } from './stacks/stacksManager'
 import { StackOverviewWebviewProvider } from './ui/stackOverviewWebviewProvider'
@@ -82,6 +83,9 @@ import { EnvironmentFileSelector } from './ui/environmentFileSelector'
 let client: LanguageClient
 
 export async function activate(context: ExtensionContext) {
+    const cfnTelemetrySettings = new CloudFormationTelemetrySettings()
+    const telemetryEnabled = await promptTelemetryOptIn(context, cfnTelemetrySettings)
+
     const cfnLspConfig = {
         ...DevSettings.instance.getServiceConfig('cloudformationLsp', {}),
         ...getServiceEnvVarConfig('cloudformationLsp', ['path', 'cloudformationEndpoint']),
@@ -139,18 +143,18 @@ export async function activate(context: ExtensionContext) {
                         name: ExtensionId,
                         version: Version,
                     },
-                    clientId: getClientId(globals.globalState, globals.telemetry.telemetryEnabled),
+                    clientId: getClientId(globals.globalState, telemetryEnabled),
                 },
-                telemetryEnabled: globals.telemetry.telemetryEnabled,
+                telemetryEnabled: telemetryEnabled,
                 ...(cfnLspConfig.cloudformationEndpoint && {
                     cloudformation: {
                         endpoint: cfnLspConfig.cloudformationEndpoint,
                     },
                 }),
-            },
-            encryption: {
-                key: encryptionKey.toString('base64'),
-                mode: 'JWT',
+                encryption: {
+                    key: encryptionKey.toString('base64'),
+                    mode: 'JWT',
+                },
             },
         },
         errorHandler: {

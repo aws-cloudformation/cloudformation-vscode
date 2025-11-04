@@ -14,10 +14,6 @@ export function toString(value: unknown): string {
     return JSON.stringify(value)
 }
 
-export function isDevelopment() {
-    return process.env.AWS_ENV === 'alpha'
-}
-
 export function formatMessage(message: string): string {
     return `${ExtensionId}: ${message}`
 }
