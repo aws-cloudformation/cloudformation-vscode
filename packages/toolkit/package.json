@@ -4935,7 +4935,7 @@
             },
             {
                 "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
-                "title": "Deploy Stack from Template",
+                "title": "Deploy Template",
                 "category": "AWS CloudFormation",
                 "icon": "$(plus)"
             },
