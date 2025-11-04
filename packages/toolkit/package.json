@@ -1480,6 +1480,10 @@
                 {
                     "command": "aws.cloudformation.api.copyResourceIdentifier",
                     "when": "false"
+                },
+                {
+                    "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
+                    "when": "false"
                 }
             ],
             "editor/title": [
@@ -2633,6 +2637,26 @@
                     "group": "inline@1"
                 },
                 {
+                    "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
+                    "group": "inline@3"
+                },
+                {
+                    "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
+                    "group": "1@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.validateDeployment",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.validateDeployment",
+                    "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
+                    "group": "1@1"
+                },
+                {
                     "command": "aws.cloudformation.api.loadMoreStacks",
                     "when": "view == aws.cloudformation && viewItem == stackSectionWithMore && !aws.cloudformation.loadingStacks",
                     "group": "1@1"
@@ -2640,6 +2664,26 @@
                 {
                     "command": "aws.cloudformation.stacks.refresh",
                     "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
+                    "group": "1@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.validateDeployment",
+                    "when": "view == aws.cloudformation && (viewItem == stack)",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.deployTemplate",
+                    "when": "view == aws.cloudformation && (viewItem == stack)",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "aws.cloudformation.api.validateDeployment",
+                    "when": "view == aws.cloudformation && (viewItem == stack)",
+                    "group": "1@1"
+                },
+                {
+                    "command": "aws.cloudformation.api.deployTemplate",
+                    "when": "view == aws.cloudformation && (viewItem == stack)",
                     "group": "1@2"
                 },
                 {
@@ -4880,12 +4924,20 @@
             {
                 "command": "aws.cloudformation.api.validateDeployment",
                 "title": "Validate Deployment",
-                "category": "AWS CloudFormation"
+                "category": "AWS CloudFormation",
+                "icon": "$(go-to-file)"
             },
             {
                 "command": "aws.cloudformation.api.deployTemplate",
                 "title": "Deploy Template",
-                "category": "AWS CloudFormation"
+                "category": "AWS CloudFormation",
+                "icon": "$(cloud-upload)"
+            },
+            {
+                "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
+                "title": "Deploy Stack from Template",
+                "category": "AWS CloudFormation",
+                "icon": "$(plus)"
             },
             {
                 "command": "aws.cloudformation.api.rerunLastValidation",

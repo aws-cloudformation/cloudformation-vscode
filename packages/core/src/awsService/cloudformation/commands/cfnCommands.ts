@@ -72,6 +72,7 @@ import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 import { fs } from '../../../shared/fs/fs'
 import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
+import { StackNode } from '../explorer/nodes/stackNode'
 
 export function validateDeploymentCommand(
     client: LanguageClient,
@@ -79,32 +80,50 @@ export function validateDeploymentCommand(
     documentManager: DocumentManager,
     environmentManager: EnvironmentManager
 ) {
-    return commands.registerCommand(commandKey('api.validateDeployment'), async (templateUri?: string) => {
-        try {
-            const result = await changeSetSteps(client, documentManager, environmentManager, true, templateUri)
-            if (!result) {
-                return
+    return commands.registerCommand(
+        commandKey('api.validateDeployment'),
+        async (changeSetParams?: string | StackNode | StacksNode) => {
+            try {
+                const result = await changeSetSteps(
+                    client,
+                    documentManager,
+                    environmentManager,
+                    true,
+                    typeof changeSetParams === 'string' ? changeSetParams : undefined,
+                    typeof changeSetParams === 'object' && 'stack' in changeSetParams
+                        ? changeSetParams?.stack.StackName
+                        : undefined
+                )
+                if (!result) {
+                    return
+                }
+
+                const validation = new Validation(
+                    result.templateUri,
+                    result.stackName,
+                    client,
+                    diffProvider,
+                    result.parameters,
+                    result.capabilities,
+                    result.resourcesToImport,
+                    false,
+                    result.optionalFlags,
+                    result.s3Url
+                )
+
+                setLastValidation(validation)
+
+                await validation.validate()
+            } catch (error) {
+                showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
             }
-
-            const validation = new Validation(
-                result.templateUri,
-                result.stackName,
-                client,
-                diffProvider,
-                result.parameters,
-                result.capabilities,
-                result.resourcesToImport,
-                false,
-                result.optionalFlags,
-                result.s3Url
-            )
-
-            setLastValidation(validation)
-
-            await validation.validate()
-        } catch (error) {
-            showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
         }
+    )
+}
+
+export function deployTemplateFromStacksMenuCommand() {
+    return commands.registerCommand(commandKey('api.deployTemplateFromStacksMenu'), async () => {
+        return commands.executeCommand(commandKey('api.deployTemplate'))
     })
 }
 
@@ -181,9 +200,16 @@ export function deployTemplateCommand(
     documentManager: DocumentManager,
     environmentManager: EnvironmentManager
 ) {
-    return commands.registerCommand(commandKey('api.deployTemplate'), async (templateUri?: string) => {
+    return commands.registerCommand(commandKey('api.deployTemplate'), async (changeSetParams?: string | StackNode) => {
         try {
-            const result = await changeSetSteps(client, documentManager, environmentManager, false, templateUri)
+            const result = await changeSetSteps(
+                client,
+                documentManager,
+                environmentManager,
+                false,
+                typeof changeSetParams === 'string' ? changeSetParams : undefined,
+                typeof changeSetParams === 'object' ? changeSetParams?.stack.StackName : undefined
+            )
             if (!result) {
                 return
             }
@@ -359,7 +385,8 @@ async function changeSetSteps(
     documentManager: DocumentManager,
     environmentManager: EnvironmentManager,
     isValidation: boolean,
-    templateUri: string | undefined
+    templateUri: string | undefined,
+    stackName: string | undefined
 ): Promise<UserInputtedTemplateParameters | undefined> {
     templateUri ??= await getTemplatePath(documentManager)
     if (!templateUri) {
@@ -403,14 +430,16 @@ async function changeSetSteps(
         }
     }
 
-    let stackName
-    if (isValidation) {
-        stackName = await getStackName(getLastValidation()?.stackName)
-    } else {
-        stackName = await getStackName()
-    }
     if (!stackName) {
-        return
+        if (isValidation) {
+            stackName = await getStackName(getLastValidation()?.stackName)
+        } else {
+            stackName = await getStackName()
+        }
+        // User cancelled
+        if (!stackName) {
+            return
+        }
     }
 
     const resourcesToImport = await promptForResourceImport(client, templateUri)
