@@ -73,12 +73,12 @@ import { RemoteLspServerProvider } from './lsp-server/remoteLspServerProvider'
 import { LspServerProvider } from './lsp-server/lspServerProvider'
 import { getLogger } from '../../shared/logger/logger'
 import { ChangeSetsManager } from './stacks/changeSetsManager'
-import { EnvironmentManager } from './cfn-init/environmentManager'
-import { EnvironmentSelector } from './ui/environmentSelector'
+import { CfnEnvironmentManager } from './cfn-init/cfnEnvironmentManager'
+import { CfnEnvironmentSelector } from './ui/cfnEnvironmentSelector'
 import { selectEnvironmentCommand } from './commands/environmentCommands'
 import { CfnInitUiInterface } from './cfn-init/cfnInitUiInterface'
 import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
-import { EnvironmentFileSelector } from './ui/environmentFileSelector'
+import { CfnEnvironmentFileSelector } from './ui/cfnEnvironmentFileSelector'
 
 let client: LanguageClient
 
@@ -189,9 +189,9 @@ export async function activate(context: ExtensionContext) {
                 resourcesManager.importResourceStates.bind(resourcesManager)
             )
             const changeSetManager = new ChangeSetsManager(client)
-            const environmentSelector = new EnvironmentSelector()
-            const environmentFileSelector = new EnvironmentFileSelector()
-            const environmentManager = new EnvironmentManager(client, environmentSelector, environmentFileSelector)
+            const environmentSelector = new CfnEnvironmentSelector()
+            const environmentFileSelector = new CfnEnvironmentFileSelector()
+            const environmentManager = new CfnEnvironmentManager(client, environmentSelector, environmentFileSelector)
 
             const cfnInitCliCaller = new CfnInitCliCaller(serverRootDir)
             const cfnInitUiInterface = new CfnInitUiInterface(cfnInitCliCaller)

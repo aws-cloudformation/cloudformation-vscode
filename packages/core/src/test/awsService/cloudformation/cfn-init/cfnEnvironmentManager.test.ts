@@ -5,22 +5,22 @@
 
 import { strict as assert } from 'assert'
 import * as sinon from 'sinon'
-import { EnvironmentManager } from '../../../../awsService/cloudformation/cfn-init/environmentManager'
+import { CfnEnvironmentManager } from '../../../../awsService/cloudformation/cfn-init/cfnEnvironmentManager'
 import { Auth } from '../../../../auth/auth'
 import { globals } from '../../../../shared'
 import { workspace } from 'vscode'
 import fs from '../../../../shared/fs/fs'
-import { EnvironmentSelector } from '../../../../awsService/cloudformation/ui/environmentSelector'
-import { EnvironmentFileSelector } from '../../../../awsService/cloudformation/ui/environmentFileSelector'
+import { CfnEnvironmentSelector } from '../../../../awsService/cloudformation/ui/cfnEnvironmentSelector'
+import { CfnEnvironmentFileSelector } from '../../../../awsService/cloudformation/ui/cfnEnvironmentFileSelector'
 import { OnStackFailure } from '@aws-sdk/client-cloudformation'
-import * as environmentApi from '../../../../awsService/cloudformation/cfn-init/environmentApi'
+import * as environmentApi from '../../../../awsService/cloudformation/cfn-init/cfnEnvironmentApi'
 
-describe('EnvironmentManager', () => {
-    let environmentManager: EnvironmentManager
+describe('CfnEnvironmentManager', () => {
+    let environmentManager: CfnEnvironmentManager
     let mockAuth: sinon.SinonStubbedInstance<Auth>
     let mockWorkspaceState: any
-    let mockEnvironmentSelector: sinon.SinonStubbedInstance<EnvironmentSelector>
-    let mockEnvironmentFileSelector: sinon.SinonStubbedInstance<EnvironmentFileSelector>
+    let mockEnvironmentSelector: sinon.SinonStubbedInstance<CfnEnvironmentSelector>
+    let mockEnvironmentFileSelector: sinon.SinonStubbedInstance<CfnEnvironmentFileSelector>
     let fsStub: sinon.SinonStub
     let workspaceStub: sinon.SinonStub
     let parseEnvironmentFilesStub: sinon.SinonStub
@@ -56,10 +56,10 @@ describe('EnvironmentManager', () => {
 
         fsStub = sinon.stub(fs, 'readFileText')
         workspaceStub = sinon.stub(workspace, 'workspaceFolders').value([{ uri: { fsPath: '/test/workspace' } }])
-        parseEnvironmentFilesStub = sinon.stub(environmentApi, 'parseEnvironmentFiles')
+        parseEnvironmentFilesStub = sinon.stub(environmentApi, 'parseCfnEnvironmentFiles')
         mockClient = {}
 
-        environmentManager = new EnvironmentManager(mockClient, mockEnvironmentSelector, mockEnvironmentFileSelector)
+        environmentManager = new CfnEnvironmentManager(mockClient, mockEnvironmentSelector, mockEnvironmentFileSelector)
     })
 
     afterEach(() => {

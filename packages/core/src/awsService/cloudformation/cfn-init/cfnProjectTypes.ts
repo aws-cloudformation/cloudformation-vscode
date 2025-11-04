@@ -6,12 +6,12 @@
 import { OnStackFailure, Parameter } from '@aws-sdk/client-cloudformation'
 import { ChangeSetOptionalFlags } from '../stacks/actions/stackActionRequestType'
 
-export type EnvironmentConfig = {
+export type CfnEnvironmentConfig = {
     name: string
     profile: string
 }
 
-export type EnvironmentLookup = Record<string, EnvironmentConfig>
+export type CfnEnvironmentLookup = Record<string, CfnEnvironmentConfig>
 
 export type CfnConfig = {
     version: string
@@ -19,7 +19,7 @@ export type CfnConfig = {
         name: string
         created: string
     }
-    environments: EnvironmentLookup
+    environments: CfnEnvironmentLookup
 }
 
 export type DeploymentConfig = {
@@ -31,7 +31,7 @@ export type DeploymentConfig = {
     onStackFailure?: OnStackFailure
 }
 
-export type EnvironmentFileSelectorItem = {
+export type CfnEnvironmentFileSelectorItem = {
     fileName: string
     hasMatchingTemplatePath?: boolean
     compatibleParameters?: Parameter[]

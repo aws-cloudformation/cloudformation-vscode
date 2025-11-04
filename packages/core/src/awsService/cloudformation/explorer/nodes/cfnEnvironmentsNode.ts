@@ -5,11 +5,11 @@
 
 import { TreeItemCollapsibleState, ThemeIcon } from 'vscode'
 import { AWSTreeNodeBase } from '../../../../shared/treeview/nodes/awsTreeNodeBase'
-import { EnvironmentManager } from '../../cfn-init/environmentManager'
+import { CfnEnvironmentManager } from '../../cfn-init/cfnEnvironmentManager'
 import { commandKey } from '../../utils'
 
-export class EnvironmentsNode extends AWSTreeNodeBase {
-    public constructor(readonly environmentManager: EnvironmentManager) {
+export class CfnEnvironmentsNode extends AWSTreeNodeBase {
+    public constructor(readonly environmentManager: CfnEnvironmentManager) {
         const selectedEnv = environmentManager.getSelectedEnvironmentName()
         const label = selectedEnv ? `Environment: ${selectedEnv}` : 'Environment: not selected'
 
