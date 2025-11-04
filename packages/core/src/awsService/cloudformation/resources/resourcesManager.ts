@@ -23,18 +23,7 @@ import {
 } from '../cfn/resourceRequestTypes'
 
 import { showErrorMessage } from '../ui/message'
-import {
-    Position,
-    ProgressLocation,
-    Range,
-    Selection,
-    TextEdit,
-    Uri,
-    window,
-    workspace,
-    WorkspaceEdit,
-    env,
-} from 'vscode'
+import { ProgressLocation, SnippetString, window, env, Position, Range } from 'vscode'
 import { getLogger } from '../../../shared/logger/logger'
 import globals from '../../../shared/extensionGlobals'
 import { setContext } from '../../../shared/vscode/setContext'
@@ -252,8 +241,6 @@ export class ResourcesManager {
 
             const params: ResourceStateParams = {
                 textDocument: { uri: editor.document.uri.toString() },
-                range: { start: editor.selection.start, end: editor.selection.end },
-                context: { diagnostics: [] },
                 resourceSelections: resourceSelectionsArray,
                 purpose,
             }
@@ -274,7 +261,7 @@ export class ResourcesManager {
                     if (result.warning) {
                         void window.showWarningMessage(result.warning)
                     }
-                    await this.applyCodeActionEdits(result)
+                    await this.applyCompletionSnippet(result)
                     const [successCount, failureCount] = this.getSuccessAndFailureCount(result)
                     this.renderResultMessage(successCount, failureCount, purpose)
                 }
@@ -309,59 +296,50 @@ export class ResourcesManager {
         }))
     }
 
-    private async applyCodeActionEdits(result: ResourceStateResult) {
-        if (result.edit?.changes) {
-            const workspaceEdit = new WorkspaceEdit()
-            let firstEditUri: Uri | undefined
-            let firstEditRange: Range | undefined
-            let hasPlaceholder = false
+    private async applyCompletionSnippet(result: ResourceStateResult): Promise<void> {
+        const { completionItem } = result
 
-            for (const [uri, textEdits] of Object.entries(result.edit.changes)) {
-                const vsCodeUri = Uri.parse(uri)
-                firstEditUri ??= vsCodeUri
+        if (!completionItem?.textEdit) {
+            getLogger().warn('No completionItem or textEdit in result')
+            return
+        }
 
-                const vsCodeEdits = (textEdits as TextEdit[]).map((edit: TextEdit) => {
-                    const range = new Range(
-                        new Position(edit.range.start.line, edit.range.start.character),
-                        new Position(edit.range.end.line, edit.range.end.character)
-                    )
+        const editor = window.activeTextEditor
+        if (!editor) {
+            getLogger().warn('No active editor for snippet insertion')
+            return
+        }
 
-                    firstEditRange ??= range
+        try {
+            const targetLine = completionItem.textEdit.range.start.line
+            await this.ensureLineExists(editor, targetLine)
 
-                    if (edit.newText.includes('${1:')) {
-                        hasPlaceholder = true
-                    }
+            const range = new Range(
+                new Position(completionItem.textEdit.range.start.line, completionItem.textEdit.range.start.character),
+                new Position(completionItem.textEdit.range.end.line, completionItem.textEdit.range.end.character)
+            )
 
-                    return new TextEdit(range, edit.newText)
-                })
-                workspaceEdit.set(vsCodeUri, vsCodeEdits)
-            }
-
-            await workspace.applyEdit(workspaceEdit)
-
-            if (hasPlaceholder && firstEditUri && firstEditRange) {
-                await this.repositionCursorToFirstPlaceholder(firstEditUri, firstEditRange)
-            }
+            getLogger().info(
+                `Inserting snippet at server-provided position: line ${range.start.line}, char ${range.start.character}`
+            )
+            await editor.insertSnippet(new SnippetString(completionItem.textEdit.newText), range)
+            getLogger().info('Snippet insertion successful')
+        } catch (error) {
+            getLogger().error(`Failed to insert snippet: ${error instanceof Error ? error.message : String(error)}`)
+            showErrorMessage(`Failed to insert resource: ${error instanceof Error ? error.message : String(error)}`)
         }
     }
 
-    private async repositionCursorToFirstPlaceholder(uri: Uri, searchStartRange: Range): Promise<void> {
-        const document = await workspace.openTextDocument(uri)
-        const editor = await window.showTextDocument(document)
-        const searchStartOffset = document.offsetAt(searchStartRange.start)
-        const text = document.getText()
-        const textFromStart = text.substring(searchStartOffset)
+    private async ensureLineExists(editor: any, targetLine: number): Promise<void> {
+        const document = editor.document
+        if (targetLine >= document.lineCount) {
+            const linesToAdd = targetLine - document.lineCount + 1
+            const lastLine = document.lineAt(document.lineCount - 1)
+            const endPosition = lastLine.range.end
 
-        const placeholderMatch = textFromStart.match(/\$\{1:([^}]+)\}/)
-        if (placeholderMatch) {
-            const placeholderStart = searchStartOffset + textFromStart.indexOf(placeholderMatch[0])
-            const placeholderEnd = placeholderStart + placeholderMatch[0].length
-
-            const startPos = document.positionAt(placeholderStart)
-            const endPos = document.positionAt(placeholderEnd)
-
-            editor.selection = new Selection(startPos, endPos)
-            editor.revealRange(new Range(startPos, endPos))
+            await editor.edit((editBuilder: any) => {
+                editBuilder.insert(endPosition, '\n'.repeat(linesToAdd))
+            })
         }
     }
 
