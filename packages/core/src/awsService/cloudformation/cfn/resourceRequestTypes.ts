@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RequestType, CodeAction, CodeActionParams } from 'vscode-languageserver-protocol'
+import { RequestType, CompletionItem, TextDocumentIdentifier } from 'vscode-languageserver-protocol'
 
 export interface ResourceRequest {
     resourceType: string
@@ -52,7 +52,8 @@ export enum ResourceStatePurpose {
     Clone = 'Clone',
 }
 
-export interface ResourceStateParams extends CodeActionParams {
+export interface ResourceStateParams {
+    textDocument: TextDocumentIdentifier
     resourceSelections?: ResourceSelection[]
     purpose: ResourceStatePurpose
 }
@@ -60,7 +61,8 @@ export interface ResourceStateParams extends CodeActionParams {
 export type ResourceType = string
 export type ResourceIdentifier = string
 
-export interface ResourceStateResult extends CodeAction {
+export interface ResourceStateResult {
+    completionItem?: CompletionItem
     successfulImports: Map<ResourceType, ResourceIdentifier[]>
     failedImports: Map<ResourceType, ResourceIdentifier[]>
     warning?: string
