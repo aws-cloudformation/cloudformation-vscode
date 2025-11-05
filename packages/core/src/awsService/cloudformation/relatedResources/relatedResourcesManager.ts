@@ -17,7 +17,7 @@ export class RelatedResourcesManager {
         private client: LanguageClient,
         private selector: RelatedResourceSelector,
         private resourceSelector: ResourceSelector,
-        private importResourceStates: (resourceNodes: ResourceNode[]) => Promise<void>
+        private importResourceStates: (resourceNodes: ResourceNode[], parentResourceType?: string) => Promise<void>
     ) {}
 
     async addRelatedResources(preSelectedResourceType?: string): Promise<void> {
@@ -30,10 +30,14 @@ export class RelatedResourcesManager {
         try {
             const templateUri = activeEditor.document.uri.toString()
 
-            const selectedResourceType =
+            const selectedParentResourceType =
                 preSelectedResourceType || (await this.selector.selectAuthoredResourceType(templateUri))
+            if (!selectedParentResourceType) {
+                return
+            }
 
-            if (!selectedResourceType) {
+            const selectedRelatedTypes = await this.selector.selectRelatedResourceTypes(selectedParentResourceType)
+            if (!selectedRelatedTypes || selectedRelatedTypes.length === 0) {
                 return
             }
 
@@ -43,9 +47,9 @@ export class RelatedResourcesManager {
             }
 
             if (action === 'create') {
-                await this.createRelatedResources(selectedResourceType)
+                await this.createRelatedResources(templateUri, selectedParentResourceType, selectedRelatedTypes)
             } else {
-                await this.importRelatedResources(selectedResourceType)
+                await this.importRelatedResources(selectedRelatedTypes, selectedParentResourceType)
             }
         } catch (error) {
             showErrorMessage(
@@ -54,28 +58,21 @@ export class RelatedResourcesManager {
         }
     }
 
-    private async createRelatedResources(selectedResourceType: string): Promise<void> {
-        const activeEditor = window.activeTextEditor
-        if (!activeEditor) {
-            void window.showErrorMessage('No template file opened')
-            return
-        }
-
-        const selectedRelatedTypes = await this.selector.selectRelatedResourceTypes(selectedResourceType)
-        if (!selectedRelatedTypes || selectedRelatedTypes.length === 0) {
-            return
-        }
-
-        const templateUri = activeEditor.document.uri.toString()
+    private async createRelatedResources(
+        templateUri: string,
+        parentResourceType: string,
+        relatedResourceTypes: string[]
+    ): Promise<void> {
         const result = await insertRelatedResources(this.client, {
             templateUri,
-            relatedResourceTypes: selectedRelatedTypes,
-            parentResourceType: selectedResourceType,
+            relatedResourceTypes,
+            parentResourceType,
         })
 
         await this.applyCodeAction(result)
 
-        if (result.data?.scrollToPosition) {
+        const activeEditor = window.activeTextEditor
+        if (activeEditor && result.data?.scrollToPosition) {
             const position = new Position(result.data.scrollToPosition.line, result.data.scrollToPosition.character)
             const revealRange = new Range(
                 new Position(Math.max(0, position.line - 2), 0),
@@ -84,7 +81,7 @@ export class RelatedResourcesManager {
             activeEditor.revealRange(revealRange, TextEditorRevealType.InCenter)
         }
 
-        void window.showInformationMessage(`Added ${selectedRelatedTypes.length} related resources`)
+        void window.showInformationMessage(`Added ${relatedResourceTypes.length} related resources`)
     }
 
     private async applyCodeAction(codeAction: RelatedResourcesCodeAction): Promise<void> {
@@ -107,13 +104,11 @@ export class RelatedResourcesManager {
         }
     }
 
-    private async importRelatedResources(selectedResourceType: string): Promise<void> {
-        const selectedRelatedTypes = await this.selector.selectRelatedResourceTypes(selectedResourceType)
-        if (!selectedRelatedTypes || selectedRelatedTypes.length === 0) {
-            return
-        }
-
-        const selections = await this.resourceSelector.selectResources(true, selectedRelatedTypes)
+    private async importRelatedResources(
+        relatedResourceTypes: string[],
+        selectedParentResourceType: string
+    ): Promise<void> {
+        const selections = await this.resourceSelector.selectResources(true, relatedResourceTypes)
         if (selections.length === 0) {
             return
         }
@@ -123,6 +118,6 @@ export class RelatedResourcesManager {
             resourceIdentifier: selection.resourceIdentifier,
         })) as ResourceNode[]
 
-        await this.importResourceStates(resourceNodes)
+        await this.importResourceStates(resourceNodes, selectedParentResourceType)
     }
 }

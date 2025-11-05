@@ -79,7 +79,7 @@ export class ResourceSelector {
                 const result = await window.showQuickPick(resourceIdentifiers, {
                     canPickMany: multiSelect,
                     placeHolder: `Select ${resourceType} identifiers`,
-                    title: `Select ${resourceType} Resources`,
+                    title: `Select from all ${resourceType} Resources`,
                 })
 
                 if (!result) {
