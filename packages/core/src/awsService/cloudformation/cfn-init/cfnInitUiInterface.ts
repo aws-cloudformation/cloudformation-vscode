@@ -58,7 +58,7 @@ export class CfnInitUiInterface {
                 }
 
                 items.push({
-                    label: '$(plus) Add Environment (optional)',
+                    label: '$(plus) Add Environment (At least one required)',
                     detail: 'Configure a new deployment environment',
                 })
 
@@ -111,6 +111,10 @@ export class CfnInitUiInterface {
                 }
                 if (!this.state.projectPath) {
                     void vscode.window.showWarningMessage('Project path is required')
+                    return
+                }
+                if (this.state.environments.length === 0) {
+                    void vscode.window.showWarningMessage('At least one environment is required')
                     return
                 }
                 quickPick.hide()

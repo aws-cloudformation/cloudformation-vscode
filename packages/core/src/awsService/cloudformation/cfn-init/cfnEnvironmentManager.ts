@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Disposable, Uri, window, workspace } from 'vscode'
+import { Disposable, Uri, window, workspace, commands } from 'vscode'
 import { Auth } from '../../../auth/auth'
-import { extractErrorMessage, formatMessage, toString } from '../utils'
+import { commandKey, extractErrorMessage, formatMessage, toString } from '../utils'
 import {
     CfnConfig,
     CfnEnvironmentConfig,
@@ -36,6 +36,8 @@ export class CfnEnvironmentManager implements Disposable {
     private readonly auth = Auth.instance
     private listeners: (() => void)[] = []
 
+    private readonly initializeOption = 'Initialize Project'
+
     constructor(
         private readonly client: LanguageClient,
         private readonly environmentSelector: CfnEnvironmentSelector,
@@ -56,7 +58,27 @@ export class CfnEnvironmentManager implements Disposable {
         }
     }
 
+    public async promptInitializeIfNeeded(operation: string): Promise<boolean> {
+        if (!(await this.isProjectInitialized())) {
+            const choice = await window.showWarningMessage(
+                `You must initialize your CFN Project to perform ${operation}`,
+                this.initializeOption
+            )
+
+            if (choice === this.initializeOption) {
+                void commands.executeCommand(commandKey('init.initializeProject'))
+            }
+            return true
+        }
+
+        return false
+    }
+
     public async selectEnvironment(): Promise<void> {
+        if (await this.promptInitializeIfNeeded('Environment Selection')) {
+            return
+        }
+
         let environmentLookup: CfnEnvironmentLookup
 
         try {
@@ -73,6 +95,13 @@ export class CfnEnvironmentManager implements Disposable {
         if (environmentName) {
             await this.setSelectedEnvironment(environmentName, environmentLookup)
         }
+    }
+
+    private async isProjectInitialized(): Promise<boolean> {
+        const configPath = await this.getConfigPath()
+        const projectDirectory = await this.getProjectDir()
+
+        return (await fs.existsFile(configPath)) && (await fs.existsDir(projectDirectory))
     }
 
     private async setSelectedEnvironment(
@@ -228,6 +257,14 @@ export class CfnEnvironmentManager implements Disposable {
             throw new Error('No workspace folder found')
         }
         return path.join(workspaceRoot, this.cfnProjectPath, this.configFile)
+    }
+
+    private async getProjectDir(): Promise<string> {
+        const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
+        if (!workspaceRoot) {
+            throw new Error('No workspace folder found')
+        }
+        return path.join(workspaceRoot, this.cfnProjectPath)
     }
 
     dispose(): void {
