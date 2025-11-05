@@ -844,8 +844,16 @@ export function createProjectCommand(uiInterface: CfnInitUiInterface) {
     })
 }
 
-export function addEnvironmentCommand(uiInterface: CfnInitUiInterface, cfnInit: CfnInitCliCaller) {
+export function addEnvironmentCommand(
+    uiInterface: CfnInitUiInterface,
+    cfnInit: CfnInitCliCaller,
+    environmentManager: CfnEnvironmentManager
+) {
     return commands.registerCommand(commandKey('init.addEnvironment'), async () => {
+        if (await environmentManager.promptInitializeIfNeeded('Environment Addition')) {
+            return
+        }
+
         try {
             const environment = await uiInterface.collectEnvironmentConfig()
             if (!environment) {
@@ -865,8 +873,12 @@ export function addEnvironmentCommand(uiInterface: CfnInitUiInterface, cfnInit: 
     })
 }
 
-export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller) {
+export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller, environmentManager: CfnEnvironmentManager) {
     return commands.registerCommand(commandKey('init.removeEnvironment'), async () => {
+        if (await environmentManager.promptInitializeIfNeeded('Environment Deletion')) {
+            return
+        }
+
         try {
             // TODO: Show quickpick of environments instead of inputting it
             const envName = await getEnvironmentName()

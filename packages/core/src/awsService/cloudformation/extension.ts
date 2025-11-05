@@ -300,8 +300,8 @@ export async function activate(context: ExtensionContext) {
                 rerunLastValidationCommand(),
                 extractToParameterPositionCursorCommand(),
                 createProjectCommand(cfnInitUiInterface),
-                addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller),
-                removeEnvironmentCommand(cfnInitCliCaller),
+                addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller, environmentManager),
+                removeEnvironmentCommand(cfnInitCliCaller, environmentManager),
                 addRelatedResourcesCommand(relatedResourcesManager),
                 credentialsService,
                 serverProvider

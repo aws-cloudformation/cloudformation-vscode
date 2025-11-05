@@ -3,14 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { window } from 'vscode'
+import { commands, window } from 'vscode'
 import { CfnEnvironmentConfig, CfnEnvironmentLookup } from '../cfn-init/cfnProjectTypes'
-import { formatMessage } from '../utils'
+import { commandKey } from '../utils'
 
 export class CfnEnvironmentSelector {
     public async selectEnvironment(environmentLookup: CfnEnvironmentLookup): Promise<string | undefined> {
         if (Object.keys(environmentLookup).length === 0) {
-            void window.showWarningMessage(formatMessage('No environments found. Initialize a CFN project first.'))
+            const choice = await window.showWarningMessage('No environments found in CFN Project', 'Add environment')
+
+            if (choice === 'Add environment') {
+                void commands.executeCommand(commandKey('init.addEnvironment'))
+            }
+
             return
         }
 
