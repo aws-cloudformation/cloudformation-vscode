@@ -35,13 +35,36 @@ export async function getTemplatePath(documentManager: DocumentManager): Promise
         })
         .sort((a, b) => a.label.localeCompare(b.label))
 
-    const selected = await window.showQuickPick(validTemplates, {
+    const options = [
+        ...validTemplates,
+        {
+            label: '$(file) Browse for template file...',
+            description: 'Select a CloudFormation template file',
+            uri: 'browse',
+        },
+    ]
+
+    const selected = await window.showQuickPick(options, {
         placeHolder: 'Select CloudFormation template',
         ignoreFocusOut: true,
     })
 
     if (!selected) {
         return undefined
+    }
+
+    if (selected.uri === 'browse') {
+        const fileUri = await window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false,
+            filters: {
+                'CloudFormation Templates': ['yaml', 'yml', 'json', 'template', 'cfn', 'txt', ''],
+            },
+            title: 'Select CloudFormation Template',
+        })
+
+        return fileUri?.[0]?.fsPath
     }
 
     return selected.uri
