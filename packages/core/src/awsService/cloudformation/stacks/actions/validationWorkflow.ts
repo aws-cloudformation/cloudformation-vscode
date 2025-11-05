@@ -49,7 +49,8 @@ export class Validation {
     private shouldEnableDeployment: boolean
     private changeSetName?: string
     private optionalFlags?: ChangeSetOptionalFlags
-    private s3Url?: string
+    private s3Bucket?: string
+    private s3Key?: string
 
     constructor(
         uri: string,
@@ -61,7 +62,8 @@ export class Validation {
         resourcesToImport?: ResourceToImport[],
         shouldEnableDeployment: boolean = false,
         optionalFlags?: ChangeSetOptionalFlags,
-        s3Url?: string
+        s3Bucket?: string,
+        s3Key?: string
     ) {
         this.id = uuidv4()
         this.uri = uri
@@ -73,14 +75,14 @@ export class Validation {
         this.resourcesToImport = resourcesToImport
         this.shouldEnableDeployment = shouldEnableDeployment
         this.optionalFlags = optionalFlags
-        this.s3Url = s3Url
+        this.s3Bucket = s3Bucket
+        this.s3Key = s3Key
     }
 
     async validate() {
         try {
             showValidationStarted(this.stackName)
             this.statusBarItem = createDeploymentStatusBar()
-
             // Capture the result to get changeSetName
             const result = await validate(
                 this.client,
@@ -93,7 +95,8 @@ export class Validation {
                     this.resourcesToImport,
                     this.shouldEnableDeployment,
                     this.optionalFlags,
-                    this.s3Url
+                    this.s3Bucket,
+                    this.s3Key
                 )
             )
 

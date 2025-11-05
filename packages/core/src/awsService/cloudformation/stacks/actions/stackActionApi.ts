@@ -19,6 +19,7 @@ import {
     DescribeDeletionStatusResult,
     DescribeChangeSetParams,
     DescribeChangeSetResult,
+    GetTemplateArtifactsResult,
 } from './stackActionRequestType'
 import {
     GetParametersRequest,
@@ -28,6 +29,7 @@ import {
     GetValidationStatusRequest,
     GetDeploymentStatusRequest,
     GetTemplateResourcesRequest,
+    GetTemplateArtifactsRequest,
     DescribeValidationStatusRequest,
     DescribeDeploymentStatusRequest,
     DeleteChangeSetRequest,
@@ -108,6 +110,13 @@ export async function getCapabilities(client: LanguageClient, params: TemplateUr
 export async function getTemplateResources(client: LanguageClient, params: TemplateUri): Promise<TemplateResource[]> {
     const result = await client.sendRequest(GetTemplateResourcesRequest, params)
     return result.resources
+}
+
+export async function getTemplateArtifacts(
+    client: LanguageClient,
+    params: TemplateUri
+): Promise<GetTemplateArtifactsResult> {
+    return await client.sendRequest(GetTemplateArtifactsRequest, params)
 }
 
 export async function describeChangeSet(

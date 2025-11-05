@@ -539,9 +539,9 @@ export async function shouldUploadToS3(): Promise<boolean | undefined> {
     return choice.value === 'upload'
 }
 
-export async function getS3Bucket(): Promise<string | undefined> {
+export async function getS3Bucket(prompt?: string): Promise<string | undefined> {
     return await window.showInputBox({
-        prompt: 'Enter S3 bucket name',
+        prompt: prompt || 'Enter S3 bucket name',
         validateInput: (value) => {
             if (!value.trim()) {
                 return 'Bucket name is required'

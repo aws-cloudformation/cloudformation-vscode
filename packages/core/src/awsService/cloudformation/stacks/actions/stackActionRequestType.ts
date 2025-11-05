@@ -30,16 +30,20 @@ export type ChangeSetOptionalFlags = {
     importExistingResources?: boolean
 }
 
-export type CreateValidationParams = Identifiable &
-    ChangeSetOptionalFlags & {
-        uri: string
-        stackName: string
-        parameters?: Parameter[]
-        capabilities?: Capability[]
-        resourcesToImport?: ResourceToImport[]
-        keepChangeSet?: boolean
-        s3Url?: string
-    }
+export type CreateValidationParams = Identifiable & {
+    uri: string
+    stackName: string
+    parameters?: Parameter[]
+    capabilities?: Capability[]
+    resourcesToImport?: ResourceToImport[]
+    keepChangeSet?: boolean
+    onStackFailure?: OnStackFailure
+    includeNestedStacks?: boolean
+    tags?: Tag[]
+    importExistingResources?: boolean
+    s3Bucket?: string
+    s3Key?: string
+}
 
 export type ChangeSetReference = {
     changeSetName: string
@@ -171,6 +175,15 @@ export type TemplateResource = {
 
 export type GetTemplateResourcesResult = {
     resources: TemplateResource[]
+}
+
+export type Artifact = {
+    resourceType: string
+    filePath: string
+}
+
+export type GetTemplateArtifactsResult = {
+    artifacts: Artifact[]
 }
 
 export enum OptionalFlagMode {
