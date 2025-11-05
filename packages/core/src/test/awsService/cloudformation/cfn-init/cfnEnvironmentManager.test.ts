@@ -85,6 +85,37 @@ describe('CfnEnvironmentManager', () => {
         })
     })
 
+    describe('promptInitializeIfNeeded', () => {
+        it('should return false when project is already initialized', async () => {
+            // Project is initialized by default in beforeEach
+            const result = await environmentManager.promptInitializeIfNeeded('Test Operation')
+
+            assert.strictEqual(result, false)
+            const messages = getTestWindow().shownMessages
+            assert.strictEqual(messages.length, 0)
+        })
+
+        it('should show warning and execute command when user clicks Initialize Project', async () => {
+            existsDirStub.resolves(false)
+            existsFileStub.resolves(false)
+
+            getTestWindow().onDidShowMessage((message) => {
+                if (message.message === 'You must initialize your CFN Project to perform Test Operation') {
+                    message.selectItem('Initialize Project')
+                }
+            })
+
+            const executeCommandStub = sinon.stub(commands, 'executeCommand')
+
+            const result = await environmentManager.promptInitializeIfNeeded('Test Operation')
+
+            assert.strictEqual(result, true)
+            const messages = getTestWindow().shownMessages
+            assert(messages.some((m) => m.message === 'You must initialize your CFN Project to perform Test Operation'))
+            assert(executeCommandStub.calledWith('aws.cloudformation.init.initializeProject'))
+        })
+    })
+
     describe('selectEnvironment', () => {
         it('should show warning when project is not initialized', async () => {
             // Override default - mock project as not initialized
@@ -93,7 +124,7 @@ describe('CfnEnvironmentManager', () => {
 
             // Set up message handler to simulate user clicking "Initialize Project"
             getTestWindow().onDidShowMessage((message) => {
-                if (message.message === 'You must initialize your CFN Project to select an Environment') {
+                if (message.message === 'You must initialize your CFN Project to perform Environment Selection') {
                     // Simulate user clicking the "Initialize Project" button
                     message.selectItem('Initialize Project')
                 }
@@ -104,7 +135,11 @@ describe('CfnEnvironmentManager', () => {
             await environmentManager.selectEnvironment()
 
             const messages = getTestWindow().shownMessages
-            assert(messages.some((m) => m.message === 'You must initialize your CFN Project to select an Environment'))
+            assert(
+                messages.some(
+                    (m) => m.message === 'You must initialize your CFN Project to perform Environment Selection'
+                )
+            )
             assert(executeCommandStub.calledWith('aws.cloudformation.init.initializeProject'))
             assert(mockEnvironmentSelector.selectEnvironment.notCalled)
         })

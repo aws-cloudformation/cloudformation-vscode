@@ -36,6 +36,8 @@ export class CfnEnvironmentManager implements Disposable {
     private readonly auth = Auth.instance
     private listeners: (() => void)[] = []
 
+    private readonly initializeOption = 'Initialize Project'
+
     constructor(
         private readonly client: LanguageClient,
         private readonly environmentSelector: CfnEnvironmentSelector,
@@ -56,16 +58,24 @@ export class CfnEnvironmentManager implements Disposable {
         }
     }
 
-    public async selectEnvironment(): Promise<void> {
+    public async promptInitializeIfNeeded(operation: string): Promise<boolean> {
         if (!(await this.isProjectInitialized())) {
             const choice = await window.showWarningMessage(
-                'You must initialize your CFN Project to select an Environment',
-                'Initialize Project'
+                `You must initialize your CFN Project to perform ${operation}`,
+                this.initializeOption
             )
 
-            if (choice === 'Initialize Project') {
+            if (choice === this.initializeOption) {
                 void commands.executeCommand(commandKey('init.initializeProject'))
             }
+            return true
+        }
+
+        return false
+    }
+
+    public async selectEnvironment(): Promise<void> {
+        if (await this.promptInitializeIfNeeded('Environment Selection')) {
             return
         }
 
