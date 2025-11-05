@@ -34,22 +34,14 @@ export async function promptTelemetryOptIn(
         return telemetryEnabled
     }
 
-    const message = 'Enable telemetry for AWS CloudFormation Language Server?'
-    const detail =
-        'Help improve the language server by sharing anonymous usage data with AWS. You can change this preference at any time in Settings.'
+    const message =
+        'Help us improve the AWS CloudFormation Language Server by sharing anonymous data with AWS. You can change this preference at any time in aws.cloudformation Settings.'
 
-    const allow = 'Allow'
+    const allow = 'Yes, Allow'
     const later = 'Not Now'
     const never = 'Never'
     const learnMore = 'Learn More'
-    const response = await window.showInformationMessage(
-        message,
-        { modal: true, detail },
-        allow,
-        later,
-        never,
-        learnMore
-    )
+    const response = await window.showInformationMessage(message, allow, later, never, learnMore)
 
     if (response === learnMore) {
         await env.openExternal(
