@@ -4,7 +4,7 @@
  */
 
 import { NotificationType } from 'vscode-languageserver-protocol'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { ViewColumn, window, workspace } from 'vscode'
 
 type DocumentPreviewType = {
@@ -18,7 +18,7 @@ const DocumentPreviewNotification = new NotificationType<DocumentPreviewType>('a
 
 export class DocumentPreview {
     constructor(private readonly client: LanguageClient) {
-        this.client.onNotification(DocumentPreviewNotification, (preview) => {
+        this.client.onNotification(DocumentPreviewNotification, (preview: DocumentPreviewType) => {
             if (preview) {
                 void docPreview(preview)
             }

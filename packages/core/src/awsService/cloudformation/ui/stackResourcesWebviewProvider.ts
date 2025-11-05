@@ -4,7 +4,7 @@
  */
 
 import { WebviewView, WebviewViewProvider } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { showErrorMessage } from './message'
 import { GetStackResourcesRequest } from '../stacks/actions/stackActionProtocol'
 import { StackResourceSummary, GetStackResourcesParams } from '../stacks/actions/stackActionRequestType'

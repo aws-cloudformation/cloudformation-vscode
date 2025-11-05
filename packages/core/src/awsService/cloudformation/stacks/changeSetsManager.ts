@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { ListChangeSetsRequest } from './actions/stackActionProtocol'
 import { ChangeSetInfo } from './actions/stackActionRequestType'
 

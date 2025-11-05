@@ -4,7 +4,7 @@
  */
 
 import { Position, Range, TextEdit, TextEditorRevealType, Uri, window, workspace, WorkspaceEdit } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { RelatedResourceSelector } from '../ui/relatedResourceSelector'
 import { ResourceSelector } from '../ui/resourceSelector'
 import { insertRelatedResources } from './relatedResourcesApi'

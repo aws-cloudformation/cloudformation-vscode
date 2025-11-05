@@ -5,7 +5,7 @@
 
 import { WebviewView, WebviewViewProvider, Disposable } from 'vscode'
 import { Output } from '@aws-sdk/client-cloudformation'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { extractErrorMessage } from '../utils'
 import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
 

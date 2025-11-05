@@ -4,7 +4,7 @@
  */
 
 import { CancellationToken, CodeLens, CodeLensProvider, Event, EventEmitter, TextDocument } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 
 const codeLensRequest = 'textDocument/codeLens'
 

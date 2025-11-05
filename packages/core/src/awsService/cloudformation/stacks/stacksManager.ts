@@ -6,7 +6,7 @@
 import { commands, Disposable, window } from 'vscode'
 import { StackStatus, StackSummary } from '@aws-sdk/client-cloudformation'
 import { RequestType } from 'vscode-languageserver-protocol'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { commandKey } from '../utils'
 import { setContext } from '../../../shared/vscode/setContext'
 

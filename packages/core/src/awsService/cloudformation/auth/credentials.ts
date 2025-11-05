@@ -4,7 +4,7 @@
  */
 
 import { Disposable } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { StacksManager } from '../stacks/stacksManager'
 import { ResourcesManager } from '../resources/resourcesManager'
 import { CloudFormationRegionManager } from '../explorer/regionManager'

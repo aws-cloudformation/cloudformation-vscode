@@ -4,7 +4,7 @@
  */
 
 import { window } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { getDeploymentStatus } from '../stacks/actions/stackActionApi'
 import { StackActionPhase, StackActionState } from '../stacks/actions/stackActionRequestType'
 

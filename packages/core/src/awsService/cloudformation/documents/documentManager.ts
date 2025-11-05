@@ -4,7 +4,7 @@
  */
 
 import { NotificationType } from 'vscode-languageserver-protocol'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 
 export type DocumentMetadata = {
     uri: string
@@ -26,7 +26,7 @@ export class DocumentManager {
     private readonly listeners: DocumentsChangeListener[] = []
 
     constructor(private readonly client: LanguageClient) {
-        this.client.onNotification(DocumentsMetadataNotification, (documents) => {
+        this.client.onNotification(DocumentsMetadataNotification, (documents: DocumentMetadata[]) => {
             this.documents = documents
             for (const listener of this.listeners) {
                 listener(this.documents)

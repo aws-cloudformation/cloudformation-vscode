@@ -4,8 +4,15 @@
  */
 
 import { ExtensionContext, window, languages } from 'vscode'
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient'
-import { CloseAction, ErrorAction } from 'vscode-languageclient'
+import {
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+    TransportKind,
+    ErrorHandlerResult,
+    CloseHandlerResult,
+} from 'vscode-languageclient/node'
+import { CloseAction, ErrorAction, Message } from 'vscode-languageclient/node'
 import { formatMessage, toString } from './utils'
 import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
@@ -158,13 +165,13 @@ export async function activate(context: ExtensionContext) {
             },
         },
         errorHandler: {
-            error: (error, message, count) => {
+            error: (error: Error, message: Message | undefined, count: number | undefined): ErrorHandlerResult => {
                 void window.showErrorMessage(formatMessage(`Error count = ${count}): ${toString(message)}`))
-                return ErrorAction.Continue
+                return { action: ErrorAction.Continue }
             },
-            closed: () => {
+            closed: (): CloseHandlerResult => {
                 void window.showWarningMessage(formatMessage(`Server connection closed`))
-                return CloseAction.DoNotRestart
+                return { action: CloseAction.DoNotRestart }
             },
         },
     }
@@ -172,10 +179,9 @@ export async function activate(context: ExtensionContext) {
     client = new LanguageClient(ExtensionId, ExtensionName, serverOptions, clientOptions)
 
     const stacksManager = new StacksManager(client)
-    const clientDisposable = client.start()
 
     client
-        .onReady()
+        .start()
         .then(() => {
             const documentManager = new DocumentManager(client)
 
@@ -255,7 +261,7 @@ export async function activate(context: ExtensionContext) {
             )
 
             context.subscriptions.push(
-                clientDisposable,
+                { dispose: () => client?.stop() },
                 codeLensProvider,
                 stacksManager,
                 window.createTreeView('aws.cloudformation', {

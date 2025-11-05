@@ -12,7 +12,7 @@ import {
     ResourceToImport,
     ChangeSetOptionalFlags,
 } from './stackActionRequestType'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
 import { setContext } from '../../../../shared/vscode/setContext'
 import { describeValidationStatus, getValidationStatus, validate } from './stackActionApi'

@@ -5,7 +5,7 @@ import { getLogger } from '../../../shared/logger'
  */
 
 import { window } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { ResourceTypesRequest, ListResourcesRequest, ResourceList } from '../cfn/resourceRequestTypes'
 import { getLogger } from '../../../shared/logger/logger'
 
@@ -27,7 +27,7 @@ export class ResourceSelector {
                 return undefined
             }
 
-            const quickPickItems = availableTypes.map((type) => ({
+            const quickPickItems = availableTypes.map((type: string) => ({
                 label: type,
                 picked: selectedTypes.includes(type),
             }))
@@ -119,7 +119,7 @@ export class ResourceSelector {
                 resources: [{ resourceType }],
             })
 
-            const resources = resourcesResponse.resources.find((r) => r.typeName === resourceType)
+            const resources = resourcesResponse.resources.find((r: { typeName: string }) => r.typeName === resourceType)
             return resources?.resourceIdentifiers ?? []
         } catch (error) {
             getLogger().error(`Failed to get resources for type ${resourceType}:`, error)

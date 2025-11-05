@@ -4,7 +4,7 @@
  */
 
 import { window } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { getAuthoredResourceTypes, getRelatedResourceTypes } from '../relatedResources/relatedResourcesApi'
 
 export class RelatedResourceSelector {

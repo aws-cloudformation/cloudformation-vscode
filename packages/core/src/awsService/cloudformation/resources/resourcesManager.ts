@@ -6,7 +6,7 @@ import { getLogger } from '../../../shared/logger'
 
 import { ResourceSelectionResult, ResourceSelector } from '../ui/resourceSelector'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import {
     ListResourcesRequest,
     RefreshResourcesRequest,
@@ -167,7 +167,9 @@ export class ResourcesManager {
                         resources: [{ resourceType }],
                     })
 
-                    const updatedResource = response.resources.find((r) => r.typeName === resourceType)
+                    const updatedResource = response.resources.find(
+                        (r: { typeName: string }) => r.typeName === resourceType
+                    )
                     if (updatedResource) {
                         this.resources.set(resourceType, updatedResource)
                     }
@@ -313,18 +315,24 @@ export class ResourcesManager {
         }
 
         try {
-            const targetLine = completionItem.textEdit.range.start.line
+            const textEdit = completionItem.textEdit
+            if (!textEdit || !('range' in textEdit)) {
+                getLogger().warn('No valid textEdit range found')
+                return
+            }
+
+            const targetLine = textEdit.range.start.line
             await this.ensureLineExists(editor, targetLine)
 
             const range = new Range(
-                new Position(completionItem.textEdit.range.start.line, completionItem.textEdit.range.start.character),
-                new Position(completionItem.textEdit.range.end.line, completionItem.textEdit.range.end.character)
+                new Position(textEdit.range.start.line, textEdit.range.start.character),
+                new Position(textEdit.range.end.line, textEdit.range.end.character)
             )
 
             getLogger().info(
                 `Inserting snippet at server-provided position: line ${range.start.line}, char ${range.start.character}`
             )
-            await editor.insertSnippet(new SnippetString(completionItem.textEdit.newText), range)
+            await editor.insertSnippet(new SnippetString(textEdit.newText), range)
             getLogger().info('Snippet insertion successful')
         } catch (error) {
             getLogger().error(`Failed to insert snippet: ${error instanceof Error ? error.message : String(error)}`)

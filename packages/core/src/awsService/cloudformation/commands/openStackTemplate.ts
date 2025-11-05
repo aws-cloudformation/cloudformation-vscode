@@ -5,7 +5,7 @@ import { getLogger } from '../../../shared/logger'
  */
 
 import { commands, window, workspace, ViewColumn, Position, Range, Selection, ProgressLocation } from 'vscode'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { RequestType } from 'vscode-languageserver-protocol'
 import { commandKey, formatMessage } from '../utils'
 import { getLogger } from '../../../shared/logger/logger'

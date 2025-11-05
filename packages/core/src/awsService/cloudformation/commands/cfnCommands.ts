@@ -5,8 +5,8 @@
 
 import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType, ProgressLocation } from 'vscode'
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
-import { LanguageClient } from 'vscode-languageclient'
-import { Command } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
+import { Command } from 'vscode-languageclient/node'
 import * as yaml from 'js-yaml'
 
 import { Deployment } from '../stacks/actions/deploymentWorkflow'

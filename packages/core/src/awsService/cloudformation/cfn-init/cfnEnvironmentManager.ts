@@ -24,7 +24,7 @@ import { validateParameterValue } from '../stacks/actions/stackActionInputValida
 import { getLogger } from '../../../shared/logger/logger'
 import { DocumentInfo } from './cfnEnvironmentRequestType'
 import { parseCfnEnvironmentFiles } from './cfnEnvironmentApi'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { Parameter } from '@aws-sdk/client-cloudformation'
 import { convertRecordToParameters, convertRecordToTags } from './utils'
 

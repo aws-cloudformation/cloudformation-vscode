@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { StackActionPhase, StackActionState } from './stackActionRequestType'
-import { LanguageClient } from 'vscode-languageclient'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { showDeploymentStarted, showDeploymentSuccess, showDeploymentFailure, showErrorMessage } from '../../ui/message'
 import { createDeploymentStatusBar, updateWorkflowStatus } from '../../ui/statusBar'
 import { StatusBarItem } from 'vscode'
