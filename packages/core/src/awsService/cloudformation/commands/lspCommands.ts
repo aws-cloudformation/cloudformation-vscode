@@ -11,8 +11,7 @@ export function restartCommand(client: LanguageClient) {
     return commands.registerCommand(commandKey('server.restartServer'), async () => {
         try {
             if (client) {
-                await client.stop()
-                client.start()
+                await client.restart()
             }
         } catch (error) {
             void window.showErrorMessage(formatMessage(`Failed to restart server: ${toString(error)}`))
