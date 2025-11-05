@@ -7,10 +7,8 @@ import { commands, env, Uri, window, workspace, Range, Selection, TextEditorReve
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
-import { RequestType } from 'vscode-languageclient'
 import * as yaml from 'js-yaml'
 
-const UploadFileRequest = new RequestType<{ localFilePath: string; s3Url: string }, void, void>('aws/s3/file/upload')
 import { Deployment } from '../stacks/actions/deploymentWorkflow'
 import { Parameter, Capability, OnStackFailure, Stack } from '@aws-sdk/client-cloudformation'
 import {
@@ -379,7 +377,6 @@ async function validateArtifactPaths(client: LanguageClient, templateUri: string
         if (artifactsResult.artifacts.length === 0) {
             return false
         }
-        console.log('ARTIFACTS: ', artifactsResult.artifacts)
 
         for (const artifact of artifactsResult.artifacts) {
             const artifactPath = artifact.filePath.startsWith('/')
@@ -452,20 +449,7 @@ async function changeSetSteps(
         if (!s3Key) {
             return
         }
-
-        const s3Url = `s3://${s3Bucket}/${s3Key}`
-
-        try {
-            await client.sendRequest(UploadFileRequest, {
-                localFilePath: templateUri,
-                s3Url: s3Url,
-            })
-        } catch (error) {
-            showErrorMessage(`Failed to upload to S3: ${extractErrorMessage(error)}`)
-            return
-        }
     } else if (hasArtifacts) {
-        console.log('Template CONTAINS ARTIFACT')
         s3Bucket = await getS3Bucket(
             'S3 bucket is required because template contains artifacts that need to be uploaded to S3'
         )
@@ -541,7 +525,6 @@ async function changeSetSteps(
     if (capabilities === undefined) {
         return
     } // User cancelled
-    console.log('S3BUCKET: ', s3Bucket, 'KEY:', s3Key)
     return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags, s3Bucket, s3Key }
 }
 

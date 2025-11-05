@@ -83,7 +83,6 @@ export class Validation {
         try {
             showValidationStarted(this.stackName)
             this.statusBarItem = createDeploymentStatusBar()
-            console.log('S3:', this.s3Bucket, this.s3Key)
             // Capture the result to get changeSetName
             const result = await validate(
                 this.client,
