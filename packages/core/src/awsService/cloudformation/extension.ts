@@ -273,7 +273,7 @@ export async function activate(context: ExtensionContext) {
                 showStackOutputsCommand(outputsProvider),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
-                refreshResourceListCommand(resourcesManager),
+                refreshResourceListCommand(resourcesManager, cfnExplorer),
                 copyResourceIdentifierCommand(),
                 selectResourceTypesCommand(resourcesManager),
                 importResourceStateCommand(resourcesManager),
