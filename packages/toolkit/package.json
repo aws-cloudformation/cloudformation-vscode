@@ -1461,6 +1461,26 @@
                     "when": "false"
                 },
                 {
+                    "command": "aws.cloudformation.api.searchResource",
+                    "when": "false"
+                },
+                {
+                    "command": "aws.cloudformation.api.loadMoreChangeSets",
+                    "when": "false"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.refreshChangeSets",
+                    "when": "false"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.viewChangeSet",
+                    "when": "false"
+                },
+                {
+                    "command": "aws.cloudformation.stacks.deleteChangeSet",
+                    "when": "false"
+                },
+                {
                     "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
                     "when": "false"
                 }
@@ -2608,12 +2628,12 @@
                 {
                     "command": "aws.cloudformation.api.loadMoreStacks",
                     "when": "view == aws.cloudformation && viewItem == stackSectionWithMore && !aws.cloudformation.loadingStacks",
-                    "group": "inline@2"
+                    "group": "inline@4"
                 },
                 {
                     "command": "aws.cloudformation.stacks.refresh",
                     "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
-                    "group": "inline@1"
+                    "group": "inline@3"
                 },
                 {
                     "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
@@ -2628,7 +2648,7 @@
                 {
                     "command": "aws.cloudformation.api.validateDeployment",
                     "when": "view == aws.cloudformation && (viewItem == stackSection || viewItem == stackSectionWithMore) && !aws.cloudformation.refreshingStacks",
-                    "group": "inline@2"
+                    "group": "inline@1"
                 },
                 {
                     "command": "aws.cloudformation.api.validateDeployment",
@@ -4886,11 +4906,6 @@
                 "category": "AWS CloudFormation"
             },
             {
-                "command": "aws.cloudformation.server.attachDebugger",
-                "title": "Attach Debugger to Server",
-                "category": "AWS CloudFormation"
-            },
-            {
                 "command": "aws.cloudformation.server.restartServer",
                 "title": "Restart Server",
                 "category": "AWS CloudFormation"
@@ -4927,7 +4942,7 @@
             {
                 "command": "aws.cloudformation.stacks.viewChangeSet",
                 "title": "View Change Set",
-                "icon": "$(search)",
+                "icon": "$(eye)",
                 "category": "AWS CloudFormation"
             },
             {
@@ -4951,22 +4966,22 @@
             {
                 "command": "aws.cloudformation.init.initializeProject",
                 "title": "CFN Init: Initialize Project",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.init.addEnvironment",
                 "title": "CFN Init: Add Environment",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.init.removeEnvironment",
                 "title": "CFN Init: Remove Environment",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             },
             {
                 "command": "aws.cloudformation.api.addRelatedResources",
                 "title": "Add Related Resources by Type",
-                "category": "CloudFormation"
+                "category": "AWS CloudFormation"
             }
         ],
         "jsonValidation": [

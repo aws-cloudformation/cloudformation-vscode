@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType } from 'vscode'
+import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType, ProgressLocation } from 'vscode'
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
 import { LanguageClient } from 'vscode-languageclient'
 import { Command } from 'vscode-languageclient'
@@ -65,6 +65,7 @@ import { ResourceContextValue } from '../explorer/contextValue'
 import { getLogger } from '../../../shared/logger/logger'
 import { CloudFormationExplorer } from '../explorer/explorer'
 import { StacksNode } from '../explorer/nodes/stacksNode'
+import { ResourcesNode } from '../explorer/nodes/resourcesNode'
 import { ResourceTypeNode } from '../explorer/nodes/resourceTypeNode'
 import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
 import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
@@ -624,8 +625,33 @@ export function refreshAllResourcesCommand(resourcesManager: ResourcesManager) {
     })
 }
 
-export function refreshResourceListCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(RefreshResourceListCommand.command, (resourceTypeNode: ResourceTypeNode) => {
+export function refreshResourceListCommand(resourcesManager: ResourcesManager, explorer: CloudFormationExplorer) {
+    return commands.registerCommand(RefreshResourceListCommand.command, async (resourceTypeNode?: ResourceTypeNode) => {
+        if (!resourceTypeNode) {
+            const children = await explorer.getChildren()
+            const resourcesNode = children.find((child) => child instanceof ResourcesNode) as ResourcesNode | undefined
+            if (!resourcesNode) {
+                return
+            }
+
+            const resourceTypeNodes = (await resourcesNode.getChildren()) as ResourceTypeNode[]
+            if (resourceTypeNodes.length === 0) {
+                void window.showInformationMessage('No resource types selected')
+                return
+            }
+
+            const selected = await window.showQuickPick(
+                resourceTypeNodes.map((n) => ({ label: n.typeName, node: n })),
+                { placeHolder: 'Select resource type to refresh' }
+            )
+
+            if (!selected) {
+                return
+            }
+
+            resourceTypeNode = selected.node
+        }
+
         resourcesManager.refreshResourceList(resourceTypeNode.typeName)
     })
 }
@@ -695,16 +721,65 @@ export function extractToParameterPositionCursorCommand() {
 }
 
 export function loadMoreResourcesCommand(explorer: CloudFormationExplorer) {
-    return commands.registerCommand(commandKey('api.loadMoreResources'), async (node: ResourceTypeNode) => {
+    return commands.registerCommand(commandKey('api.loadMoreResources'), async (node?: ResourceTypeNode) => {
+        if (!node) {
+            const children = await explorer.getChildren()
+            const resourcesNode = children.find((child) => child instanceof ResourcesNode) as ResourcesNode | undefined
+            if (!resourcesNode) {
+                return
+            }
+
+            const resourceTypeNodes = (await resourcesNode.getChildren()) as ResourceTypeNode[]
+            const nodesWithMore = resourceTypeNodes.filter((n) => n.contextValue === 'resourceTypeWithMore')
+
+            if (nodesWithMore.length === 0) {
+                void window.showInformationMessage('No resource types have more resources to load')
+                return
+            }
+
+            const selected = await window.showQuickPick(
+                nodesWithMore.map((n) => ({ label: n.typeName, node: n })),
+                { placeHolder: 'Select resource type to load more' }
+            )
+
+            if (!selected) {
+                return
+            }
+
+            node = selected.node
+        }
+
         await node.loadMoreResources()
         explorer.refresh(node)
     })
 }
 
 export function loadMoreStacksCommand(explorer: CloudFormationExplorer) {
-    return commands.registerCommand(commandKey('api.loadMoreStacks'), async (node: StacksNode) => {
-        await node.loadMoreStacks()
-        explorer.refresh(node)
+    return commands.registerCommand(commandKey('api.loadMoreStacks'), async (node?: StacksNode) => {
+        if (!node) {
+            const children = await explorer.getChildren()
+            node = children.find((child) => child instanceof StacksNode) as StacksNode | undefined
+            if (!node) {
+                return
+            }
+        }
+
+        if (node.contextValue !== 'stackSectionWithMore') {
+            void window.showInformationMessage('No more stacks to load')
+            return
+        }
+
+        const stacksNode = node
+        await window.withProgress(
+            {
+                location: ProgressLocation.Notification,
+                title: 'Loading More Stacks',
+            },
+            async () => {
+                await stacksNode.loadMoreStacks()
+                explorer.refresh(stacksNode)
+            }
+        )
     })
 }
 
