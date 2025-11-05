@@ -8,12 +8,13 @@ import * as sinon from 'sinon'
 import { CfnEnvironmentManager } from '../../../../awsService/cloudformation/cfn-init/cfnEnvironmentManager'
 import { Auth } from '../../../../auth/auth'
 import { globals } from '../../../../shared'
-import { workspace } from 'vscode'
+import { workspace, commands } from 'vscode'
 import fs from '../../../../shared/fs/fs'
 import { CfnEnvironmentSelector } from '../../../../awsService/cloudformation/ui/cfnEnvironmentSelector'
 import { CfnEnvironmentFileSelector } from '../../../../awsService/cloudformation/ui/cfnEnvironmentFileSelector'
 import { OnStackFailure } from '@aws-sdk/client-cloudformation'
 import * as environmentApi from '../../../../awsService/cloudformation/cfn-init/cfnEnvironmentApi'
+import { getTestWindow } from '../../../shared/vscode/window'
 
 describe('CfnEnvironmentManager', () => {
     let environmentManager: CfnEnvironmentManager
@@ -25,6 +26,9 @@ describe('CfnEnvironmentManager', () => {
     let workspaceStub: sinon.SinonStub
     let parseEnvironmentFilesStub: sinon.SinonStub
     let mockClient: any
+
+    let existsDirStub: sinon.SinonStub
+    let existsFileStub: sinon.SinonStub
 
     beforeEach(() => {
         mockAuth = {
@@ -55,6 +59,10 @@ describe('CfnEnvironmentManager', () => {
         } as any
 
         fsStub = sinon.stub(fs, 'readFileText')
+        // Mock project as initialized by default
+        existsDirStub = sinon.stub(fs, 'existsDir').resolves(true)
+        existsFileStub = sinon.stub(fs, 'existsFile').resolves(true)
+
         workspaceStub = sinon.stub(workspace, 'workspaceFolders').value([{ uri: { fsPath: '/test/workspace' } }])
         parseEnvironmentFilesStub = sinon.stub(environmentApi, 'parseCfnEnvironmentFiles')
         mockClient = {}
@@ -78,6 +86,29 @@ describe('CfnEnvironmentManager', () => {
     })
 
     describe('selectEnvironment', () => {
+        it('should show warning when project is not initialized', async () => {
+            // Override default - mock project as not initialized
+            existsDirStub.resolves(false)
+            existsFileStub.resolves(false)
+
+            // Set up message handler to simulate user clicking "Initialize Project"
+            getTestWindow().onDidShowMessage((message) => {
+                if (message.message === 'You must initialize your CFN Project to select an Environment') {
+                    // Simulate user clicking the "Initialize Project" button
+                    message.selectItem('Initialize Project')
+                }
+            })
+
+            const executeCommandStub = sinon.stub(commands, 'executeCommand')
+
+            await environmentManager.selectEnvironment()
+
+            const messages = getTestWindow().shownMessages
+            assert(messages.some((m) => m.message === 'You must initialize your CFN Project to select an Environment'))
+            assert(executeCommandStub.calledWith('aws.cloudformation.init.initializeProject'))
+            assert(mockEnvironmentSelector.selectEnvironment.notCalled)
+        })
+
         it('should select environment successfully', async () => {
             const mockEnvironmentLookup = { 'test-env': { name: 'test-env', profile: 'test-profile' } }
             fsStub.resolves(JSON.stringify({ environments: mockEnvironmentLookup }))
