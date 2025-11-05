@@ -898,23 +898,27 @@
                     "id": "aws.cloudformation.diff",
                     "name": "Stack Changes",
                     "type": "webview",
-                    "when": "aws.cloudformation.stacks.diffVisible"
+                    "when": "aws.cloudformation.stacks.diffVisible",
+                    "icon": "$(diff)"
                 },
                 {
                     "id": "aws.cloudformation.stack.events",
                     "name": "Stack Events",
-                    "type": "webview"
+                    "type": "webview",
+                    "icon": "$(history)"
                 },
                 {
                     "id": "aws.cloudformation.detail",
                     "name": "Stack Resources",
                     "type": "webview",
-                    "when": "aws.cloudformation.stacks.detailVisible"
+                    "when": "aws.cloudformation.stacks.detailVisible",
+                    "icon": "$(symbol-class)"
                 },
                 {
                     "id": "aws.cloudformation.stack.outputs",
                     "name": "Stack Outputs",
-                    "type": "webview"
+                    "type": "webview",
+                    "icon": "$(output)"
                 }
             ],
             "explorer": [
