@@ -43,7 +43,7 @@ export class AwsCredentialsService implements Disposable {
 
         if (credentials && profileName) {
             const encryptedRequest = await this.createEncryptedCredentialsRequest({
-                profile: profileName,
+                profile: profileName.replaceAll('profile:', ''),
                 region: this.regionManager.getSelectedRegion(),
                 accessKeyId: credentials.accessKeyId,
                 secretAccessKey: credentials.secretAccessKey,

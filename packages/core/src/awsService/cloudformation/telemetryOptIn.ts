@@ -61,18 +61,15 @@ export async function promptTelemetryOptIn(
     if (response === allow) {
         await cfnTelemetrySettings.update('enabled', true)
         await context.globalState.update(commandKey('telemetry.hasResponded'), true)
-        return true
     } else if (response === never) {
         await cfnTelemetrySettings.update('enabled', false)
         await context.globalState.update(commandKey('telemetry.hasResponded'), true)
-        return false
     } else if (response === later) {
         await cfnTelemetrySettings.update('enabled', false)
         await context.globalState.update(commandKey('telemetry.lastPromptDate'), now)
-        return false
     }
 
     // User dismissed the prompt - treat as "Not Now"
     await context.globalState.update(commandKey('telemetry.lastPromptDate'), now)
-    return false
+    return cfnTelemetrySettings.get('enabled', false)
 }
