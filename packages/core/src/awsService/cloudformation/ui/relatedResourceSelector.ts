@@ -18,14 +18,14 @@ export class RelatedResourceSelector {
         }
 
         return window.showQuickPick(resourceTypes, {
-            placeHolder: 'Select a resource type to add related resources',
+            placeHolder: 'Select an existing resource type from your template',
             canPickMany: false,
         })
     }
 
     async promptCreateOrImport(): Promise<'create' | 'import' | undefined> {
         const action = await window.showQuickPick(['Create new', 'Import existing'], {
-            placeHolder: 'How would you like to add related resources?',
+            placeHolder: 'How would you like to add related resource types?',
             canPickMany: false,
         })
 
@@ -45,7 +45,7 @@ export class RelatedResourceSelector {
         }
 
         return window.showQuickPick(relatedTypes, {
-            placeHolder: 'Select related resources',
+            placeHolder: 'Select related resource types',
             canPickMany: true,
         })
     }
