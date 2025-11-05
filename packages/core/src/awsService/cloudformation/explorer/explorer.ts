@@ -69,7 +69,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
         if (!element) {
             return this.getRootChildren()
         }
-        return await element.getChildren()
+        return element.getChildren()
     }
 
     private getRootChildren(): AWSTreeNodeBase[] {
@@ -85,14 +85,12 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
                 return [signInNode]
             }
 
-            const children: AWSTreeNodeBase[] = [
+            return [
                 new RegionSelectorNode(this.regionManager),
                 new CfnEnvironmentsNode(this.environmentManager),
                 new StacksNode(this.stacksManager, this.changeSetsManager),
                 new ResourcesNode(this.resourcesManager),
             ]
-
-            return children
         } catch (error) {
             getLogger().error('CloudFormation explorer error: %O', error)
             return []
