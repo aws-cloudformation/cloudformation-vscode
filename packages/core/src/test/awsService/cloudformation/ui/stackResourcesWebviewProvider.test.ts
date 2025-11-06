@@ -17,7 +17,11 @@ describe('StackResourcesWebviewProvider', function () {
         mockClient = {
             sendRequest: sandbox.stub(),
         }
-        provider = new StackResourcesWebviewProvider(mockClient)
+        const mockCoordinator = {
+            onDidChangeStack: sandbox.stub().returns({ dispose: () => {} }),
+            setStack: sandbox.stub().resolves(),
+        } as any
+        provider = new StackResourcesWebviewProvider(mockClient, mockCoordinator)
     })
 
     afterEach(function () {
@@ -255,7 +259,10 @@ describe('StackResourcesWebviewProvider', function () {
         })
 
         it('should return early if no client or stack name', async function () {
-            const providerWithoutClient = new StackResourcesWebviewProvider(undefined as any)
+            const mockCoordinator = {
+                onDidChangeStack: sandbox.stub().returns({ dispose: () => {} }),
+            } as any
+            const providerWithoutClient = new StackResourcesWebviewProvider(undefined as any, mockCoordinator)
             const mockWebview = createMockWebview()
             providerWithoutClient.resolveWebviewView(mockWebview as any)
 
