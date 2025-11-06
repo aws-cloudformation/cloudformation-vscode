@@ -24,6 +24,8 @@ import { DocumentManager } from '../documents/documentManager'
 import { ChangeSetsManager } from '../stacks/changeSetsManager'
 import { CfnEnvironmentManager } from '../cfn-init/cfnEnvironmentManager'
 import { CfnEnvironmentsNode } from './nodes/cfnEnvironmentsNode'
+import { telemetry } from '../../../shared/telemetry/telemetry'
+import { cloudFormationUiClickMetric } from '../utils'
 
 export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNodeBase>, RefreshableAwsTreeProvider {
     public viewProviderId: string = 'aws.cloudformation'
@@ -52,6 +54,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
     }
 
     public async selectRegion(): Promise<void> {
+        telemetry.ui_click.emit({ elementId: cloudFormationUiClickMetric })
         const changed = await this.regionManager.showRegionSelector()
         if (changed) {
             this.refresh()
@@ -69,6 +72,7 @@ export class CloudFormationExplorer implements vscode.TreeDataProvider<AWSTreeNo
         if (!element) {
             return this.getRootChildren()
         }
+        telemetry.ui_click.emit({ elementId: cloudFormationUiClickMetric })
         return element.getChildren()
     }
 
