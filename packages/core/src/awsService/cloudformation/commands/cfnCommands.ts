@@ -725,15 +725,8 @@ export function extractToParameterPositionCursorCommand(client: LanguageClient) 
             actionType?: string
         ) => {
             try {
-                getLogger().info(
-                    `extractToParameterPositionCursor called with: uri=${documentUri}, param=${parameterName}, type=${documentType}, trackingCmd=${trackingCommand}, actionType=${actionType}`
-                )
-
                 // Track code action acceptance on the server if tracking parameters provided
                 if (trackingCommand && actionType) {
-                    getLogger().info(
-                        `Executing tracking command on server: ${trackingCommand} with actionType: ${actionType}`
-                    )
                     await client.sendRequest('workspace/executeCommand', {
                         command: trackingCommand,
                         arguments: [actionType],
@@ -748,11 +741,8 @@ export function extractToParameterPositionCursorCommand(client: LanguageClient) 
                 const position = findParameterDescriptionPosition(text, parameterName, documentType)
 
                 if (position) {
-                    getLogger().info(`Positioning cursor at line ${position.line}, character ${position.character}`)
                     editor.selection = new Selection(position, position)
                     editor.revealRange(new Range(position, position), TextEditorRevealType.InCenter)
-                } else {
-                    getLogger().warn(`Could not find position for parameter: ${parameterName}`)
                 }
             } catch (error) {
                 getLogger().error(`Error positioning cursor in parameter description: ${error}`)
