@@ -35,7 +35,7 @@ export async function promptTelemetryOptIn(
     }
 
     const message =
-        'Help us improve the AWS CloudFormation Language Server by sharing anonymous data with AWS. You can change this preference at any time in aws.cloudformation Settings.'
+        'Help us improve the AWS CloudFormation Language Server by sharing anonymous telemetry data with AWS. You can change this preference at any time in aws.cloudformation Settings.'
 
     const allow = 'Yes, Allow'
     const later = 'Not Now'
@@ -61,7 +61,5 @@ export async function promptTelemetryOptIn(
         await context.globalState.update(commandKey('telemetry.lastPromptDate'), now)
     }
 
-    // User dismissed the prompt - treat as "Not Now"
-    await context.globalState.update(commandKey('telemetry.lastPromptDate'), now)
     return cfnTelemetrySettings.get('enabled', false)
 }
