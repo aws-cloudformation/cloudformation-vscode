@@ -13,6 +13,15 @@ describe('StackOutputsWebviewProvider', () => {
     let mockClient: any
     let mockCoordinator: any
 
+    function createMockView() {
+        return {
+            webview: {
+                options: {},
+                html: '',
+            },
+        }
+    }
+
     beforeEach(() => {
         sandbox = sinon.createSandbox()
         mockClient = {
@@ -44,13 +53,7 @@ describe('StackOutputsWebviewProvider', () => {
     })
 
     it('should use DescribeStackRequest to load outputs', async () => {
-        const mockView = {
-            webview: {
-                options: {},
-                html: '',
-            },
-        }
-        await provider.resolveWebviewView(mockView as any)
+        await provider.resolveWebviewView(createMockView() as any)
         await provider.showOutputs('test-stack')
 
         assert.strictEqual(mockClient.sendRequest.calledOnce, true)
@@ -59,12 +62,7 @@ describe('StackOutputsWebviewProvider', () => {
     })
 
     it('should extract outputs from stack object', async () => {
-        const mockView = {
-            webview: {
-                options: {},
-                html: '',
-            },
-        }
+        const mockView = createMockView()
         await provider.resolveWebviewView(mockView as any)
 
         await provider.showOutputs('test-stack')
@@ -74,13 +72,7 @@ describe('StackOutputsWebviewProvider', () => {
     })
 
     it('should update coordinator with stack status', async () => {
-        const mockView = {
-            webview: {
-                options: {},
-                html: '',
-            },
-        }
-        await provider.resolveWebviewView(mockView as any)
+        await provider.resolveWebviewView(createMockView() as any)
         await provider.showOutputs('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.calledWith('test-stack', 'CREATE_COMPLETE'), true)
@@ -89,13 +81,7 @@ describe('StackOutputsWebviewProvider', () => {
     it('should not update coordinator if status unchanged', async () => {
         mockCoordinator.currentStackStatus = 'CREATE_COMPLETE'
 
-        const mockView = {
-            webview: {
-                options: {},
-                html: '',
-            },
-        }
-        await provider.resolveWebviewView(mockView as any)
+        await provider.resolveWebviewView(createMockView() as any)
         await provider.showOutputs('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.called, false)

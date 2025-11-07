@@ -14,6 +14,17 @@ describe('StackOverviewWebviewProvider', () => {
     let mockCoordinator: any
     let coordinatorCallback: any
 
+    function createMockView() {
+        return {
+            webview: {
+                options: {},
+                html: '',
+            },
+            onDidChangeVisibility: sandbox.stub(),
+            onDidDispose: sandbox.stub(),
+        }
+    }
+
     beforeEach(() => {
         sandbox = sinon.createSandbox()
         mockClient = {
@@ -43,15 +54,7 @@ describe('StackOverviewWebviewProvider', () => {
     })
 
     it('should load stack overview', async () => {
-        const mockView = {
-            webview: {
-                options: {},
-                html: '',
-            },
-            onDidChangeVisibility: sandbox.stub(),
-            onDidDispose: sandbox.stub(),
-        }
-        provider.resolveWebviewView(mockView as any)
+        provider.resolveWebviewView(createMockView() as any)
         await provider.showStackOverview('test-stack')
 
         assert.strictEqual(mockClient.sendRequest.calledOnce, true)
@@ -59,15 +62,7 @@ describe('StackOverviewWebviewProvider', () => {
     })
 
     it('should update coordinator with stack status', async () => {
-        const mockView = {
-            webview: {
-                options: {},
-                html: '',
-            },
-            onDidChangeVisibility: sandbox.stub(),
-            onDidDispose: sandbox.stub(),
-        }
-        provider.resolveWebviewView(mockView as any)
+        provider.resolveWebviewView(createMockView() as any)
         await provider.showStackOverview('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.calledWith('test-stack', 'CREATE_COMPLETE'), true)
@@ -76,15 +71,7 @@ describe('StackOverviewWebviewProvider', () => {
     it('should not update coordinator if status unchanged', async () => {
         mockCoordinator.currentStackStatus = 'CREATE_COMPLETE'
 
-        const mockView = {
-            webview: {
-                options: {},
-                html: '',
-            },
-            onDidChangeVisibility: sandbox.stub(),
-            onDidDispose: sandbox.stub(),
-        }
-        provider.resolveWebviewView(mockView as any)
+        provider.resolveWebviewView(createMockView() as any)
         await provider.showStackOverview('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.called, false)
