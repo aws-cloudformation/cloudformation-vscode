@@ -49,24 +49,25 @@ describe('StackViewCoordinator', () => {
     })
 
     it('should call status update callback when status changes', async () => {
-        let callbackCalled = false
+        let callbackCount = 0
         let receivedStackName: string | undefined
         let receivedStatus: string | undefined
 
         coordinator.setStackStatusUpdateCallback((stackName, status) => {
-            callbackCalled = true
+            callbackCount++
             receivedStackName = stackName
             receivedStatus = status
         })
 
         await coordinator.setStack('test-stack', 'CREATE_COMPLETE')
 
-        assert.strictEqual(callbackCalled, false) // First time, no previous status
+        assert.strictEqual(callbackCount, 1)
+        assert.strictEqual(receivedStackName, 'test-stack')
+        assert.strictEqual(receivedStatus, 'CREATE_COMPLETE')
 
         await coordinator.setStack('test-stack', 'UPDATE_IN_PROGRESS')
 
-        assert.strictEqual(callbackCalled, true)
-        assert.strictEqual(receivedStackName, 'test-stack')
+        assert.strictEqual(callbackCount, 2)
         assert.strictEqual(receivedStatus, 'UPDATE_IN_PROGRESS')
     })
 
@@ -78,9 +79,10 @@ describe('StackViewCoordinator', () => {
         })
 
         await coordinator.setStack('test-stack', 'CREATE_COMPLETE')
-        await coordinator.setStack('test-stack', 'CREATE_COMPLETE')
+        assert.strictEqual(callbackCount, 1)
 
-        assert.strictEqual(callbackCount, 0)
+        await coordinator.setStack('test-stack', 'CREATE_COMPLETE')
+        assert.strictEqual(callbackCount, 1)
     })
 
     it('should set change set mode', async () => {

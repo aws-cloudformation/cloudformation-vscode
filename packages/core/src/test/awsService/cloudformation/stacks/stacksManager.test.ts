@@ -33,8 +33,10 @@ describe('StacksManager', () => {
 
     describe('updateStackStatus', () => {
         beforeEach(async () => {
-            manager.reload()
-            await new Promise((resolve) => setTimeout(resolve, 10))
+            await new Promise<void>((resolve) => {
+                manager.addListener(() => resolve())
+                manager.reload()
+            })
         })
 
         it('should update status of existing stack', () => {

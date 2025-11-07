@@ -32,7 +32,7 @@ describe('StackOverviewWebviewProvider', () => {
                 return { dispose: () => {} }
             }),
             setStack: sandbox.stub().resolves(),
-            currentStackStatus: 'CREATE_COMPLETE',
+            currentStackStatus: undefined,
         }
         provider = new StackOverviewWebviewProvider(mockClient, mockCoordinator)
     })
@@ -43,6 +43,15 @@ describe('StackOverviewWebviewProvider', () => {
     })
 
     it('should load stack overview', async () => {
+        const mockView = {
+            webview: {
+                options: {},
+                html: '',
+            },
+            onDidChangeVisibility: sandbox.stub(),
+            onDidDispose: sandbox.stub(),
+        }
+        provider.resolveWebviewView(mockView as any)
         await provider.showStackOverview('test-stack')
 
         assert.strictEqual(mockClient.sendRequest.calledOnce, true)
@@ -50,6 +59,15 @@ describe('StackOverviewWebviewProvider', () => {
     })
 
     it('should update coordinator with stack status', async () => {
+        const mockView = {
+            webview: {
+                options: {},
+                html: '',
+            },
+            onDidChangeVisibility: sandbox.stub(),
+            onDidDispose: sandbox.stub(),
+        }
+        provider.resolveWebviewView(mockView as any)
         await provider.showStackOverview('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.calledWith('test-stack', 'CREATE_COMPLETE'), true)
@@ -58,6 +76,15 @@ describe('StackOverviewWebviewProvider', () => {
     it('should not update coordinator if status unchanged', async () => {
         mockCoordinator.currentStackStatus = 'CREATE_COMPLETE'
 
+        const mockView = {
+            webview: {
+                options: {},
+                html: '',
+            },
+            onDidChangeVisibility: sandbox.stub(),
+            onDidDispose: sandbox.stub(),
+        }
+        provider.resolveWebviewView(mockView as any)
         await provider.showStackOverview('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.called, false)

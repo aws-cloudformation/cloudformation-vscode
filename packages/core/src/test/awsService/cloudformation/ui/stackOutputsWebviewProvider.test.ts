@@ -44,6 +44,13 @@ describe('StackOutputsWebviewProvider', () => {
     })
 
     it('should use DescribeStackRequest to load outputs', async () => {
+        const mockView = {
+            webview: {
+                options: {},
+                html: '',
+            },
+        }
+        await provider.resolveWebviewView(mockView as any)
         await provider.showOutputs('test-stack')
 
         assert.strictEqual(mockClient.sendRequest.calledOnce, true)
@@ -67,6 +74,13 @@ describe('StackOutputsWebviewProvider', () => {
     })
 
     it('should update coordinator with stack status', async () => {
+        const mockView = {
+            webview: {
+                options: {},
+                html: '',
+            },
+        }
+        await provider.resolveWebviewView(mockView as any)
         await provider.showOutputs('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.calledWith('test-stack', 'CREATE_COMPLETE'), true)
@@ -75,6 +89,13 @@ describe('StackOutputsWebviewProvider', () => {
     it('should not update coordinator if status unchanged', async () => {
         mockCoordinator.currentStackStatus = 'CREATE_COMPLETE'
 
+        const mockView = {
+            webview: {
+                options: {},
+                html: '',
+            },
+        }
+        await provider.resolveWebviewView(mockView as any)
         await provider.showOutputs('test-stack')
 
         assert.strictEqual(mockCoordinator.setStack.called, false)
