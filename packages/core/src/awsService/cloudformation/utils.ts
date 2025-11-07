@@ -22,6 +22,8 @@ export function commandKey(key: string): string {
     return `${ExtensionConfigKey}.${key}`
 }
 
+export const cloudFormationUiClickMetric = 'cloudformation_nodeExpansion'
+
 export function extractErrorMessage(error: unknown) {
     if (error instanceof Error) {
         const prefix = error.name === 'Error' ? '' : `${error.name}: `
