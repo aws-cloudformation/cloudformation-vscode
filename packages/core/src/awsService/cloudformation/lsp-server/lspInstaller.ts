@@ -5,7 +5,6 @@
 
 import { BaseLspInstaller } from '../../../shared/lsp/baseLspInstaller'
 import { GitHubManifestAdapter } from './githubManifestAdapter'
-import { CloudFrontManifestAdapter } from './cloudFrontManifestAdapter'
 import { fs } from '../../../shared/fs/fs'
 import { CfnLspName, CfnLspServerEnvType, CfnLspServerFile } from './lspServerConfig'
 import { isAutomation, isBeta, isDebugInstance } from '../../../shared/vscode/env'
@@ -30,7 +29,7 @@ export class CfnLspInstaller extends BaseLspInstaller {
     constructor() {
         super(
             {
-                manifestUrl: 'github/cloudfront',
+                manifestUrl: 'github',
                 supportedVersions: '0.*.*',
                 id: CfnLspName,
                 suppressPromptPrefix: 'cfnLsp',
@@ -39,29 +38,13 @@ export class CfnLspInstaller extends BaseLspInstaller {
             {
                 resolve: async () => {
                     const environment = determineEnvironment()
-
-                    // Try GitHub first
-                    try {
-                        this.log.info(`Attempting to resolve CloudFormation LSP from GitHub releases (${environment})`)
-                        const githubAdapter = new GitHubManifestAdapter(
-                            'aws-cloudformation',
-                            'cloudformation-languageserver',
-                            environment
-                        )
-                        return await githubAdapter.getManifest()
-                    } catch (error) {
-                        this.log.warn(`Failed to resolve from GitHub (${(error as Error).message})`)
-                    }
-
-                    // Fallback to CloudFront
-                    try {
-                        this.log.info(`Falling back to CloudFront for CloudFormation LSP (${environment})`)
-                        const cloudFrontAdapter = new CloudFrontManifestAdapter(environment)
-                        return await cloudFrontAdapter.getManifest()
-                    } catch (error) {
-                        this.log.error(`Failed to resolve from CloudFront`, error)
-                        throw new Error('Failed to resolve CloudFormation LSP manifest from both GitHub and CloudFront')
-                    }
+                    this.log.info(`Resolving CloudFormation LSP from GitHub releases (${environment})`)
+                    const githubAdapter = new GitHubManifestAdapter(
+                        'aws-cloudformation',
+                        'cloudformation-languageserver',
+                        environment
+                    )
+                    return await githubAdapter.getManifest()
                 },
             } as any
         )
