@@ -38,11 +38,13 @@ import {
     DescribeChangeSetRequest,
 } from './stackActionProtocol'
 import { Identifiable } from '../../lspTypes'
+import { getLogger } from '../../../../shared'
 
 export async function validate(
     client: LanguageClient,
     params: CreateValidationParams
 ): Promise<CreateStackActionResult> {
+    getLogger().info(JSON.stringify(params))
     return await client.sendRequest(CreateValidationRequest, params)
 }
 
