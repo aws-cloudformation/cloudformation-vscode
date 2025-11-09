@@ -196,6 +196,74 @@ describe('CfnCommands', function () {
                 shouldSaveOptions: false,
             })
         })
+
+        it('should default to REVERT_DRIFT in skip mode when conditions are met', async function () {
+            chooseOptionalFlagModeStub.resolves(OptionalFlagMode.Skip)
+
+            const fileFlags = {
+                onStackFailure: OnStackFailure.ROLLBACK,
+                includeNestedStacks: false,
+                tags: undefined,
+                importExistingResources: false,
+            }
+
+            const stackDetails = { StackName: 'test-stack' }
+            const result = await promptForOptionalFlags(fileFlags, stackDetails as any)
+
+            assert.deepStrictEqual(result, {
+                onStackFailure: OnStackFailure.ROLLBACK,
+                includeNestedStacks: false,
+                tags: undefined,
+                importExistingResources: false,
+                deploymentMode: 'REVERT_DRIFT',
+                shouldSaveOptions: false,
+            })
+        })
+
+        it('should not default to REVERT_DRIFT in skip mode when stack does not exist', async function () {
+            chooseOptionalFlagModeStub.resolves(OptionalFlagMode.Skip)
+
+            const fileFlags = {
+                onStackFailure: OnStackFailure.ROLLBACK,
+                includeNestedStacks: false,
+                tags: undefined,
+                importExistingResources: false,
+            }
+
+            const result = await promptForOptionalFlags(fileFlags)
+
+            assert.deepStrictEqual(result, {
+                onStackFailure: OnStackFailure.ROLLBACK,
+                includeNestedStacks: false,
+                tags: undefined,
+                importExistingResources: false,
+                deploymentMode: undefined,
+                shouldSaveOptions: false,
+            })
+        })
+
+        it('should not default to REVERT_DRIFT in skip mode when includeNestedStacks is true', async function () {
+            chooseOptionalFlagModeStub.resolves(OptionalFlagMode.Skip)
+
+            const fileFlags = {
+                onStackFailure: OnStackFailure.ROLLBACK,
+                includeNestedStacks: true,
+                tags: undefined,
+                importExistingResources: false,
+            }
+
+            const stackDetails = { StackName: 'test-stack' }
+            const result = await promptForOptionalFlags(fileFlags, stackDetails as any)
+
+            assert.deepStrictEqual(result, {
+                onStackFailure: OnStackFailure.ROLLBACK,
+                includeNestedStacks: true,
+                tags: undefined,
+                importExistingResources: false,
+                deploymentMode: undefined,
+                shouldSaveOptions: false,
+            })
+        })
     })
 
     describe('promptToSaveToFile', function () {

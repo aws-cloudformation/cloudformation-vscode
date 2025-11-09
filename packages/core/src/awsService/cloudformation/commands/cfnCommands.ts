@@ -50,6 +50,7 @@ import {
     TemplateParameter,
     ResourceToImport,
     ChangeSetReference,
+    DeploymentMode,
 } from '../stacks/actions/stackActionRequestType'
 import { StackInfo } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
@@ -294,7 +295,17 @@ export async function promptForOptionalFlags(
                 includeNestedStacks: fileFlags?.includeNestedStacks,
                 tags: fileFlags?.tags,
                 importExistingResources: fileFlags?.importExistingResources,
-                deploymentMode: fileFlags?.deploymentMode,
+                // default to REVERT_DRIFT if possible because it's generally useful
+                deploymentMode:
+                    fileFlags?.deploymentMode ??
+                    (shouldPromptForDeploymentMode(
+                        stackDetails,
+                        fileFlags?.importExistingResources,
+                        fileFlags?.includeNestedStacks,
+                        fileFlags?.onStackFailure
+                    )
+                        ? DeploymentMode.REVERT_DRIFT
+                        : undefined),
                 shouldSaveOptions: false,
             }
 
