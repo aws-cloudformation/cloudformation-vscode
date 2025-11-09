@@ -310,7 +310,7 @@ export async function promptForOptionalFlags(
             }
 
             break
-        case OptionalFlagMode.Input:
+        case OptionalFlagMode.Input: {
             const onStackFailure = fileFlags?.onStackFailure ?? (await getOnStackFailure(!!stackDetails))
             const includeNestedStacks = fileFlags?.includeNestedStacks ?? (await getIncludeNestedStacks())
             const importExistingResources = fileFlags?.importExistingResources ?? (await getImportExistingResources())
@@ -341,6 +341,7 @@ export async function promptForOptionalFlags(
             }
 
             break
+        }
         case OptionalFlagMode.DevFriendly:
             optionalFlags = {
                 onStackFailure: OnStackFailure.DO_NOTHING,
