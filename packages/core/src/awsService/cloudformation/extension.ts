@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ExtensionContext, window, languages } from 'vscode'
+import { ExtensionContext, window, languages, commands } from 'vscode'
 import {
     LanguageClient,
     LanguageClientOptions,
@@ -14,7 +14,6 @@ import {
 } from 'vscode-languageclient/node'
 import { CloseAction, ErrorAction, Message } from 'vscode-languageclient/node'
 import { formatMessage, toString } from './utils'
-import { restartCommand } from './commands/lspCommands'
 import globals from '../../shared/extensionGlobals'
 import { getServiceEnvVarConfig } from '../../shared/vscode/env'
 import { DevSettings } from '../../shared/settings'
@@ -87,6 +86,19 @@ import { CfnEnvironmentFileSelector } from './ui/cfnEnvironmentFileSelector'
 let client: LanguageClient
 
 export async function activate(context: ExtensionContext) {
+    context.subscriptions.push(
+        commands.registerCommand(commandKey('server.restartServer'), async () => {
+            try {
+                await deactivate()
+                await activate(context)
+            } catch (error) {
+                void window.showErrorMessage(
+                    formatMessage(`Failed to restart CloudFormation extension: ${toString(error)}`)
+                )
+            }
+        })
+    )
+
     const cfnTelemetrySettings = new CloudFormationTelemetrySettings()
     const telemetryEnabled = await promptTelemetryOptIn(context, cfnTelemetrySettings)
 
@@ -111,7 +123,7 @@ export async function activate(context: ExtensionContext) {
     const serverOptions: ServerOptions = {
         run: {
             module: serverFile,
-            transport: TransportKind.ipc,
+            transport: TransportKind.stdio,
             options: {
                 env: envOptions,
             },
@@ -286,7 +298,6 @@ export async function activate(context: ExtensionContext) {
                 window.registerWebviewViewProvider(commandKey('stack.resources'), resourcesProvider),
                 window.registerWebviewViewProvider(commandKey('stack.outputs'), outputsProvider),
                 focusDiffCommand(),
-                restartCommand(client),
                 validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),
                 deployTemplateCommand(client, diffProvider, documentManager, environmentManager),
                 deployTemplateFromStacksMenuCommand(),
