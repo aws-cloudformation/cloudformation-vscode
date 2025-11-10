@@ -25,6 +25,7 @@ import {
     getOnStackFailure,
     getIncludeNestedStacks,
     getImportExistingResources,
+    getDeploymentMode,
     shouldUploadToS3,
     getS3Bucket,
     getS3Key,
@@ -47,6 +48,7 @@ import {
     TemplateParameter,
     ResourceToImport,
     ChangeSetReference,
+    DeploymentMode,
 } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
@@ -255,6 +257,18 @@ type OptionalFlagSelection = ChangeSetOptionalFlags & {
     shouldSaveOptions?: boolean
 }
 
+function shouldPromptForDeploymentMode(
+    stackDetails: Stack | undefined,
+    importExistingResources: boolean | undefined,
+    includeNestedStacks: boolean | undefined,
+    onStackFailure: OnStackFailure | undefined
+): boolean {
+    const isCreate = !stackDetails
+    const hasDisableRollback = onStackFailure === OnStackFailure.DO_NOTHING
+
+    return !isCreate && !importExistingResources && !includeNestedStacks && !hasDisableRollback
+}
+
 export async function promptForOptionalFlags(
     fileFlags?: ChangeSetOptionalFlags,
     stackDetails?: Stack
@@ -277,16 +291,45 @@ export async function promptForOptionalFlags(
                 includeNestedStacks: fileFlags?.includeNestedStacks,
                 tags: fileFlags?.tags,
                 importExistingResources: fileFlags?.importExistingResources,
+                // default to REVERT_DRIFT if possible because it's generally useful
+                deploymentMode:
+                    fileFlags?.deploymentMode ??
+                    (shouldPromptForDeploymentMode(
+                        stackDetails,
+                        fileFlags?.importExistingResources,
+                        fileFlags?.includeNestedStacks,
+                        fileFlags?.onStackFailure
+                    )
+                        ? DeploymentMode.REVERT_DRIFT
+                        : undefined),
                 shouldSaveOptions: false,
             }
 
             break
-        case OptionalFlagMode.Input:
+        case OptionalFlagMode.Input: {
+            const onStackFailure = fileFlags?.onStackFailure ?? (await getOnStackFailure(!!stackDetails))
+            const includeNestedStacks = fileFlags?.includeNestedStacks ?? (await getIncludeNestedStacks())
+            const importExistingResources = fileFlags?.importExistingResources ?? (await getImportExistingResources())
+
+            let deploymentMode = fileFlags?.deploymentMode
+            if (
+                !deploymentMode &&
+                shouldPromptForDeploymentMode(
+                    stackDetails,
+                    importExistingResources,
+                    includeNestedStacks,
+                    onStackFailure
+                )
+            ) {
+                deploymentMode = await getDeploymentMode()
+            }
+
             optionalFlags = {
-                onStackFailure: fileFlags?.onStackFailure ?? (await getOnStackFailure()),
-                includeNestedStacks: fileFlags?.includeNestedStacks ?? (await getIncludeNestedStacks()),
+                onStackFailure,
+                includeNestedStacks,
                 tags: fileFlags?.tags ?? (await getTags(stackDetails?.Tags)),
-                importExistingResources: fileFlags?.importExistingResources ?? (await getImportExistingResources()),
+                importExistingResources,
+                deploymentMode,
             }
 
             if (!fileFlags && Object.values(optionalFlags).some((val) => val !== undefined)) {
@@ -294,12 +337,14 @@ export async function promptForOptionalFlags(
             }
 
             break
+        }
         case OptionalFlagMode.DevFriendly:
             optionalFlags = {
                 onStackFailure: OnStackFailure.DO_NOTHING,
                 includeNestedStacks: true,
                 tags: fileFlags?.tags ?? (await getTags(stackDetails?.Tags)),
                 importExistingResources: true,
+                deploymentMode: undefined,
             }
 
             if (!fileFlags && optionalFlags.tags) {
@@ -337,6 +382,7 @@ export async function promptToSaveToFile(
         'on-stack-failure': optionalFlags?.onStackFailure,
         'include-nested-stacks': optionalFlags?.includeNestedStacks,
         'import-existing-resources': optionalFlags?.importExistingResources,
+        'deployment-mode': optionalFlags?.deploymentMode,
     }
 
     // Determine file type and format accordingly
