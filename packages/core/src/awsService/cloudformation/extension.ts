@@ -123,7 +123,7 @@ export async function activate(context: ExtensionContext) {
     const serverOptions: ServerOptions = {
         run: {
             module: serverFile,
-            transport: TransportKind.stdio,
+            transport: TransportKind.ipc,
             options: {
                 env: envOptions,
             },
