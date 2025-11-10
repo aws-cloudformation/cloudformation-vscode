@@ -17,29 +17,24 @@ import { StackViewCoordinator } from '../../ui/stackViewCoordinator'
 
 export class Deployment {
     private readonly id: string
-    private readonly stackName: string
-    private readonly changeSetName: string
-    private readonly client: LanguageClient
     private status: StackActionPhase | undefined
     private statusBarItem?: StatusBarItem
-    private coordinator?: StackViewCoordinator
 
-    constructor(stackName: string, changeSetName: string, client: LanguageClient, coordinator?: StackViewCoordinator) {
+    constructor(
+        private readonly stackName: string,
+        private readonly changeSetName: string,
+        private readonly client: LanguageClient,
+        private readonly coordinator: StackViewCoordinator
+    ) {
         this.id = uuidv4()
-        this.stackName = stackName
-        this.changeSetName = changeSetName
-        this.client = client
-        this.coordinator = coordinator
     }
 
     async deploy() {
         await deploy(this.client, createDeploymentParams(this.id, this.stackName, this.changeSetName))
         showDeploymentStarted(this.stackName)
 
-        if (this.coordinator) {
-            await this.coordinator.setStack(this.stackName)
-            await commands.executeCommand(commandKey('stack.events.focus'))
-        }
+        await this.coordinator.setStack(this.stackName)
+        await commands.executeCommand(commandKey('stack.events.focus'))
 
         this.statusBarItem = createDeploymentStatusBar()
         this.pollForProgress()

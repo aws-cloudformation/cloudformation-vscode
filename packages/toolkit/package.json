@@ -895,14 +895,14 @@
         "views": {
             "cfn-diff": [
                 {
-                    "id": "aws.cloudformation.overview",
+                    "id": "aws.cloudformation.stack.overview",
                     "name": "Overview",
                     "type": "webview",
                     "when": "aws.cloudformation.stackSelected && !aws.cloudformation.changeSetMode",
                     "icon": "$(info)"
                 },
                 {
-                    "id": "aws.cloudformation.detail",
+                    "id": "aws.cloudformation.stack.resources",
                     "name": "Resources",
                     "type": "webview",
                     "when": "aws.cloudformation.stackSelected && !aws.cloudformation.changeSetMode",
@@ -4910,11 +4910,6 @@
             {
                 "command": "aws.cloudformation.diff.focus",
                 "title": "Focus CloudFormation Diff View",
-                "category": "AWS CloudFormation"
-            },
-            {
-                "command": "aws.cloudformation.detail.focus",
-                "title": "Focus CloudFormation Detail View",
                 "category": "AWS CloudFormation"
             },
             {

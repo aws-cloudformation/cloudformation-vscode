@@ -33,7 +33,7 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
                     this.allResources = []
                     this.currentPage = 0
                     this.nextToken = undefined
-                    if (this._view && this._view.visible !== false) {
+                    if (this._view && this._view.visible) {
                         this._view.webview.html = this.getHtmlContent()
                     }
                     await this.updateData(state.stackName)
@@ -41,7 +41,7 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
                     this.stopAutoRefresh()
                     this.stackName = ''
                     this.allResources = []
-                    if (this._view && this._view.visible !== false) {
+                    if (this._view && this._view.visible) {
                         this._view.webview.html = this.getHtmlContent()
                     }
                 }

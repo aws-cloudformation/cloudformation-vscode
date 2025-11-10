@@ -78,7 +78,7 @@ export class StackOutputsWebviewProvider implements WebviewViewProvider, Disposa
     }
 
     private renderError(message: string): void {
-        if (!this.view || this.view.visible === false) {
+        if (!this.view || !this.view.visible) {
             return
         }
         this.view.webview.html = `<!DOCTYPE html>

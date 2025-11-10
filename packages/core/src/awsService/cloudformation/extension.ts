@@ -29,7 +29,6 @@ import {
     refreshAllResourcesCommand,
     refreshResourceListCommand,
     copyResourceIdentifierCommand,
-    viewStackDetailCommand,
     focusDiffCommand,
     getStackManagementInfoCommand,
     extractToParameterPositionCursorCommand,
@@ -233,7 +232,6 @@ export async function activate(context: ExtensionContext) {
             )
             cfnExplorer.setCredentialsService(credentialsService)
 
-            // Create stack view coordinator
             const stackViewCoordinator = new StackViewCoordinator()
 
             // Register callback to update stack status in cache and refresh explorer
@@ -242,18 +240,10 @@ export async function activate(context: ExtensionContext) {
                 cfnExplorer.refresh()
             })
 
-            // Create diff webview provider
             const diffProvider = new DiffWebviewProvider(stackViewCoordinator)
-
             const resourcesProvider = new StackResourcesWebviewProvider(client, stackViewCoordinator)
-
-            // Create stack overview webview provider
             const overviewProvider = new StackOverviewWebviewProvider(client, stackViewCoordinator)
-
-            // Create stack events webview provider
             const eventsProvider = new StackEventsWebviewProvider(client, stackViewCoordinator)
-
-            // Create stack outputs webview provider
             const outputsProvider = new StackOutputsWebviewProvider(client, stackViewCoordinator)
 
             const documentSelector = [
@@ -281,13 +271,7 @@ export async function activate(context: ExtensionContext) {
                 searchResourceCommand(cfnExplorer, resourcesManager),
                 refreshChangeSetsCommand(cfnExplorer),
                 loadMoreChangeSetsCommand(cfnExplorer),
-                viewStackCommand(
-                    stackViewCoordinator,
-                    overviewProvider,
-                    eventsProvider,
-                    outputsProvider,
-                    resourcesProvider
-                ),
+                viewStackCommand(stackViewCoordinator, overviewProvider, outputsProvider, resourcesProvider),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager, cfnExplorer),
@@ -296,12 +280,11 @@ export async function activate(context: ExtensionContext) {
                 importResourceStateCommand(resourcesManager),
                 cloneResourceStateCommand(resourcesManager),
                 getStackManagementInfoCommand(resourcesManager),
-                window.registerWebviewViewProvider(commandKey('overview'), overviewProvider),
+                window.registerWebviewViewProvider(commandKey('stack.overview'), overviewProvider),
                 window.registerWebviewViewProvider(commandKey('diff'), diffProvider),
                 window.registerWebviewViewProvider(commandKey('stack.events'), eventsProvider),
-                window.registerWebviewViewProvider(commandKey('detail'), resourcesProvider),
+                window.registerWebviewViewProvider(commandKey('stack.resources'), resourcesProvider),
                 window.registerWebviewViewProvider(commandKey('stack.outputs'), outputsProvider),
-                viewStackDetailCommand(resourcesProvider),
                 focusDiffCommand(),
                 restartCommand(client),
                 validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),

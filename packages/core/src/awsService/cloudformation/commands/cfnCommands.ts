@@ -4,7 +4,7 @@
  */
 
 import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType, ProgressLocation } from 'vscode'
-import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
+import { commandKey, extractErrorMessage, findParameterDescriptionPosition, isStackInTransientState } from '../utils'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { Command } from 'vscode-languageclient/node'
 import * as yaml from 'js-yaml'
@@ -55,7 +55,6 @@ import { DocumentManager } from '../documents/documentManager'
 import { CfnEnvironmentManager } from '../cfn-init/cfnEnvironmentManager'
 
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
-import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
 import { StackOutputsWebviewProvider } from '../ui/stackOutputsWebviewProvider'
 import { StackResourcesWebviewProvider } from '../ui/stackResourcesWebviewProvider'
 import { StackViewCoordinator } from '../ui/stackViewCoordinator'
@@ -681,15 +680,6 @@ export function refreshResourceListCommand(resourcesManager: ResourcesManager, e
     })
 }
 
-export function viewStackDetailCommand(resourcesProvider: StackResourcesWebviewProvider) {
-    return commands.registerCommand(commandKey('stacks.viewDetail'), async (node?: any) => {
-        const stackName = node?.stackName || 'Unknown Stack'
-
-        await resourcesProvider.updateData(stackName)
-        void commands.executeCommand(commandKey('detail.focus'))
-    })
-}
-
 export function focusDiffCommand() {
     return commands.registerCommand(commandKey('diff.focus'), () => {
         void commands.executeCommand('workbench.view.extension.cfn-diff')
@@ -840,7 +830,6 @@ export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
 export function viewStackCommand(
     coordinator: StackViewCoordinator,
     overviewProvider: StackOverviewWebviewProvider,
-    eventsProvider: StackEventsWebviewProvider,
     outputsProvider: StackOutputsWebviewProvider,
     resourcesProvider: StackResourcesWebviewProvider
 ) {
@@ -861,15 +850,14 @@ export function viewStackCommand(
         await overviewProvider.showStackOverview(stackName)
 
         const stackStatus = coordinator.currentStackStatus
-        const isSuccessfulTerminal = stackStatus?.includes('_COMPLETE') && !stackStatus?.includes('ROLLBACK')
 
         await resourcesProvider.updateData(stackName)
 
-        if (isSuccessfulTerminal) {
+        if (stackStatus && !isStackInTransientState(stackStatus)) {
             await outputsProvider.showOutputs(stackName)
         }
 
-        await commands.executeCommand('aws.cloudformation.overview.focus')
+        await commands.executeCommand(commandKey('stack.overview.focus'))
     })
 }
 
