@@ -4,7 +4,7 @@
  */
 
 import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType, ProgressLocation } from 'vscode'
-import { commandKey, extractErrorMessage, findParameterDescriptionPosition } from '../utils'
+import { commandKey, extractErrorMessage, findParameterDescriptionPosition, isStackInTransientState } from '../utils'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { Command } from 'vscode-languageclient/node'
 import * as yaml from 'js-yaml'
@@ -31,9 +31,7 @@ import {
     shouldSaveFlagsToFile,
     getFilePath,
 } from '../ui/inputBox'
-import { setContext } from '../../../shared/vscode/setContext'
 import { DiffWebviewProvider } from '../ui/diffWebviewProvider'
-import { StackResourcesWebviewProvider } from '../ui/stackResourcesWebviewProvider'
 import { showErrorMessage } from '../ui/message'
 import { getLastValidation, setLastValidation, Validation } from '../stacks/actions/validationWorkflow'
 import {
@@ -50,7 +48,6 @@ import {
     ResourceToImport,
     ChangeSetReference,
 } from '../stacks/actions/stackActionRequestType'
-import { StackInfo } from '../stacks/actions/stackActionRequestType'
 import { ResourceNode } from '../explorer/nodes/resourceNode'
 import { ResourcesManager } from '../resources/resourcesManager'
 import { RelatedResourcesManager } from '../relatedResources/relatedResourcesManager'
@@ -58,12 +55,14 @@ import { DocumentManager } from '../documents/documentManager'
 import { CfnEnvironmentManager } from '../cfn-init/cfnEnvironmentManager'
 
 import { StackOverviewWebviewProvider } from '../ui/stackOverviewWebviewProvider'
-import { StackEventsWebviewProvider } from '../ui/stackEventsWebviewProvider'
 import { StackOutputsWebviewProvider } from '../ui/stackOutputsWebviewProvider'
+import { StackResourcesWebviewProvider } from '../ui/stackResourcesWebviewProvider'
+import { StackViewCoordinator } from '../ui/stackViewCoordinator'
 import { ResourceContextValue } from '../explorer/contextValue'
 import { getLogger } from '../../../shared/logger/logger'
 import { CloudFormationExplorer } from '../explorer/explorer'
 import { StacksNode } from '../explorer/nodes/stacksNode'
+import { StackNode } from '../explorer/nodes/stackNode'
 import { ResourcesNode } from '../explorer/nodes/resourcesNode'
 import { ResourceTypeNode } from '../explorer/nodes/resourceTypeNode'
 import { StackChangeSetsNode } from '../explorer/nodes/stackChangeSetsNode'
@@ -72,7 +71,6 @@ import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 import { fs } from '../../../shared/fs/fs'
 import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
-import { StackNode } from '../explorer/nodes/stackNode'
 import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
 
 export function validateDeploymentCommand(
@@ -127,12 +125,12 @@ export function deployTemplateFromStacksMenuCommand() {
     })
 }
 
-export function executeChangeSetCommand(client: LanguageClient) {
+export function executeChangeSetCommand(client: LanguageClient, coordinator: StackViewCoordinator) {
     return commands.registerCommand(
         commandKey('api.executeChangeSet'),
         async (stackName: string, changeSetName: string) => {
             try {
-                const deployment = new Deployment(stackName, changeSetName, client)
+                const deployment = new Deployment(stackName, changeSetName, client, coordinator)
 
                 await deployment.deploy()
             } catch (error) {
@@ -174,9 +172,7 @@ export function viewChangeSetCommand(client: LanguageClient, diffProvider: DiffW
                 stackName: params.stackName,
             })
 
-            void setContext('aws.cloudformation.stacks.diffVisible', true)
-
-            diffProvider.updateData(params.stackName, describeChangeSetResult.changes, params.changeSetName, true)
+            void diffProvider.updateData(params.stackName, describeChangeSetResult.changes, params.changeSetName, true)
             void commands.executeCommand(commandKey('diff.focus'))
         } catch (error) {
             showErrorMessage(`Error viewing change set: ${extractErrorMessage(error)}`)
@@ -684,24 +680,6 @@ export function refreshResourceListCommand(resourcesManager: ResourcesManager, e
     })
 }
 
-export function viewStackDiffCommand() {
-    return commands.registerCommand(commandKey('stacks.viewDiff'), () => {
-        void setContext('aws.cloudformation.stacks.diffVisible', true)
-        void commands.executeCommand(commandKey('diff.focus'))
-    })
-}
-
-export function viewStackDetailCommand(resourcesProvider: StackResourcesWebviewProvider) {
-    return commands.registerCommand(commandKey('stacks.viewDetail'), async (node?: any) => {
-        void setContext('aws.cloudformation.stacks.detailVisible', true)
-
-        const stackName = node?.stackName || 'Unknown Stack'
-
-        await resourcesProvider.updateData(stackName)
-        void commands.executeCommand(commandKey('detail.focus'))
-    })
-}
-
 export function focusDiffCommand() {
     return commands.registerCommand(commandKey('diff.focus'), () => {
         void commands.executeCommand('workbench.view.extension.cfn-diff')
@@ -849,23 +827,37 @@ export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
     })
 }
 
-export function showStackOverviewCommand(overviewProvider: StackOverviewWebviewProvider) {
-    return commands.registerCommand(commandKey('api.showStackOverview'), async (stack: StackInfo) => {
-        await overviewProvider.showStackOverview(stack)
-    })
-}
+export function viewStackCommand(
+    coordinator: StackViewCoordinator,
+    overviewProvider: StackOverviewWebviewProvider,
+    outputsProvider: StackOutputsWebviewProvider,
+    resourcesProvider: StackResourcesWebviewProvider
+) {
+    return commands.registerCommand(commandKey('stack.view'), async (node?: StackNode) => {
+        let stackName: string | undefined
 
-export function showStackEventsCommand(eventsProvider: StackEventsWebviewProvider) {
-    return commands.registerCommand(commandKey('stack.events.show'), async (stackName: string) => {
-        await eventsProvider.showStackEvents(stackName)
-        await commands.executeCommand(commandKey('stack.events.focus'))
-    })
-}
+        if (node?.stack.StackName) {
+            stackName = node.stack.StackName
+        } else {
+            stackName = await getStackName()
+            if (!stackName) {
+                return
+            }
+        }
 
-export function showStackOutputsCommand(outputsProvider: StackOutputsWebviewProvider) {
-    return commands.registerCommand(commandKey('stack.outputs.show'), async (stackName: string) => {
-        await outputsProvider.showOutputs(stackName)
-        await commands.executeCommand(commandKey('stack.outputs.focus'))
+        await coordinator.setStack(stackName)
+
+        await overviewProvider.showStackOverview(stackName)
+
+        const stackStatus = coordinator.currentStackStatus
+
+        await resourcesProvider.updateData(stackName)
+
+        if (stackStatus && !isStackInTransientState(stackStatus)) {
+            await outputsProvider.showOutputs(stackName)
+        }
+
+        await commands.executeCommand(commandKey('stack.overview.focus'))
     })
 }
 

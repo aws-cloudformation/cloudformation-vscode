@@ -29,8 +29,6 @@ import {
     refreshAllResourcesCommand,
     refreshResourceListCommand,
     copyResourceIdentifierCommand,
-    viewStackDiffCommand,
-    viewStackDetailCommand,
     focusDiffCommand,
     getStackManagementInfoCommand,
     extractToParameterPositionCursorCommand,
@@ -41,13 +39,11 @@ import {
     addRelatedResourcesCommand,
     refreshChangeSetsCommand,
     loadMoreChangeSetsCommand,
-    showStackOverviewCommand,
+    viewStackCommand,
     createProjectCommand,
     addEnvironmentCommand,
     removeEnvironmentCommand,
     deleteChangeSetCommand,
-    showStackEventsCommand,
-    showStackOutputsCommand,
     viewChangeSetCommand,
     deployTemplateFromStacksMenuCommand,
 } from './commands/cfnCommands'
@@ -65,6 +61,7 @@ import { StackEventsWebviewProvider } from './ui/stackEventsWebviewProvider'
 import { StackOutputsWebviewProvider } from './ui/stackOutputsWebviewProvider'
 import { DiffWebviewProvider } from './ui/diffWebviewProvider'
 import { StackResourcesWebviewProvider } from './ui/stackResourcesWebviewProvider'
+import { StackViewCoordinator } from './ui/stackViewCoordinator'
 import { DocumentManager } from './documents/documentManager'
 
 import { ResourcesManager } from './resources/resourcesManager'
@@ -235,19 +232,19 @@ export async function activate(context: ExtensionContext) {
             )
             cfnExplorer.setCredentialsService(credentialsService)
 
-            // Create diff webview provider
-            const diffProvider = new DiffWebviewProvider()
+            const stackViewCoordinator = new StackViewCoordinator()
 
-            const resourcesProvider = new StackResourcesWebviewProvider(client)
+            // Register callback to update stack status in cache and refresh explorer
+            stackViewCoordinator.setStackStatusUpdateCallback((stackName, stackStatus) => {
+                stacksManager.updateStackStatus(stackName, stackStatus)
+                cfnExplorer.refresh()
+            })
 
-            // Create stack overview webview provider
-            const overviewProvider = new StackOverviewWebviewProvider()
-
-            // Create stack events webview provider
-            const eventsProvider = new StackEventsWebviewProvider(client)
-
-            // Create stack outputs webview provider
-            const outputsProvider = new StackOutputsWebviewProvider(client)
+            const diffProvider = new DiffWebviewProvider(stackViewCoordinator)
+            const resourcesProvider = new StackResourcesWebviewProvider(client, stackViewCoordinator)
+            const overviewProvider = new StackOverviewWebviewProvider(client, stackViewCoordinator)
+            const eventsProvider = new StackEventsWebviewProvider(client, stackViewCoordinator)
+            const outputsProvider = new StackOutputsWebviewProvider(client, stackViewCoordinator)
 
             const documentSelector = [
                 { scheme: 'file', language: 'cloudformation' },
@@ -274,9 +271,7 @@ export async function activate(context: ExtensionContext) {
                 searchResourceCommand(cfnExplorer, resourcesManager),
                 refreshChangeSetsCommand(cfnExplorer),
                 loadMoreChangeSetsCommand(cfnExplorer),
-                showStackOverviewCommand(overviewProvider),
-                showStackEventsCommand(eventsProvider),
-                showStackOutputsCommand(outputsProvider),
+                viewStackCommand(stackViewCoordinator, overviewProvider, outputsProvider, resourcesProvider),
                 addResourceTypesCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager, cfnExplorer),
@@ -285,18 +280,17 @@ export async function activate(context: ExtensionContext) {
                 importResourceStateCommand(resourcesManager),
                 cloneResourceStateCommand(resourcesManager),
                 getStackManagementInfoCommand(resourcesManager),
+                window.registerWebviewViewProvider(commandKey('stack.overview'), overviewProvider),
                 window.registerWebviewViewProvider(commandKey('diff'), diffProvider),
                 window.registerWebviewViewProvider(commandKey('stack.events'), eventsProvider),
-                window.registerWebviewViewProvider(commandKey('detail'), resourcesProvider),
+                window.registerWebviewViewProvider(commandKey('stack.resources'), resourcesProvider),
                 window.registerWebviewViewProvider(commandKey('stack.outputs'), outputsProvider),
-                viewStackDiffCommand(),
-                viewStackDetailCommand(resourcesProvider),
                 focusDiffCommand(),
                 restartCommand(client),
                 validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),
                 deployTemplateCommand(client, diffProvider, documentManager, environmentManager),
                 deployTemplateFromStacksMenuCommand(),
-                executeChangeSetCommand(client),
+                executeChangeSetCommand(client, stackViewCoordinator),
                 deleteChangeSetCommand(client),
                 viewChangeSetCommand(client, diffProvider),
                 refreshCommand(stacksManager),
