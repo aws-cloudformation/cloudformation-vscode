@@ -43,7 +43,8 @@ describe('CfnCommands', function () {
 
     describe('extractToParameterPositionCursorCommand', function () {
         it('should register extract to parameter command', function () {
-            const result = extractToParameterPositionCursorCommand()
+            const mockClient = {} as any
+            const result = extractToParameterPositionCursorCommand(mockClient)
             assert.ok(result)
             assert.ok(registerCommandStub.calledOnce)
             assert.strictEqual(

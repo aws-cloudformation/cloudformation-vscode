@@ -304,7 +304,7 @@ export async function activate(context: ExtensionContext) {
                 selectRegionCommand(cfnExplorer),
                 selectEnvironmentCommand(cfnExplorer),
                 rerunLastValidationCommand(),
-                extractToParameterPositionCursorCommand(),
+                extractToParameterPositionCursorCommand(client),
                 createProjectCommand(cfnInitUiInterface),
                 addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller, environmentManager),
                 removeEnvironmentCommand(cfnInitCliCaller, environmentManager),

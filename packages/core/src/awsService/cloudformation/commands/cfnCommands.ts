@@ -714,7 +714,7 @@ export function getStackManagementInfoCommand(resourcesManager: ResourcesManager
     })
 }
 
-export function extractToParameterPositionCursorCommand() {
+export function extractToParameterPositionCursorCommand(client: LanguageClient) {
     return commands.registerCommand(
         'aws.cloudformation.extractToParameter.positionCursor',
         async (
@@ -725,9 +725,12 @@ export function extractToParameterPositionCursorCommand() {
             actionType?: string
         ) => {
             try {
-                // Track code action acceptance if tracking parameters provided
+                // Track code action acceptance on the server if tracking parameters provided
                 if (trackingCommand && actionType) {
-                    await commands.executeCommand(trackingCommand, actionType)
+                    await client.sendRequest('workspace/executeCommand', {
+                        command: trackingCommand,
+                        arguments: [actionType],
+                    })
                 }
 
                 const uri = Uri.parse(documentUri)
