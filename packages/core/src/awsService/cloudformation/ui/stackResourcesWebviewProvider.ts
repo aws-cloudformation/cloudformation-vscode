@@ -9,12 +9,14 @@ import { showErrorMessage } from './message'
 import { GetStackResourcesRequest } from '../stacks/actions/stackActionProtocol'
 import { StackResourceSummary, GetStackResourcesParams } from '../stacks/actions/stackActionRequestType'
 import { StackViewCoordinator } from './stackViewCoordinator'
+import { arnToConsoleTabUrl, externalLinkSvg, consoleLinkStyles } from '../consoleLinksUtils'
 
 const ResourcesPerPage = 50
 
 export class StackResourcesWebviewProvider implements WebviewViewProvider, Disposable {
     private _view?: WebviewView
     private stackName = ''
+    private stackArn = ''
     private allResources: StackResourceSummary[] = []
     private currentPage = 0
     private nextToken?: string
@@ -30,6 +32,7 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
                 if (state.stackName && !state.isChangeSetMode) {
                     this.stopAutoRefresh()
                     this.stackName = state.stackName
+                    this.stackArn = state.stackArn || ''
                     this.allResources = []
                     this.currentPage = 0
                     this.nextToken = undefined
@@ -40,6 +43,7 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
                 } else if (!state.stackName || state.isChangeSetMode) {
                     this.stopAutoRefresh()
                     this.stackName = ''
+                    this.stackArn = ''
                     this.allResources = []
                     if (this._view && this._view.visible) {
                         this._view.webview.html = this.getHtmlContent()
@@ -233,10 +237,11 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
             margin-bottom: 8px;
         }
         .stack-info {
-            display: flex;
-            gap: 12px;
-            align-items: baseline;
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
         }
+        ${consoleLinkStyles}
         .pagination {
             display: flex;
             gap: 8px;
@@ -254,7 +259,8 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
 <body>
     <div class="header">
         <div class="stack-info">
-            <span>${this.stackName}</span>
+            ${this.stackName}
+            ${this.stackArn ? `<a href="${arnToConsoleTabUrl(this.stackArn, 'resources')}" class="console-link" title="View in AWS Console">${externalLinkSvg()}</a>` : ''}
             <span class="resource-count">(0 resources)</span>
         </div>
     </div>
@@ -304,10 +310,11 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
             margin-bottom: 8px;
         }
         .stack-info {
-            display: flex;
-            gap: 12px;
-            align-items: baseline;
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
         }
+        ${consoleLinkStyles}
         .pagination {
             display: flex;
             gap: 8px;
@@ -364,7 +371,8 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
     <div class="header">
         <div class="header-content">
             <div class="stack-info">
-                <span>${this.stackName}</span>
+                ${this.stackName}
+                ${this.stackArn ? `<a href="${arnToConsoleTabUrl(this.stackArn, 'resources')}" class="console-link" title="View in AWS Console">${externalLinkSvg()}</a>` : ''}
                 <span class="resource-count">(${this.allResources.length}${hasMore ? '+' : ''} resources)</span>
             </div>
             <div class="pagination">
