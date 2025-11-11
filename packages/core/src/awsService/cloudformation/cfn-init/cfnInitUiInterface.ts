@@ -8,6 +8,8 @@ import { CfnInitCliCaller, EnvironmentOption } from './cfnInitCliCaller'
 import { Auth } from '../../../auth/auth'
 import { promptForConnection } from '../../../auth/utils'
 import { getEnvironmentName, getProjectName, getProjectPath } from '../ui/inputBox'
+import fs from '../../../shared/fs/fs'
+import path from 'path'
 
 interface FormState {
     projectName?: string
@@ -22,8 +24,22 @@ export class CfnInitUiInterface {
 
     async promptForCreate() {
         try {
-            // Set default project path
-            this.state.projectPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
+            // Set default project path with validation
+            const defaultPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
+
+            // Validate default path
+            try {
+                await fs.checkPerms(defaultPath, '*w*')
+                const cfnProjectPath = path.join(defaultPath, 'cfn-project')
+                const cfnProjectExists = await fs.existsDir(cfnProjectPath)
+
+                // Only use default if it's valid and doesn't have cfn-project
+                this.state.projectPath = cfnProjectExists ? undefined : defaultPath
+            } catch {
+                // Default path is invalid, leave undefined to force user selection
+                this.state.projectPath = undefined
+            }
+
             await this.showForm()
         } catch (error) {
             void vscode.window.showErrorMessage(`CFN Init failed: ${error}`)
@@ -57,10 +73,11 @@ export class CfnInitUiInterface {
                     })
                 }
 
-                items.push({
+                const addEnvItem = {
                     label: '$(plus) Add Environment (At least one required)',
                     detail: 'Configure a new deployment environment',
-                })
+                }
+                items.push(addEnvItem)
 
                 if (this.state.environments.length > 0) {
                     items.push({
@@ -69,7 +86,24 @@ export class CfnInitUiInterface {
                     })
                 }
 
+                const createProjectItem = {
+                    label: '$(check) Create Project',
+                    detail: 'Create the CloudFormation project with current configuration',
+                }
+                items.push(createProjectItem)
+
                 quickPick.items = items
+
+                // Highlight first undefined state property
+                if (!this.state.projectName) {
+                    quickPick.activeItems = [items[0]]
+                } else if (!this.state.projectPath) {
+                    quickPick.activeItems = [items[1]]
+                } else if (this.state.environments.length === 0) {
+                    quickPick.activeItems = [addEnvItem] 
+                } else {
+                    quickPick.activeItems = [createProjectItem]
+                }
             }
 
             updateItems()
@@ -98,6 +132,13 @@ export class CfnInitUiInterface {
                     await this.addEnvironment()
                 } else if (selected.label.includes('Delete Environment')) {
                     await this.deleteEnvironment()
+                } else if (selected.label.includes('Create Project')) {
+                    if (await this.isFormStateValid()) {
+                        quickPick.hide()
+                        resolve(true)
+                        await this.executeProject()
+                    }
+                    return
                 }
 
                 updateItems()
@@ -105,16 +146,7 @@ export class CfnInitUiInterface {
             })
 
             quickPick.onDidTriggerButton(async () => {
-                if (!this.state.projectName) {
-                    void vscode.window.showWarningMessage('Project name is required')
-                    return
-                }
-                if (!this.state.projectPath) {
-                    void vscode.window.showWarningMessage('Project path is required')
-                    return
-                }
-                if (this.state.environments.length === 0) {
-                    void vscode.window.showWarningMessage('At least one environment is required')
+                if (!(await this.isFormStateValid())) {
                     return
                 }
                 quickPick.hide()
@@ -125,6 +157,23 @@ export class CfnInitUiInterface {
             quickPick.onDidHide(() => resolve(false))
             quickPick.show()
         })
+    }
+
+    private async isFormStateValid(): Promise<boolean> {
+        if (!this.state.projectName) {
+            void vscode.window.showWarningMessage('Project name is required')
+            return false
+        }
+        if (!this.state.projectPath) {
+            void vscode.window.showWarningMessage('Project path is required')
+            return false
+        }
+        if (this.state.environments.length === 0) {
+            void vscode.window.showWarningMessage('At least one environment is required')
+            return false
+        }
+
+        return true
     }
 
     async collectEnvironmentConfig(): Promise<EnvironmentOption | undefined> {
