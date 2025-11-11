@@ -4,10 +4,11 @@
  */
 
 import { WebviewView, WebviewViewProvider, commands, Disposable } from 'vscode'
-import { StackChange } from '../stacks/actions/stackActionRequestType'
+import { StackChange, ValidationDetail } from '../stacks/actions/stackActionRequestType'
 import { DiffViewHelper } from './diffViewHelper'
 import { commandKey } from '../utils'
 import { StackViewCoordinator } from './stackViewCoordinator'
+import { showWarningConfirmation } from './message'
 
 const webviewCommandOpenDiff = 'openDiff'
 
@@ -21,6 +22,7 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
     private pageSize: number = 50
     private totalPages: number = 0
     private readonly disposables: Disposable[] = []
+    private validationDetail: ValidationDetail[] = []
 
     constructor(private readonly coordinator: StackViewCoordinator) {
         this.disposables.push(
@@ -41,7 +43,8 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
         stackName: string,
         changes: StackChange[] = [],
         changeSetName?: string,
-        enableDeployments = false
+        enableDeployments = false,
+        validationDetail?: ValidationDetail[]
     ) {
         this.stackName = stackName
         this.changes = changes
@@ -49,6 +52,10 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
         this.enableDeployments = enableDeployments
         this.currentPage = 0
         this.totalPages = Math.ceil(changes.length / this.pageSize)
+        if (validationDetail) {
+            this.validationDetail = validationDetail
+        }
+
         await this.coordinator.setChangeSetMode(stackName, true)
         if (this._view) {
             this._view.webview.html = this.getHtmlContent()
@@ -60,11 +67,21 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
         webviewView.webview.options = { enableScripts: true }
         webviewView.webview.html = this.getHtmlContent()
 
-        webviewView.webview.onDidReceiveMessage((message: { command: string; resourceId?: string }) => {
+        webviewView.webview.onDidReceiveMessage(async (message: { command: string; resourceId?: string }) => {
             if (message.command === webviewCommandOpenDiff) {
                 void DiffViewHelper.openDiff(this.stackName, this.changes, message.resourceId)
             } else if (message.command === 'confirmDeploy') {
                 if (this.changeSetName) {
+                    const errorCount = this.getErrorCount()
+                    const warningCount = this.getWarningCount()
+
+                    if (errorCount === 0 && warningCount > 0) {
+                        const proceed = await showWarningConfirmation(warningCount)
+                        if (!proceed) {
+                            return
+                        }
+                    }
+
                     void commands.executeCommand(commandKey('api.executeChangeSet'), this.stackName, this.changeSetName)
                     this.changeSetName = undefined
                     this.enableDeployments = false
@@ -255,7 +272,7 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
                 ? `
             <div class="pagination-controls" style="
                 position: fixed;
-                top: 0;
+                top: ${this.getWarningCount() > 0 ? '40px' : '0'};
                 right: 0;
                 z-index: 10;
                 background: var(--vscode-editor-background);
@@ -286,6 +303,27 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
                     border-radius: 2px;
                     opacity: ${hasNext ? '1' : '0.5'};
                 ">Next</button>
+            </div>
+        `
+                : ''
+
+        const warningBanner =
+            this.getWarningCount() > 0
+                ? `
+            <div class="warning-banner" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 11;
+                background: var(--vscode-editorWarning-background);
+                color: var(--vscode-editorWarning-foreground);
+                padding: 8px 16px;
+                border-bottom: 1px solid var(--vscode-panel-border);
+                text-align: center;
+                font-weight: bold;
+            ">
+                ⚠️ ${this.getWarningCount()} warning(s) found
             </div>
         `
                 : ''
@@ -344,6 +382,7 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
                     }
                     .content {
                         padding: 8px;
+                        margin-top: ${this.getWarningCount() > 0 ? '40px' : '0'};
                     }
                     a {
                         color: var(--vscode-textLink-foreground);
@@ -356,6 +395,7 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
                 </style>
             </head>
             <body>
+                ${warningBanner}
                 ${paginationControls}
                 <div class="content">
                     ${viewDiffButton}${deploymentButtons}
@@ -396,6 +436,14 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
             </body>
             </html>
         `
+    }
+
+    private getWarningCount(): number {
+        return this.validationDetail.filter((detail) => detail.Severity === 'INFO').length
+    }
+
+    private getErrorCount(): number {
+        return this.validationDetail.filter((detail) => detail.Severity === 'ERROR').length
     }
 
     dispose(): void {

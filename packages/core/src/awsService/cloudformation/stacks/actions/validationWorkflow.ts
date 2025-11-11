@@ -11,6 +11,7 @@ import {
     StackActionState,
     ResourceToImport,
     ChangeSetOptionalFlags,
+    ValidationDetail,
 } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
@@ -131,15 +132,15 @@ export class Validation {
                         case StackActionPhase.VALIDATION_IN_PROGRESS:
                             // Status bar updated above
                             break
-                        case StackActionPhase.VALIDATION_COMPLETE:
+                        case StackActionPhase.VALIDATION_COMPLETE: {
+                            const describeValidationStatusResult = await describeValidationStatus(this.client, {
+                                id: this.id,
+                            })
                             if (validationResult.state === StackActionState.SUCCESSFUL) {
                                 showValidationSuccess(this.stackName)
 
-                                this.showDiffView()
+                                this.showDiffView(describeValidationStatusResult.ValidationDetails ?? [])
                             } else {
-                                const describeValidationStatusResult = await describeValidationStatus(this.client, {
-                                    id: this.id,
-                                })
                                 showValidationFailure(
                                     this.stackName,
                                     describeValidationStatusResult.FailureReason ?? 'UNKNOWN'
@@ -147,6 +148,7 @@ export class Validation {
                             }
                             clearInterval(interval)
                             break
+                        }
                         case StackActionPhase.VALIDATION_FAILED: {
                             const describeValidationStatusResult = await describeValidationStatus(this.client, {
                                 id: this.id,
@@ -155,6 +157,7 @@ export class Validation {
                                 this.stackName,
                                 describeValidationStatusResult.FailureReason ?? 'UNKNOWN'
                             )
+                            void commands.executeCommand('workbench.panel.markers.view.focus')
                             clearInterval(interval)
                             break
                         }
@@ -168,8 +171,14 @@ export class Validation {
         }, 1000)
     }
 
-    private showDiffView() {
-        void this.diffProvider.updateData(this.stackName, this.changes, this.changeSetName, this.shouldEnableDeployment)
+    private showDiffView(validationDetail?: ValidationDetail[]) {
+        void this.diffProvider.updateData(
+            this.stackName,
+            this.changes,
+            this.changeSetName,
+            this.shouldEnableDeployment,
+            validationDetail
+        )
         void commands.executeCommand('aws.cloudformation.diff.focus')
     }
 
