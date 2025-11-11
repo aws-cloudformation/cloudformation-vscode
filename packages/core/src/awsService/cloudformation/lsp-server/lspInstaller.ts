@@ -51,8 +51,6 @@ export class CfnLspInstaller extends BaseLspInstaller {
     }
 
     protected async postInstall(assetDirectory: string): Promise<void> {
-        await this.deleteZip(assetDirectory)
-
         const resourcePaths = this.resourcePaths(assetDirectory)
         const rootDir = dirname(resourcePaths.lsp)
         await this.makeLspExecutable(rootDir)
@@ -96,15 +94,6 @@ export class CfnLspInstaller extends BaseLspInstaller {
         return {
             lsp: join(assetDirectory, folders[0].name, CfnLspServerFile),
             node: process.execPath,
-        }
-    }
-
-    private async deleteZip(assetDirectory: string): Promise<void> {
-        const files = await fs.readdir(assetDirectory)
-        const zips = files.filter(([name, type]) => type === FileType.File && name.endsWith('.zip'))
-
-        for (const zip of zips) {
-            await fs.delete(join(assetDirectory, zip[0]))
         }
     }
 }
