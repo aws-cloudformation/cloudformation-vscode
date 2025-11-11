@@ -2784,6 +2784,10 @@
                     "group": "1@1"
                 },
                 {
+                    "command": "aws.cloudformation.removeResourceType",
+                    "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore)"
+                },
+                {
                     "command": "aws.cloudformation.api.addResourceTypes",
                     "when": "view == aws.cloudformation && viewItem == resourceSection && !aws.cloudformation.refreshingAllResources",
                     "group": "1@1"
@@ -4868,6 +4872,11 @@
                 "command": "aws.cloudformation.api.addResourceTypes",
                 "title": "Add Resource Types",
                 "icon": "$(add)",
+                "category": "AWS CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.removeResourceType",
+                "title": "Remove Resource Type",
                 "category": "AWS CloudFormation"
             },
             {
