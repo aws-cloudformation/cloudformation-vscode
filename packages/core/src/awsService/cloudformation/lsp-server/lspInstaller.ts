@@ -25,6 +25,12 @@ function determineEnvironment(): CfnLspServerEnvType {
 
 export class CfnLspInstaller extends BaseLspInstaller {
     private log = getLogger()
+    private readonly environment = determineEnvironment()
+    private readonly githubManifest = new GitHubManifestAdapter(
+        'aws-cloudformation',
+        'cloudformation-languageserver',
+        determineEnvironment()
+    )
 
     constructor() {
         super(
@@ -37,14 +43,8 @@ export class CfnLspInstaller extends BaseLspInstaller {
             'awsCfnLsp',
             {
                 resolve: async () => {
-                    const environment = determineEnvironment()
-                    this.log.info(`Resolving CloudFormation LSP from GitHub releases (${environment})`)
-                    const githubAdapter = new GitHubManifestAdapter(
-                        'aws-cloudformation',
-                        'cloudformation-languageserver',
-                        environment
-                    )
-                    return await githubAdapter.getManifest()
+                    this.log.info(`Resolving CloudFormation LSP from GitHub releases (${this.environment})`)
+                    return await this.githubManifest.getManifest()
                 },
             } as any
         )
@@ -55,6 +55,9 @@ export class CfnLspInstaller extends BaseLspInstaller {
         const rootDir = dirname(resourcePaths.lsp)
         await this.makeLspExecutable(rootDir)
         await fs.chmod(join(rootDir, 'bin', process.platform === 'win32' ? 'cfn-init.exe' : 'cfn-init'), 0o755)
+
+        const manifest = await this.githubManifest.getManifest()
+        await fs.writeFile(join(assetDirectory, 'manifest.json'), JSON.stringify(manifest, undefined, 2))
     }
 
     private async makeLspExecutable(directory: string): Promise<void> {
