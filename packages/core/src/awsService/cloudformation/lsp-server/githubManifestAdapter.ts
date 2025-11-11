@@ -110,7 +110,7 @@ export class GitHubManifestAdapter {
         const platform = parts.pop()
 
         if (!platform || !arch) {
-            throw new Error(`Unknown arch and platform ${arch} ${plat}`)
+            throw new Error(`Unknown arch and platform ${arch} ${platform}`)
         }
 
         return { arch, platform }
