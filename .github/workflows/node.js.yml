@@ -139,10 +139,18 @@ jobs:
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
+            - name: Setup CloudFormation LSP Server
+              run: |
+                  bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
+                  echo "__CLOUDFORMATIONLSP_PATH=$(pwd)/.lsp-server" >> $GITHUB_ENV
             - name: Tests
               uses: coactions/setup-xvfb@v1
               with:
                   run: npm run test -w packages/${{ matrix.package }}
+            - name: E2E Tests
+              uses: coactions/setup-xvfb@v1
+              with:
+                  run: npm run testE2E -w packages/${{ matrix.package }}
             - name: Code coverage for ${{ matrix.package }}
               env:
                   # Unset NODE_OPTIONS because of https://github.com/codecov/uploader/issues/475
@@ -201,8 +209,15 @@ jobs:
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
+            - name: Setup CloudFormation LSP Server
+              shell: bash
+              run: |
+                  bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
+                  echo "__CLOUDFORMATIONLSP_PATH=$(pwd)/.lsp-server" >> $GITHUB_ENV
             - name: Tests
               run: npm run test -w packages/${{ matrix.package }}
+            - name: E2E Tests
+              run: npm run testE2E -w packages/${{ matrix.package }}
             - name: Code coverage for ${{ matrix.package }}
               env:
                   # Unset NODE_OPTIONS because of https://github.com/codecov/uploader/issues/475

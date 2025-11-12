@@ -29,7 +29,7 @@ case "$ARCH" in
     *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-NODE_VERSION=$(node -v | cut -d'.' -f1 | tr -d 'v')
+NODE_VERSION="22"
 
 # Fetch latest release
 echo "Fetching latest LSP server release..."
