@@ -100,7 +100,7 @@ export class CfnInitUiInterface {
                 } else if (!this.state.projectPath) {
                     quickPick.activeItems = [items[1]]
                 } else if (this.state.environments.length === 0) {
-                    quickPick.activeItems = [addEnvItem] 
+                    quickPick.activeItems = [addEnvItem]
                 } else {
                     quickPick.activeItems = [createProjectItem]
                 }
