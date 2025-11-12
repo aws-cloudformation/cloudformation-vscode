@@ -12,10 +12,13 @@ import {
     extractToParameterPositionCursorCommand,
     promptForOptionalFlags,
     promptToSaveToFile,
+    addResourceTypesCommand,
+    removeResourceTypeCommand,
 } from '../../../../awsService/cloudformation/commands/cfnCommands'
 import { OptionalFlagMode } from '../../../../awsService/cloudformation/stacks/actions/stackActionRequestType'
 import * as inputBox from '../../../../awsService/cloudformation/ui/inputBox'
 import { fs } from '../../../../shared/fs/fs'
+import { ResourceTypeNode } from '../../../../awsService/cloudformation/explorer/nodes/resourceTypeNode'
 
 describe('CfnCommands', function () {
     let sandbox: sinon.SinonSandbox
@@ -330,6 +333,38 @@ describe('CfnCommands', function () {
             assert.strictEqual(parsed['on-stack-failure'], OnStackFailure.ROLLBACK)
             assert.strictEqual(parsed['include-nested-stacks'], false)
             assert.strictEqual(parsed['import-existing-resources'], true)
+        })
+    })
+
+    describe('addResourceTypesCommand', function () {
+        it('should register add resource types command', function () {
+            const mockResourcesManager = { selectResourceTypes: sinon.stub() } as any
+            const result = addResourceTypesCommand(mockResourcesManager)
+            assert.ok(result)
+            assert.ok(registerCommandStub.calledOnce)
+            assert.strictEqual(registerCommandStub.firstCall.args[0], 'aws.cloudformation.api.addResourceTypes')
+        })
+    })
+
+    describe('removeResourceTypeCommand', function () {
+        it('should register remove resource type command', function () {
+            const mockResourcesManager = { removeResourceType: sinon.stub() } as any
+            const result = removeResourceTypeCommand(mockResourcesManager)
+            assert.ok(result)
+            assert.ok(registerCommandStub.calledOnce)
+            assert.strictEqual(registerCommandStub.firstCall.args[0], 'aws.cloudformation.removeResourceType')
+        })
+
+        it('should call removeResourceType with node typeName', async function () {
+            const mockResourcesManager = { removeResourceType: sinon.stub().resolves() } as any
+            removeResourceTypeCommand(mockResourcesManager)
+
+            const commandHandler = registerCommandStub.firstCall.args[1]
+            const mockNode = { typeName: 'AWS::S3::Bucket' } as ResourceTypeNode
+
+            await commandHandler(mockNode)
+
+            assert.ok(mockResourcesManager.removeResourceType.calledOnceWith('AWS::S3::Bucket'))
         })
     })
 })

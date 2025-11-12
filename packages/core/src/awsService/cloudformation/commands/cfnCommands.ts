@@ -632,23 +632,17 @@ async function getTemplateParameters(client: LanguageClient, templateUri: string
     }
 }
 
-export const SelectResourceTypeCommand: Command = {
-    title: 'Select Resource Types',
-    command: commandKey('api.selectResourceTypes'),
-    arguments: [],
-}
-
-export function selectResourceTypesCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(
-        commandKey('api.selectResourceTypes'),
-        async () => await resourcesManager.selectResourceTypes()
-    )
-}
-
 export function addResourceTypesCommand(resourcesManager: ResourcesManager) {
     return commands.registerCommand(
         commandKey('api.addResourceTypes'),
         async () => await resourcesManager.selectResourceTypes()
+    )
+}
+
+export function removeResourceTypeCommand(resourcesManager: ResourcesManager) {
+    return commands.registerCommand(
+        commandKey('removeResourceType'),
+        async (node: ResourceTypeNode) => await resourcesManager.removeResourceType(node.typeName)
     )
 }
 

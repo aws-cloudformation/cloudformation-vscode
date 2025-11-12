@@ -23,8 +23,8 @@ import {
     rerunLastValidationCommand,
     importResourceStateCommand,
     cloneResourceStateCommand,
-    selectResourceTypesCommand,
     addResourceTypesCommand,
+    removeResourceTypeCommand,
     refreshAllResourcesCommand,
     refreshResourceListCommand,
     copyResourceIdentifierCommand,
@@ -285,10 +285,10 @@ export async function activate(context: ExtensionContext) {
                 loadMoreChangeSetsCommand(cfnExplorer),
                 viewStackCommand(stackViewCoordinator, overviewProvider, outputsProvider, resourcesProvider),
                 addResourceTypesCommand(resourcesManager),
+                removeResourceTypeCommand(resourcesManager),
                 refreshAllResourcesCommand(resourcesManager),
                 refreshResourceListCommand(resourcesManager, cfnExplorer),
                 copyResourceIdentifierCommand(),
-                selectResourceTypesCommand(resourcesManager),
                 importResourceStateCommand(resourcesManager),
                 cloneResourceStateCommand(resourcesManager),
                 getStackManagementInfoCommand(resourcesManager),
@@ -321,9 +321,8 @@ export async function activate(context: ExtensionContext) {
             return credentialsService.initialize(client)
         })
         .catch((err: any) => {
-            void window.showErrorMessage(
-                formatMessage(`Failed to start ${err instanceof Error ? err.message : toString(err)}`)
-            )
+            // Language client already shows error popup for startup failures
+            getLogger().error(`CloudFormation language server failed to start: ${toString(err)}`)
         })
 }
 

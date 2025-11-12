@@ -2,7 +2,7 @@
     "name": "aws-toolkit-vscode",
     "displayName": "AWS Toolkit",
     "description": "Including CodeCatalyst, Infrastructure Composer, and support for Lambda, S3, CloudWatch Logs, CloudFormation, and many other services.",
-    "version": "3.83.0-SNAPSHOT",
+    "version": "3.84.0-SNAPSHOT",
     "extensionKind": [
         "workspace"
     ],
@@ -1737,22 +1737,22 @@
                 {
                     "command": "aws.sagemaker.stopSpace",
                     "group": "inline@0",
-                    "when": "view != aws.smus.rootView  && viewItem =~ /^(awsSagemakerSpaceRunningRemoteEnabledNode|awsSagemakerSpaceRunningRemoteDisabledNode)$/"
+                    "when": "view != aws.smus.rootView && viewItem == awsSagemakerSpaceRunningNode"
                 },
                 {
                     "command": "aws.smus.stopSpace",
                     "group": "inline@0",
-                    "when": "view == aws.smus.rootView && viewItem =~ /^(awsSagemakerSpaceRunningRemoteEnabledNode|awsSagemakerSpaceRunningRemoteDisabledNode|awsSagemakerSpaceRunningNode)$/"
+                    "when": "view == aws.smus.rootView && viewItem == awsSagemakerSpaceRunningNode"
                 },
                 {
                     "command": "aws.sagemaker.openRemoteConnection",
                     "group": "inline@1",
-                    "when": "view != aws.smus.rootView && viewItem =~ /^(awsSagemakerSpaceRunningRemoteEnabledNode|awsSagemakerSpaceStoppedRemoteEnabledNode|awsSagemakerSpaceStoppedRemoteDisabledNode)$/"
+                    "when": "view != aws.smus.rootView && viewItem =~ /^(awsSagemakerSpaceRunningNode|awsSagemakerSpaceNode)$/"
                 },
                 {
                     "command": "aws.smus.openRemoteConnection",
                     "group": "inline@1",
-                    "when": "view == aws.smus.rootView && viewItem =~ /^(awsSagemakerSpaceRunningRemoteEnabledNode|awsSagemakerSpaceStoppedRemoteEnabledNode|awsSagemakerSpaceStoppedRemoteDisabledNode)$/"
+                    "when": "view == aws.smus.rootView && viewItem =~ /^(awsSagemakerSpaceRunningNode|smusSpaceNode)$/"
                 },
                 {
                     "command": "_aws.toolkit.notifications.dismiss",
@@ -2782,6 +2782,10 @@
                     "command": "aws.cloudformation.api.refreshResourceList",
                     "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore) && !aws.cloudformation.refreshingResourceList",
                     "group": "1@1"
+                },
+                {
+                    "command": "aws.cloudformation.removeResourceType",
+                    "when": "view == aws.cloudformation && (viewItem == resourceType || viewItem == resourceTypeWithMore)"
                 },
                 {
                     "command": "aws.cloudformation.api.addResourceTypes",
@@ -4868,6 +4872,11 @@
                 "command": "aws.cloudformation.api.addResourceTypes",
                 "title": "Add Resource Types",
                 "icon": "$(add)",
+                "category": "AWS CloudFormation"
+            },
+            {
+                "command": "aws.cloudformation.removeResourceType",
+                "title": "Remove Resource Type",
                 "category": "AWS CloudFormation"
             },
             {
