@@ -4934,13 +4934,13 @@
             },
             {
                 "command": "aws.cloudformation.api.deployTemplate",
-                "title": "Deploy Template",
+                "title": "Validate and Deploy",
                 "category": "AWS CloudFormation",
                 "icon": "$(cloud-upload)"
             },
             {
                 "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
-                "title": "Deploy Template",
+                "title": "Validate and Deploy",
                 "category": "AWS CloudFormation",
                 "icon": "$(plus)"
             },

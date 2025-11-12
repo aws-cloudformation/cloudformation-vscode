@@ -82,3 +82,12 @@ export function showChangeSetDeletionStarted(changeSetName: string, stackName: s
 export function showErrorMessage(message: string) {
     void window.showErrorMessage(message)
 }
+
+export async function showWarningConfirmation(warningCount: number): Promise<boolean> {
+    const proceed = await window.showWarningMessage(
+        `There are ${warningCount} warning(s). Do you want to proceed with deployment?`,
+        'Proceed',
+        'Cancel'
+    )
+    return proceed === 'Proceed'
+}
