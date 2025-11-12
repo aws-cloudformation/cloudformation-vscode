@@ -13,6 +13,7 @@ import { getLogger } from '../../../shared/logger/logger'
 import { ResourcePaths } from '../../../shared/lsp/types'
 import { FileType } from 'vscode'
 import * as nodeFs from 'fs' // eslint-disable-line no-restricted-imports
+import globals from '../../../shared/extensionGlobals'
 
 function determineEnvironment(): CfnLspServerEnvType {
     if (isDebugInstance()) {
@@ -43,8 +44,38 @@ export class CfnLspInstaller extends BaseLspInstaller {
             'awsCfnLsp',
             {
                 resolve: async () => {
-                    this.log.info(`Resolving CloudFormation LSP from GitHub releases (${this.environment})`)
-                    return await this.githubManifest.getManifest()
+                    const log = getLogger()
+                    log.info(`Resolving CloudFormation LSP from GitHub releases (${this.environment})`)
+
+                    try {
+                        const manifest = await this.githubManifest.getManifest()
+
+                        // Cache in global state like other LSPs
+                        const manifestStorageKey = 'aws.toolkit.lsp.manifest'
+                        const storage = globals.globalState.tryGet(manifestStorageKey, Object, {})
+                        storage[CfnLspName] = {
+                            etag: '',
+                            content: JSON.stringify(manifest),
+                        }
+                        globals.globalState.tryUpdate(manifestStorageKey, storage)
+
+                        return manifest
+                    } catch (error) {
+                        log.warn(`GitHub fetch failed, trying cached manifest: ${error}`)
+
+                        // Try cached manifest from global state
+                        const manifestStorageKey = 'aws.toolkit.lsp.manifest'
+                        const storage = globals.globalState.tryGet(manifestStorageKey, Object, {})
+                        const manifestData = storage[CfnLspName]
+
+                        if (manifestData?.content) {
+                            log.info('Using cached manifest for offline mode')
+                            return JSON.parse(manifestData.content)
+                        }
+
+                        log.error('No cached manifest found')
+                        throw error
+                    }
                 },
             } as any
         )
@@ -55,9 +86,6 @@ export class CfnLspInstaller extends BaseLspInstaller {
         const rootDir = dirname(resourcePaths.lsp)
         await this.makeLspExecutable(rootDir)
         await fs.chmod(join(rootDir, 'bin', process.platform === 'win32' ? 'cfn-init.exe' : 'cfn-init'), 0o755)
-
-        const manifest = await this.githubManifest.getManifest()
-        await fs.writeFile(join(assetDirectory, 'manifest.json'), JSON.stringify(manifest, undefined, 2))
     }
 
     private async makeLspExecutable(directory: string): Promise<void> {
