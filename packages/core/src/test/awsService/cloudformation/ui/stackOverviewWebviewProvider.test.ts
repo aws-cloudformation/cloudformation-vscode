@@ -22,6 +22,7 @@ describe('StackOverviewWebviewProvider', () => {
             },
             onDidChangeVisibility: sandbox.stub(),
             onDidDispose: sandbox.stub(),
+            visible: true,
         }
     }
 
@@ -108,5 +109,33 @@ describe('StackOverviewWebviewProvider', () => {
         assert.strictEqual(mockClient.sendRequest.callCount, 1)
 
         clock.restore()
+    })
+
+    it('should include console link with ARN in HTML', async () => {
+        const view = createMockView()
+        provider.resolveWebviewView(view as any)
+        await provider.showStackOverview('test-stack')
+
+        const html = view.webview.html
+        assert.strictEqual(html.includes('https://console.aws.amazon.com/go/view?arn='), true)
+        assert.strictEqual(html.includes('stack-id-123'), true)
+        assert.strictEqual(html.includes('View in AWS Console'), true)
+    })
+
+    it('should not include console link when ARN is missing', async () => {
+        mockClient.sendRequest.resolves({
+            stack: {
+                StackName: 'test-stack',
+                StackStatus: 'CREATE_COMPLETE',
+                StackId: undefined,
+            },
+        })
+
+        const view = createMockView()
+        provider.resolveWebviewView(view as any)
+        await provider.showStackOverview('test-stack')
+
+        const html = view.webview.html
+        assert.strictEqual(html.includes('console.aws.amazon.com'), false)
     })
 })

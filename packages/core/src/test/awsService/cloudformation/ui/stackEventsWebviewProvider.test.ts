@@ -13,6 +13,19 @@ describe('StackEventsWebviewProvider', () => {
     let mockClient: any
     let coordinatorCallback: any
 
+    function createMockView() {
+        return {
+            webview: {
+                options: {},
+                html: '',
+                onDidReceiveMessage: sandbox.stub(),
+            },
+            onDidChangeVisibility: sandbox.stub(),
+            onDidDispose: sandbox.stub(),
+            visible: true,
+        }
+    }
+
     beforeEach(() => {
         sandbox = sinon.createSandbox()
         mockClient = {
@@ -87,5 +100,35 @@ describe('StackEventsWebviewProvider', () => {
         assert.strictEqual(mockClient.sendRequest.callCount > initialCalls, true)
 
         clock.restore()
+    })
+
+    it('should include console link with ARN when stackArn is set', async () => {
+        const view = createMockView()
+        provider.resolveWebviewView(view as any)
+
+        await coordinatorCallback({
+            stackName: 'test-stack',
+            stackArn: 'arn:aws:cloudformation:us-west-2:123456789012:stack/test-stack/xyz-456',
+            isChangeSetMode: false,
+        })
+
+        const html = view.webview.html
+        assert.strictEqual(html.includes('us-west-2.console.aws.amazon.com'), true)
+        assert.strictEqual(html.includes('/stacks/events?stackId='), true)
+        assert.strictEqual(html.includes('View in AWS Console'), true)
+    })
+
+    it('should not include console link when stackArn is missing', async () => {
+        const view = createMockView()
+        provider.resolveWebviewView(view as any)
+
+        await coordinatorCallback({
+            stackName: 'test-stack',
+            stackArn: undefined,
+            isChangeSetMode: false,
+        })
+
+        const html = view.webview.html
+        assert.strictEqual(html.includes('console.aws.amazon.com'), false)
     })
 })

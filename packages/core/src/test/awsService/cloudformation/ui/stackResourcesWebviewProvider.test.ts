@@ -183,6 +183,38 @@ describe('StackResourcesWebviewProvider', function () {
             assert.ok(html.includes('disabled'))
             assert.ok(html.includes('Previous'))
         })
+
+        it('should include console link with ARN when stackArn is set', async function () {
+            const mockWebview = createMockWebview()
+            provider.resolveWebviewView(mockWebview as any)
+
+            const coordinatorCallback = mockCoordinator.onDidChangeStack.firstCall.args[0]
+            await coordinatorCallback({
+                stackName: 'test-stack',
+                stackArn: 'arn:aws:cloudformation:us-east-1:123456789012:stack/test-stack/abc-123',
+                isChangeSetMode: false,
+            })
+
+            const html = mockWebview.webview.html
+            assert.ok(html.includes('us-east-1.console.aws.amazon.com'))
+            assert.ok(html.includes('/stacks/resources?stackId='))
+            assert.ok(html.includes('View in AWS Console'))
+        })
+
+        it('should not include console link when stackArn is missing', async function () {
+            const mockWebview = createMockWebview()
+            provider.resolveWebviewView(mockWebview as any)
+
+            const coordinatorCallback = mockCoordinator.onDidChangeStack.firstCall.args[0]
+            await coordinatorCallback({
+                stackName: 'test-stack',
+                stackArn: undefined,
+                isChangeSetMode: false,
+            })
+
+            const html = mockWebview.webview.html
+            assert.strictEqual(html.includes('console.aws.amazon.com'), false)
+        })
     })
 
     describe('pagination functionality', function () {

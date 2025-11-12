@@ -86,4 +86,36 @@ describe('StackOutputsWebviewProvider', () => {
 
         assert.strictEqual(mockCoordinator.setStack.called, false)
     })
+
+    it('should include console link with ARN when stackArn is set', async () => {
+        const mockView = createMockView()
+        await provider.resolveWebviewView(mockView as any)
+
+        const coordinatorCallback = mockCoordinator.onDidChangeStack.firstCall.args[0]
+        await coordinatorCallback({
+            stackName: 'test-stack',
+            stackArn: 'arn:aws:cloudformation:eu-west-1:123456789012:stack/test-stack/def-789',
+            isChangeSetMode: false,
+        })
+
+        const html = mockView.webview.html
+        assert.strictEqual(html.includes('eu-west-1.console.aws.amazon.com'), true)
+        assert.strictEqual(html.includes('/stacks/outputs?stackId='), true)
+        assert.strictEqual(html.includes('View in AWS Console'), true)
+    })
+
+    it('should not include console link when stackArn is missing', async () => {
+        const mockView = createMockView()
+        await provider.resolveWebviewView(mockView as any)
+
+        const coordinatorCallback = mockCoordinator.onDidChangeStack.firstCall.args[0]
+        await coordinatorCallback({
+            stackName: 'test-stack',
+            stackArn: undefined,
+            isChangeSetMode: false,
+        })
+
+        const html = mockView.webview.html
+        assert.strictEqual(html.includes('console.aws.amazon.com'), false)
+    })
 })
