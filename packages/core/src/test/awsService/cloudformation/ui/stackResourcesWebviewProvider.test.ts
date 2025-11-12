@@ -196,7 +196,7 @@ describe('StackResourcesWebviewProvider', function () {
             })
 
             const html = mockWebview.webview.html
-            assert.ok(html.includes('us-east-1.console.aws.amazon.com'))
+            assert.ok(html.includes('href="https://us-east-1.console.aws.amazon.com'))
             assert.ok(html.includes('/stacks/resources?stackId='))
             assert.ok(html.includes('View in AWS Console'))
         })
@@ -213,7 +213,7 @@ describe('StackResourcesWebviewProvider', function () {
             })
 
             const html = mockWebview.webview.html
-            assert.strictEqual(html.includes('console.aws.amazon.com'), false)
+            assert.ok(!html.includes('href="https://'))
         })
     })
 

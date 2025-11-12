@@ -16,13 +16,13 @@ describe('StackEventsWebviewProvider', () => {
     function createMockView() {
         return {
             webview: {
-                options: {},
-                html: '',
                 onDidReceiveMessage: sandbox.stub(),
+                html: '',
+                options: {},
             },
             onDidChangeVisibility: sandbox.stub(),
-            onDidDispose: sandbox.stub(),
             visible: true,
+            onDidDispose: sandbox.stub(),
         }
     }
 
@@ -113,9 +113,9 @@ describe('StackEventsWebviewProvider', () => {
         })
 
         const html = view.webview.html
-        assert.strictEqual(html.includes('us-west-2.console.aws.amazon.com'), true)
-        assert.strictEqual(html.includes('/stacks/events?stackId='), true)
-        assert.strictEqual(html.includes('View in AWS Console'), true)
+        assert.ok(html.includes('href="https://us-west-2.console.aws.amazon.com'))
+        assert.ok(html.includes('/stacks/events?stackId='))
+        assert.ok(html.includes('View in AWS Console'))
     })
 
     it('should not include console link when stackArn is missing', async () => {
@@ -129,6 +129,6 @@ describe('StackEventsWebviewProvider', () => {
         })
 
         const html = view.webview.html
-        assert.strictEqual(html.includes('console.aws.amazon.com'), false)
+        assert.ok(!html.includes('href="https://'))
     })
 })

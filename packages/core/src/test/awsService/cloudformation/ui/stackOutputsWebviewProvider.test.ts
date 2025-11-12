@@ -99,9 +99,9 @@ describe('StackOutputsWebviewProvider', () => {
         })
 
         const html = mockView.webview.html
-        assert.strictEqual(html.includes('eu-west-1.console.aws.amazon.com'), true)
-        assert.strictEqual(html.includes('/stacks/outputs?stackId='), true)
-        assert.strictEqual(html.includes('View in AWS Console'), true)
+        assert.ok(html.includes('href="https://eu-west-1.console.aws.amazon.com'))
+        assert.ok(html.includes('/stacks/outputs?stackId='))
+        assert.ok(html.includes('View in AWS Console'))
     })
 
     it('should not include console link when stackArn is missing', async () => {
@@ -116,6 +116,6 @@ describe('StackOutputsWebviewProvider', () => {
         })
 
         const html = mockView.webview.html
-        assert.strictEqual(html.includes('console.aws.amazon.com'), false)
+        assert.ok(!html.includes('href="https://'))
     })
 })
