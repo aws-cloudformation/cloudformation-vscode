@@ -26,7 +26,6 @@ function determineEnvironment(): CfnLspServerEnvType {
 
 export class CfnLspInstaller extends BaseLspInstaller {
     private log = getLogger()
-    private readonly environment = determineEnvironment()
     private readonly githubManifest = new GitHubManifestAdapter(
         'aws-cloudformation',
         'cloudformation-languageserver',
@@ -45,31 +44,25 @@ export class CfnLspInstaller extends BaseLspInstaller {
             {
                 resolve: async () => {
                     const log = getLogger()
-                    log.info(`Resolving CloudFormation LSP from GitHub releases (${this.environment})`)
+                    const cfnManifestStorageKey = 'aws.cloudformation.lsp.manifest'
 
                     try {
                         const manifest = await this.githubManifest.getManifest()
 
-                        // Cache in global state like other LSPs
-                        const manifestStorageKey = 'aws.toolkit.lsp.manifest'
-                        const storage = globals.globalState.tryGet(manifestStorageKey, Object, {})
-                        storage[CfnLspName] = {
-                            etag: '',
+                        // Cache in CloudFormation-specific global state storage
+                        globals.globalState.tryUpdate(cfnManifestStorageKey, {
                             content: JSON.stringify(manifest),
-                        }
-                        globals.globalState.tryUpdate(manifestStorageKey, storage)
+                        })
 
                         return manifest
                     } catch (error) {
                         log.warn(`GitHub fetch failed, trying cached manifest: ${error}`)
 
-                        // Try cached manifest from global state
-                        const manifestStorageKey = 'aws.toolkit.lsp.manifest'
-                        const storage = globals.globalState.tryGet(manifestStorageKey, Object, {})
-                        const manifestData = storage[CfnLspName]
+                        // Try cached manifest from CloudFormation-specific storage
+                        const manifestData = globals.globalState.tryGet(cfnManifestStorageKey, Object, {})
 
                         if (manifestData?.content) {
-                            log.info('Using cached manifest for offline mode')
+                            log.debug('Using cached manifest for offline mode')
                             return JSON.parse(manifestData.content)
                         }
 
