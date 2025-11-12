@@ -75,52 +75,6 @@ import { fs } from '../../../shared/fs/fs'
 import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
 import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
 
-export function validateDeploymentCommand(
-    client: LanguageClient,
-    diffProvider: DiffWebviewProvider,
-    documentManager: DocumentManager,
-    environmentManager: CfnEnvironmentManager
-) {
-    return commands.registerCommand(
-        commandKey('api.validateDeployment'),
-        async (changeSetParams: string | StackNode | StacksNode) => {
-            try {
-                const result = await changeSetSteps(
-                    client,
-                    documentManager,
-                    environmentManager,
-                    true,
-                    typeof changeSetParams === 'string' ? changeSetParams : undefined,
-                    changeSetParams instanceof StackNode ? changeSetParams?.stack.StackName : undefined
-                )
-                if (!result) {
-                    return
-                }
-
-                const validation = new Validation(
-                    result.templateUri,
-                    result.stackName,
-                    client,
-                    diffProvider,
-                    result.parameters,
-                    result.capabilities,
-                    result.resourcesToImport,
-                    false,
-                    result.optionalFlags,
-                    result.s3Bucket,
-                    result.s3Key
-                )
-
-                setLastValidation(validation)
-
-                await validation.validate()
-            } catch (error) {
-                showErrorMessage(`Error validating template: ${extractErrorMessage(error)}`)
-            }
-        }
-    )
-}
-
 export function deployTemplateFromStacksMenuCommand() {
     return commands.registerCommand(commandKey('api.deployTemplateFromStacksMenu'), async () => {
         return commands.executeCommand(commandKey('api.deployTemplate'))

@@ -19,7 +19,6 @@ import { getServiceEnvVarConfig } from '../../shared/vscode/env'
 import { DevSettings } from '../../shared/settings'
 import {
     deployTemplateCommand,
-    validateDeploymentCommand,
     rerunLastValidationCommand,
     importResourceStateCommand,
     cloneResourceStateCommand,
@@ -298,7 +297,6 @@ export async function activate(context: ExtensionContext) {
                 window.registerWebviewViewProvider(commandKey('stack.resources'), resourcesProvider),
                 window.registerWebviewViewProvider(commandKey('stack.outputs'), outputsProvider),
                 focusDiffCommand(),
-                validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),
                 deployTemplateCommand(client, diffProvider, documentManager, environmentManager),
                 deployTemplateFromStacksMenuCommand(),
                 executeChangeSetCommand(client, stackViewCoordinator),
