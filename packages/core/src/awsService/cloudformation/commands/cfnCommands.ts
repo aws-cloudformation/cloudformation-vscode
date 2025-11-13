@@ -525,8 +525,8 @@ async function changeSetSteps(
     return { templateUri, stackName, parameters, capabilities, resourcesToImport, optionalFlags, s3Bucket, s3Key }
 }
 
-export function rerunLastValidationCommand() {
-    return commands.registerCommand(commandKey('api.rerunLastValidation'), async () => {
+export function rerunValidateAndDeployCommand() {
+    return commands.registerCommand(commandKey('api.rerunValidateAndDeploy'), async () => {
         try {
             const lastValidation = getLastValidation()
             if (!lastValidation) {

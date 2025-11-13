@@ -19,7 +19,7 @@ import { getServiceEnvVarConfig } from '../../shared/vscode/env'
 import { DevSettings } from '../../shared/settings'
 import {
     deployTemplateCommand,
-    rerunLastValidationCommand,
+    rerunValidateAndDeployCommand,
     importResourceStateCommand,
     cloneResourceStateCommand,
     addResourceTypesCommand,
@@ -272,7 +272,6 @@ async function startClient(context: ExtensionContext) {
         window.registerWebviewViewProvider(commandKey('stack.resources'), resourcesProvider),
         window.registerWebviewViewProvider(commandKey('stack.outputs'), outputsProvider),
         focusDiffCommand(),
-        validateDeploymentCommand(client, diffProvider, documentManager, environmentManager),
         deployTemplateCommand(client, diffProvider, documentManager, environmentManager),
         deployTemplateFromStacksMenuCommand(),
         executeChangeSetCommand(client, stackViewCoordinator),
@@ -282,7 +281,7 @@ async function startClient(context: ExtensionContext) {
         openStackTemplateCommand(client),
         selectRegionCommand(cfnExplorer),
         selectEnvironmentCommand(cfnExplorer),
-        rerunLastValidationCommand(),
+        rerunValidateAndDeployCommand(),
         extractToParameterPositionCursorCommand(client),
         createProjectCommand(cfnInitUiInterface),
         addEnvironmentCommand(cfnInitUiInterface, cfnInitCliCaller, environmentManager),
