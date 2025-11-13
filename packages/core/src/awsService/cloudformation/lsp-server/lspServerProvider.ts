@@ -13,6 +13,7 @@ export interface LspServerResolverI {
 
 export interface LspServerProviderI extends LspServerResolverI {
     canProvide(): boolean
+    name(): string
 }
 
 export class LspServerProvider implements LspServerResolverI, Disposable {
@@ -29,7 +30,7 @@ export class LspServerProvider implements LspServerResolverI, Disposable {
 
         this.matchedProviders = matches
         getLogger().info(
-            `Found CloudFormation LSP provider: ${this.matchedProviders.map((provider) => provider.constructor.name)}`
+            `Found CloudFormation LSP provider: ${this.matchedProviders.map((provider) => provider.name())}`
         )
     }
 
