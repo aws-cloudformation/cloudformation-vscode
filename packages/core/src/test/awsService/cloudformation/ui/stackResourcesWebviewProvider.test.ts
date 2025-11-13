@@ -215,6 +215,19 @@ describe('StackResourcesWebviewProvider', function () {
             const html = mockWebview.webview.html
             assert.ok(!html.includes('href="https://'))
         })
+
+        it('should show "X resources loaded" in header when nextToken is available', async function () {
+            const mockWebview = await setupProviderWithResources('test-stack', createMockResources(50), 'token123')
+            const html = mockWebview.webview.html
+            assert.ok(html.includes('(50 resources loaded)'))
+        })
+
+        it('should show "X resources" in header when nextToken is not available', async function () {
+            const mockWebview = await setupProviderWithResources('test-stack', createMockResources(60))
+            const html = mockWebview.webview.html
+            assert.ok(html.includes('(60 resources)'))
+            assert.ok(!html.includes('(60 resources loaded)'))
+        })
     })
 
     describe('pagination functionality', function () {
