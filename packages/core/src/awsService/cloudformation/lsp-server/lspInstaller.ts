@@ -11,7 +11,6 @@ import { isAutomation, isBeta, isDebugInstance } from '../../../shared/vscode/en
 import { dirname, join } from 'path'
 import { getLogger } from '../../../shared/logger/logger'
 import { ResourcePaths } from '../../../shared/lsp/types'
-import { FileType } from 'vscode'
 import * as nodeFs from 'fs' // eslint-disable-line no-restricted-imports
 import globals from '../../../shared/extensionGlobals'
 
@@ -25,7 +24,6 @@ function determineEnvironment(): CfnLspServerEnvType {
 }
 
 export class CfnLspInstaller extends BaseLspInstaller {
-    private log = getLogger()
     private readonly githubManifest = new GitHubManifestAdapter(
         'aws-cloudformation',
         'cloudformation-languageserver',
@@ -77,26 +75,7 @@ export class CfnLspInstaller extends BaseLspInstaller {
     protected async postInstall(assetDirectory: string): Promise<void> {
         const resourcePaths = this.resourcePaths(assetDirectory)
         const rootDir = dirname(resourcePaths.lsp)
-        await this.makeLspExecutable(rootDir)
         await fs.chmod(join(rootDir, 'bin', process.platform === 'win32' ? 'cfn-init.exe' : 'cfn-init'), 0o755)
-    }
-
-    private async makeLspExecutable(directory: string): Promise<void> {
-        const extensions = ['.cjs', '.gyp', '.js', '.mjs', '.node', '.wasm', '.json', '.zip', '.map']
-        const entries = await fs.readdir(directory)
-
-        for (const [name, type] of entries) {
-            const fullPath = join(directory, name)
-            if (type === FileType.Directory) {
-                await this.makeLspExecutable(fullPath)
-            } else if (extensions.some((ext) => name.endsWith(ext))) {
-                try {
-                    await fs.chmod(fullPath, 0o755)
-                } catch (error) {
-                    this.log.error(`Failed to make ${name} executable`, error)
-                }
-            }
-        }
     }
 
     protected resourcePaths(assetDirectory?: string): ResourcePaths {
