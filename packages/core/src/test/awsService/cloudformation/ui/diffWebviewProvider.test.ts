@@ -136,7 +136,7 @@ describe('DiffWebviewProvider', function () {
             // Verify expandable structure
             assert.ok(html.includes('toggleDetails'))
             assert.ok(html.includes('display: none'))
-            assert.ok(html.includes('▶'))
+            assert.ok(html.includes('<svg'))
         })
 
         it('should handle multiple detail rows with proper expandable structure', function () {

@@ -181,7 +181,9 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
                         : 'transparent'
 
             const hasDetails = rc.details && rc.details.length > 0
-            const expandIcon = hasDetails ? '▶' : ''
+            const expandIcon = hasDetails
+                ? '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;"><path d="M5 2L11 8L5 14" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+                : ''
 
             const driftStatus = rc.resourceDriftStatus
             const hasDriftDetails = rc.details?.some(
@@ -418,12 +420,13 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
                     function toggleDetails(index) {
                         const detailsRow = document.getElementById('details-' + index);
                         const icon = document.getElementById('expand-icon-' + index);
+                        // https://cloudscape.design/foundation/visual-foundation/iconography/ angle-right angle-down
                         if (detailsRow.style.display === 'none') {
                             detailsRow.style.display = 'table-row';
-                            icon.textContent = '▼';
+                            icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;"><path d="M2 5L8 11L14 5" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linejoin="round"/></svg>';
                         } else {
                             detailsRow.style.display = 'none';
-                            icon.textContent = '▶';
+                            icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;"><path d="M5 2L11 8L5 14" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linejoin="round"/></svg>';
                         }
                     }
                     function nextPage() {
