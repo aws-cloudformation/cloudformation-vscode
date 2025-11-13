@@ -74,6 +74,7 @@ import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 import { fs } from '../../../shared/fs/fs'
 import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
 import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
+import { ResourceIdentifierDocumentationUrl } from '../artifacts/awsDocumentationLinks'
 
 export function deployTemplateFromStacksMenuCommand() {
     return commands.registerCommand(commandKey('api.deployTemplateFromStacksMenu'), async () => {
@@ -789,8 +790,8 @@ export function loadMoreStacksCommand(explorer: CloudFormationExplorer) {
 export function searchResourceCommand(explorer: CloudFormationExplorer, resourcesManager: ResourcesManager) {
     return commands.registerCommand(commandKey('api.searchResource'), async (node: ResourceTypeNode) => {
         const identifier = await window.showInputBox({
-            prompt: `Enter ${node.label} identifier to search`,
-            placeHolder: 'Resource identifier',
+            prompt: `Enter ${node.label} identifier to add to list`,
+            placeHolder: 'Resource identifier must match exactly',
         })
 
         if (!identifier) {
@@ -800,10 +801,16 @@ export function searchResourceCommand(explorer: CloudFormationExplorer, resource
         const result = await resourcesManager.searchResource(node.label as string, identifier)
 
         if (result.found) {
-            void window.showInformationMessage(`Resource found: ${identifier}`)
+            void window.showInformationMessage(`${identifier} (${node.label}) has been added to the list`)
             explorer.refresh(node)
         } else {
-            void window.showErrorMessage(`Resource not found: ${identifier}`)
+            const action = await window.showErrorMessage(
+                `${node.label} with identifier '${identifier}' was not found. The identifier must match exactly.`,
+                'See Documentation'
+            )
+            if (action === 'See Documentation') {
+                void env.openExternal(Uri.parse(ResourceIdentifierDocumentationUrl))
+            }
         }
     })
 }

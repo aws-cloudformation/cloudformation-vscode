@@ -55,10 +55,6 @@ export function showChangeSetDeletionFailure(changeSetName: string, stackName: s
     )
 }
 
-export function showValidationComplete(stackName: string) {
-    void window.showInformationMessage(`Validation completed for stack: ${stackName}. Starting deployment...`)
-}
-
 export function showValidationStarted(stackName: string) {
     void window.showInformationMessage(`Validation started for stack: ${stackName}`)
 }
