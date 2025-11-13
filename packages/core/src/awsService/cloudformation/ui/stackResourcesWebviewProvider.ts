@@ -123,10 +123,14 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
             const params: GetStackResourcesParams = { stackName: this.stackName }
             if (this.nextToken) {
                 params.nextToken = this.nextToken
+                const result = await this.client.sendRequest(GetStackResourcesRequest, params)
+                this.allResources.push(...result.resources)
+                this.nextToken = result.nextToken
+            } else {
+                const result = await this.client.sendRequest(GetStackResourcesRequest, params)
+                this.allResources = result.resources
+                this.nextToken = result.nextToken
             }
-            const result = await this.client.sendRequest(GetStackResourcesRequest, params)
-            this.allResources.push(...result.resources)
-            this.nextToken = result.nextToken
         } catch (error) {
             showErrorMessage(`Failed to fetch stack resources: ${error}`)
         }
