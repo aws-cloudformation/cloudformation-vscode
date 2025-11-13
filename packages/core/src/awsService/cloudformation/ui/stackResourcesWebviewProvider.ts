@@ -377,7 +377,7 @@ export class StackResourcesWebviewProvider implements WebviewViewProvider, Dispo
             <div class="stack-info">
                 ${this.stackName}
                 ${this.stackArn ? `<a href="${arnToConsoleTabUrl(this.stackArn, 'resources')}" class="console-link" title="View in AWS Console">${externalLinkSvg()}</a>` : ''}
-                <span class="resource-count">(${this.allResources.length}${hasMore ? '+' : ''} resources)</span>
+                <span class="resource-count">(${this.allResources.length} resources${hasMore ? ' loaded' : ''})</span>
             </div>
             <div class="pagination">
                 <span>Page ${this.currentPage + 1} of ${totalPages || 1}</span>

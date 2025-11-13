@@ -330,7 +330,7 @@ export class StackEventsWebviewProvider implements WebviewViewProvider, Disposab
             <div class="stack-info">
                 ${this.stackName ?? ''}
                 ${this.stackArn ? `<a href="${arnToConsoleTabUrl(this.stackArn, 'events')}" class="console-link" title="View in AWS Console">${externalLinkSvg()}</a>` : ''}
-                <span class="event-count">(${totalEvents} events)</span>
+                <span class="event-count">(${totalEvents} events${hasMore ? ' loaded' : ''})</span>
             </div>
             <div class="pagination">
                 <span>Page ${currentPage} of ${totalPages || 1}</span>
