@@ -377,37 +377,60 @@ export async function getProjectName(prefillValue: string | undefined) {
 }
 
 export async function getProjectPath(prefillValue: string) {
-    while (true) {
-        const input = await window.showInputBox({
-            prompt: 'Enter project path (optional)',
-            value: prefillValue,
-            placeHolder: 'Press Enter for current directory',
-            ignoreFocusOut: true,
-        })
+    const selected = await window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        title: 'Select project directory',
+        defaultUri: prefillValue ? Uri.file(prefillValue) : undefined,
+    })
 
-        if (input === undefined) {
+    if (!selected || selected.length === 0) {
+        return undefined // User cancelled
+    }
+
+    const input = selected[0].fsPath
+
+    // Validate the selected path
+    try {
+        const resolvedPath = path.resolve(input)
+        const parentDir = path.dirname(resolvedPath)
+
+        const parentPathExists = await fs.existsDir(parentDir)
+        if (!parentPathExists) {
+            void window.showErrorMessage('Parent directory does not exist.')
             return undefined
-        } // User cancelled
-        if (!input.trim()) {
-            return input
-        } // Empty is valid (optional field)
-
-        // Validate after input
-        try {
-            const resolvedPath = path.resolve(input.trim())
-            const parentDir = path.dirname(resolvedPath)
-
-            const parentPathExists = await fs.existsDir(parentDir)
-            if (!parentPathExists) {
-                void window.showErrorMessage('Parent directory does not exist. Please try again.')
-                continue // Ask again
-            }
-
-            return input
-        } catch (error) {
-            void window.showErrorMessage('Invalid path format. Please try again.')
-            continue // Ask again
         }
+
+        // Check if we can write to the directory
+        try {
+            await fs.checkPerms(resolvedPath, '*w*')
+        } catch {
+            // If directory doesn't exist, check parent directory write permissions
+            try {
+                await fs.checkPerms(parentDir, '*w*')
+            } catch {
+                void window.showErrorMessage(
+                    'Cannot write to this location. Please choose a path you have write permissions for.'
+                )
+                return undefined
+            }
+        }
+
+        // Check if cfn-project directory already exists
+        const cfnProjectPath = path.join(resolvedPath, 'cfn-project')
+        const cfnProjectExists = await fs.existsDir(cfnProjectPath)
+        if (cfnProjectExists) {
+            void window.showErrorMessage(
+                'A cfn-project directory already exists at this location. Please choose a different path.'
+            )
+            return undefined
+        }
+
+        return input
+    } catch (error) {
+        void window.showErrorMessage('Invalid path format.')
+        return undefined
     }
 }
 
