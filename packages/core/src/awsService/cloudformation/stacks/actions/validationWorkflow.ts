@@ -22,6 +22,7 @@ import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
 import { createValidationParams } from './stackActionUtil'
 import { extractErrorMessage } from '../../utils'
 import { getLogger } from '../../../../shared/logger/logger'
+import { commandKey } from '../../utils'
 
 // TODO move this to server side, we should let server handle last validation
 let lastValidation: Validation | undefined = undefined
@@ -35,48 +36,26 @@ export function setLastValidation(validation: Validation | undefined): void {
 }
 
 export class Validation {
-    private id: string
-    public readonly uri: string
-    public readonly stackName: string
-    public readonly parameters?: Parameter[]
-    private capabilities?: Capability[]
-    private resourcesToImport?: ResourceToImport[]
-    private client: LanguageClient
-    private diffProvider: DiffWebviewProvider
+    private readonly id: string
     private status: StackActionPhase | undefined
     private changes: StackChange[] | undefined
     private statusBarItem: StatusBarItem | undefined
-    private shouldEnableDeployment: boolean
     private changeSetName?: string
-    private optionalFlags?: ChangeSetOptionalFlags
-    private s3Bucket?: string
-    private s3Key?: string
 
     constructor(
-        uri: string,
-        stackName: string,
-        client: LanguageClient,
-        diffProvider: DiffWebviewProvider,
-        parameters?: Parameter[],
-        capabilities?: Capability[],
-        resourcesToImport?: ResourceToImport[],
-        shouldEnableDeployment: boolean = false,
-        optionalFlags?: ChangeSetOptionalFlags,
-        s3Bucket?: string,
-        s3Key?: string
+        public readonly uri: string,
+        public readonly stackName: string,
+        private readonly client: LanguageClient,
+        private readonly diffProvider: DiffWebviewProvider,
+        public readonly parameters?: Parameter[],
+        private readonly capabilities?: Capability[],
+        private readonly resourcesToImport?: ResourceToImport[],
+        private readonly shouldEnableDeployment: boolean = false,
+        private readonly optionalFlags?: ChangeSetOptionalFlags,
+        private readonly s3Bucket?: string,
+        private readonly s3Key?: string
     ) {
         this.id = uuidv4()
-        this.uri = uri
-        this.stackName = stackName
-        this.client = client
-        this.diffProvider = diffProvider
-        this.parameters = parameters
-        this.capabilities = capabilities
-        this.resourcesToImport = resourcesToImport
-        this.shouldEnableDeployment = shouldEnableDeployment
-        this.optionalFlags = optionalFlags
-        this.s3Bucket = s3Bucket
-        this.s3Key = s3Key
     }
 
     async validate() {
@@ -100,17 +79,13 @@ export class Validation {
                 )
             )
 
-            // Store changeSetName from validation result
+            void commands.executeCommand(commandKey('stacks.refresh'))
             this.changeSetName = result.changeSetName
 
             this.pollForProgress()
         } catch (error) {
             showErrorMessage(`Error validating template: ${error instanceof Error ? error.message : String(error)}`)
         }
-    }
-
-    getChanges(): StackChange[] | undefined {
-        return this.changes
     }
 
     private pollForProgress() {
@@ -146,6 +121,7 @@ export class Validation {
                                     describeValidationStatusResult.FailureReason ?? 'UNKNOWN'
                                 )
                             }
+                            void commands.executeCommand(commandKey('stacks.refresh'))
                             clearInterval(interval)
                             break
                         }
@@ -158,6 +134,7 @@ export class Validation {
                                 describeValidationStatusResult.FailureReason ?? 'UNKNOWN'
                             )
                             void commands.executeCommand('workbench.panel.markers.view.focus')
+                            void commands.executeCommand(commandKey('stacks.refresh'))
                             clearInterval(interval)
                             break
                         }
@@ -166,6 +143,7 @@ export class Validation {
                 .catch((error) => {
                     getLogger().error(`Error polling for deployment status: ${error}`)
                     showErrorMessage(`Error polling for validation status: ${extractErrorMessage(error)}`)
+                    void commands.executeCommand(commandKey('stacks.refresh'))
                     clearInterval(interval)
                 })
         }, 1000)
@@ -179,19 +157,6 @@ export class Validation {
             this.shouldEnableDeployment,
             validationDetail
         )
-        void commands.executeCommand('aws.cloudformation.diff.focus')
-    }
-
-    // Test-specific accessors - protected to limit access
-    protected getDiffProvider(): DiffWebviewProvider {
-        return this.diffProvider
-    }
-
-    protected setChanges(changes: StackChange[]): void {
-        this.changes = changes
-    }
-
-    protected showDiffViewForTest(): void {
-        this.showDiffView()
+        void commands.executeCommand(commandKey('diff.focus'))
     }
 }

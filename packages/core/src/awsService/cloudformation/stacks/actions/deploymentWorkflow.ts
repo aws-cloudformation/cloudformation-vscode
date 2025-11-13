@@ -60,14 +60,15 @@ export class Deployment {
                             if (deploymentResult.state === StackActionState.SUCCESSFUL) {
                                 showDeploymentSuccess(this.stackName)
                             } else {
-                                const describeDeplomentStatusResult = await describeDeploymentStatus(this.client, {
+                                const describeDeploymentStatusResult = await describeDeploymentStatus(this.client, {
                                     id: this.id,
                                 })
                                 showDeploymentFailure(
                                     this.stackName,
-                                    describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN'
+                                    describeDeploymentStatusResult.FailureReason ?? 'UNKNOWN'
                                 )
                             }
+                            void commands.executeCommand(commandKey('stacks.refresh'))
                             clearInterval(interval)
                             break
                         case StackActionPhase.DEPLOYMENT_FAILED:
@@ -79,6 +80,7 @@ export class Deployment {
                                 this.stackName,
                                 describeDeplomentStatusResult.FailureReason ?? 'UNKNOWN'
                             )
+                            void commands.executeCommand(commandKey('stacks.refresh'))
                             clearInterval(interval)
                             break
                         }
@@ -87,6 +89,7 @@ export class Deployment {
                 .catch(async (error) => {
                     getLogger().error(`Error polling for deployment status: ${error}`)
                     showErrorMessage(`Error polling for deployment status: ${extractErrorMessage(error)}`)
+                    void commands.executeCommand(commandKey('stacks.refresh'))
                     clearInterval(interval)
                 })
         }, 1000)
