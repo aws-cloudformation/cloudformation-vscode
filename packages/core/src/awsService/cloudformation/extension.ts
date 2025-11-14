@@ -68,6 +68,7 @@ import { RelatedResourcesManager } from './relatedResources/relatedResourcesMana
 import { RelatedResourceSelector } from './ui/relatedResourceSelector'
 
 import { StackActionCodeLensProvider } from './codelens/stackActionCodeLensProvider'
+import { registerStatusBarCommand } from './ui/statusBar'
 import { getClientId } from '../../shared/telemetry/util'
 import { SettingsLspServerProvider } from './lsp-server/settingsLspServerProvider'
 import { DevLspServerProvider } from './lsp-server/devLspServerProvider'
@@ -291,6 +292,8 @@ async function startClient(context: ExtensionContext) {
         serverProvider,
         { dispose: () => client?.stop() },
     ]
+
+    registerStatusBarCommand()
 
     context.subscriptions.push(...clientDisposables)
     await credentialsService.initialize(client)
