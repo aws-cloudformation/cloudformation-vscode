@@ -412,6 +412,8 @@ async function changeSetSteps(
     templateUri: string | undefined,
     stackName: string | undefined
 ): Promise<UserInputtedTemplateParameters | undefined> {
+    await environmentManager.refreshSelectedEnvironment()
+
     templateUri ??= await getTemplatePath(documentManager)
     if (!templateUri) {
         return
@@ -874,11 +876,11 @@ export function addEnvironmentCommand(
     environmentManager: CfnEnvironmentManager
 ) {
     return commands.registerCommand(commandKey('init.addEnvironment'), async () => {
-        if (await environmentManager.promptInitializeIfNeeded('Environment Addition')) {
-            return
-        }
-
         try {
+            if (await environmentManager.promptInitializeIfNeeded('Environment Addition')) {
+                return
+            }
+
             const environment = await uiInterface.collectEnvironmentConfig()
             if (!environment) {
                 return
@@ -899,11 +901,11 @@ export function addEnvironmentCommand(
 
 export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller, environmentManager: CfnEnvironmentManager) {
     return commands.registerCommand(commandKey('init.removeEnvironment'), async () => {
-        if (await environmentManager.promptInitializeIfNeeded('Environment Deletion')) {
-            return
-        }
-
         try {
+            if (await environmentManager.promptInitializeIfNeeded('Environment Deletion')) {
+                return
+            }
+
             // TODO: Show quickpick of environments instead of inputting it
             const envName = await getEnvironmentName()
             if (!envName) {
@@ -916,6 +918,8 @@ export function removeEnvironmentCommand(cfnInit: CfnInitCliCaller, environmentM
             }
 
             const result = await cfnInit.removeEnvironment(envName)
+
+            await environmentManager.refreshSelectedEnvironment()
             if (result.success) {
                 void window.showInformationMessage(`Environment '${envName}' removed successfully`)
             } else {

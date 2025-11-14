@@ -10,6 +10,7 @@ import { promptForConnection } from '../../../auth/utils'
 import { getEnvironmentName, getProjectName, getProjectPath } from '../ui/inputBox'
 import fs from '../../../shared/fs/fs'
 import path from 'path'
+import { unselectedValue } from './cfnProjectTypes'
 
 interface FormState {
     projectName?: string
@@ -56,12 +57,12 @@ export class CfnInitUiInterface {
             const updateItems = () => {
                 const items = [
                     {
-                        label: `${this.state.projectName ? '[✓]' : '[ ]'} Project Name`,
-                        detail: this.state.projectName || 'Click to set project name',
+                        label: `Project Name`,
+                        detail: this.state.projectName || unselectedValue,
                     },
                     {
-                        label: `${this.state.projectPath ? '[✓]' : '[ ]'} Project Path`,
-                        detail: this.state.projectPath || 'Click to set project path',
+                        label: `Project Path`,
+                        detail: this.state.projectPath || unselectedValue,
                     },
                 ]
 

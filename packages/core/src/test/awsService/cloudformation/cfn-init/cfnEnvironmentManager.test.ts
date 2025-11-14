@@ -214,7 +214,10 @@ describe('CfnEnvironmentManager', () => {
         it('should throw error when workspace not found', async () => {
             workspaceStub.value(undefined)
 
-            await assert.rejects(environmentManager.fetchAvailableEnvironments(), /No workspace folder found/)
+            await assert.rejects(
+                environmentManager.fetchAvailableEnvironments(),
+                /You must open a workspace to use CFN environment commands/
+            )
         })
 
         it('should throw error when file read fails', async () => {
@@ -430,6 +433,38 @@ describe('CfnEnvironmentManager', () => {
             const result = await environmentManager.selectEnvironmentFile('template.yaml', [{ name: 'Param1' }])
 
             assert.strictEqual(result, undefined)
+        })
+    })
+
+    describe('refreshSelectedEnvironment', () => {
+        it('should unselect environment if environment not in config', async () => {
+            mockWorkspaceState.get.returns('not-found')
+            const mockEnvironmentLookup = { env1: { name: 'env1', profile: 'profile1' } }
+            fsStub.resolves(JSON.stringify({ environments: mockEnvironmentLookup }))
+
+            await environmentManager.refreshSelectedEnvironment()
+
+            assert(mockWorkspaceState.update.calledWith('aws.cloudformation.selectedEnvironment', undefined))
+        })
+
+        it('should keep environment if environment is valid', async () => {
+            mockWorkspaceState.get.returns('env1')
+            const mockEnvironmentLookup = { env1: { name: 'env1', profile: 'profile1' } }
+            fsStub.resolves(JSON.stringify({ environments: mockEnvironmentLookup }))
+
+            await environmentManager.refreshSelectedEnvironment()
+
+            assert(mockWorkspaceState.update.notCalled)
+        })
+
+        it('should keep environment if environment is undefined', async () => {
+            mockWorkspaceState.get.returns(undefined)
+            const mockEnvironmentLookup = { env1: { name: 'env1', profile: 'profile1' } }
+            fsStub.resolves(JSON.stringify({ environments: mockEnvironmentLookup }))
+
+            await environmentManager.refreshSelectedEnvironment()
+
+            assert(mockWorkspaceState.update.notCalled)
         })
     })
 })

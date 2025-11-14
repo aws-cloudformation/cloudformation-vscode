@@ -193,9 +193,9 @@ export type GetTemplateArtifactsResult = {
 }
 
 export enum OptionalFlagMode {
-    Skip = 'Skip Optional Flags',
-    Input = 'Input Optional Flags',
-    DevFriendly = 'Use Developer Friendly Flag Selections',
+    Skip = 'Skip for now',
+    Input = 'Input optional flags',
+    DevFriendly = 'Use default developer friendly flags',
 }
 
 export type TemplateParameter = {

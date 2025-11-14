@@ -13,6 +13,7 @@ import {
     DeploymentConfig,
     CfnEnvironmentFileSelectorItem as DeploymentFileDetail,
     CfnEnvironmentFileSelectorItem,
+    unselectedValue,
 } from './cfnProjectTypes'
 import path from 'path'
 import fs from '../../../shared/fs/fs'
@@ -114,6 +115,8 @@ export class CfnEnvironmentManager implements Disposable {
             await globals.context.workspaceState.update(this.selectedEnvironmentKey, environmentName)
 
             await this.syncEnvironmentWithProfile(environment)
+        } else {
+            await globals.context.workspaceState.update(this.selectedEnvironmentKey, undefined)
         }
 
         this.notifyListeners()
@@ -194,6 +197,18 @@ export class CfnEnvironmentManager implements Disposable {
         return await this.environmentFileSelector.selectEnvironmentFile(selectorItems, requiredParameters.length)
     }
 
+    public async refreshSelectedEnvironment() {
+        const environmentName = this.getSelectedEnvironmentName()
+        const availableEnvironments = await this.fetchAvailableEnvironments()
+
+        // unselect environment if an environment was manually deleted
+        if (environmentName && !availableEnvironments[environmentName]) {
+            await this.setSelectedEnvironment(unselectedValue, availableEnvironments)
+
+            return undefined
+        }
+    }
+
     private async createEnvironmentFileSelectorItem(
         fileName: string,
         deploymentConfig: DeploymentConfig,
@@ -244,27 +259,27 @@ export class CfnEnvironmentManager implements Disposable {
     }
 
     public async getEnvironmentDir(environmentName: string): Promise<string> {
-        const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
-        if (!workspaceRoot) {
-            throw new Error('No workspace folder found')
-        }
+        const workspaceRoot = this.getWorkspaceRoot()
         return path.join(workspaceRoot, this.cfnProjectPath, this.environmentsDirectory, environmentName)
     }
 
     private async getConfigPath(): Promise<string> {
-        const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
-        if (!workspaceRoot) {
-            throw new Error('No workspace folder found')
-        }
+        const workspaceRoot = this.getWorkspaceRoot()
         return path.join(workspaceRoot, this.cfnProjectPath, this.configFile)
     }
 
     private async getProjectDir(): Promise<string> {
+        const workspaceRoot = this.getWorkspaceRoot()
+        return path.join(workspaceRoot, this.cfnProjectPath)
+    }
+
+    private getWorkspaceRoot(): string {
         const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
         if (!workspaceRoot) {
-            throw new Error('No workspace folder found')
+            throw new Error('You must open a workspace to use CFN environment commands')
         }
-        return path.join(workspaceRoot, this.cfnProjectPath)
+
+        return workspaceRoot
     }
 
     dispose(): void {
