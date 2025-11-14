@@ -151,14 +151,14 @@ export async function confirmCapabilities(capabilities: Capability[]): Promise<C
     const allCapabilities = new Map([
         [Capability.CAPABILITY_IAM, 'Allows deployment to create IAM resources'],
         [Capability.CAPABILITY_NAMED_IAM, 'Allows deployment to create named IAM resources'],
-        [Capability.CAPABILITY_AUTO_EXPAND, 'Allows deployment to create resources using macros']
+        [Capability.CAPABILITY_AUTO_EXPAND, 'Allows deployment to create resources using macros'],
     ])
 
     const selected = await window.showQuickPick(
-        Array.from(allCapabilities.entries()).map(([cap, description]) => ({ 
-            label: cap, 
+        Array.from(allCapabilities.entries()).map(([cap, description]) => ({
+            label: cap,
             description: description,
-            picked: capabilities.includes(cap) 
+            picked: capabilities.includes(cap),
         })),
         {
             placeHolder: 'Select capabilities to use',
