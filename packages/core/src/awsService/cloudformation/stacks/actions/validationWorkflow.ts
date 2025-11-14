@@ -17,7 +17,7 @@ import { LanguageClient } from 'vscode-languageclient/node'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
 import { describeValidationStatus, getValidationStatus, validate } from './stackActionApi'
 import { createDeploymentStatusBar, updateWorkflowStatus } from '../../ui/statusBar'
-import { StatusBarItem, commands } from 'vscode'
+import { commands } from 'vscode'
 import { DiffWebviewProvider } from '../../ui/diffWebviewProvider'
 import { createValidationParams } from './stackActionUtil'
 import { extractErrorMessage } from '../../utils'
@@ -39,7 +39,7 @@ export class Validation {
     private readonly id: string
     private status: StackActionPhase | undefined
     private changes: StackChange[] | undefined
-    private statusBarItem: StatusBarItem | undefined
+    private statusBarHandle?: { update(phase: StackActionPhase): void; release(): void }
     private changeSetName?: string
 
     constructor(
@@ -61,7 +61,7 @@ export class Validation {
     async validate() {
         try {
             showValidationStarted(this.stackName)
-            this.statusBarItem = createDeploymentStatusBar()
+            this.statusBarHandle = createDeploymentStatusBar(this.stackName, 'Validation')
             // Capture the result to get changeSetName
             const result = await validate(
                 this.client,
@@ -99,8 +99,8 @@ export class Validation {
                     this.status = validationResult.phase
                     this.changes = validationResult.changes
 
-                    if (this.statusBarItem) {
-                        updateWorkflowStatus(this.statusBarItem, validationResult.phase)
+                    if (this.statusBarHandle) {
+                        updateWorkflowStatus(this.statusBarHandle, validationResult.phase)
                     }
 
                     switch (validationResult.phase) {
@@ -122,6 +122,7 @@ export class Validation {
                                 )
                             }
                             void commands.executeCommand(commandKey('stacks.refresh'))
+                            this.statusBarHandle?.release()
                             clearInterval(interval)
                             break
                         }
@@ -135,6 +136,7 @@ export class Validation {
                             )
                             void commands.executeCommand('workbench.panel.markers.view.focus')
                             void commands.executeCommand(commandKey('stacks.refresh'))
+                            this.statusBarHandle?.release()
                             clearInterval(interval)
                             break
                         }
@@ -144,6 +146,7 @@ export class Validation {
                     getLogger().error(`Error polling for deployment status: ${error}`)
                     showErrorMessage(`Error polling for validation status: ${extractErrorMessage(error)}`)
                     void commands.executeCommand(commandKey('stacks.refresh'))
+                    this.statusBarHandle?.release()
                     clearInterval(interval)
                 })
         }, 1000)
