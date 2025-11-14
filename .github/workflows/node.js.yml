@@ -230,7 +230,6 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: 18.x
-            - run: npm ci
             - name: Setup CloudFormation LSP Server
               run: |
                   bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
@@ -245,6 +244,7 @@ jobs:
                   LSP_DIR=$(cd "$LSP_DIR" && pwd)
                   echo "Setting __CLOUDFORMATIONLSP_PATH=$LSP_DIR"
                   echo "__CLOUDFORMATIONLSP_PATH=$LSP_DIR" >> $GITHUB_ENV
+            - run: npm ci
             - name: CloudFormation E2E Tests
               uses: coactions/setup-xvfb@v1
               with:
