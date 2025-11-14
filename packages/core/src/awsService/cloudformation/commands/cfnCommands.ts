@@ -3,7 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType, ProgressLocation, Disposable } from 'vscode'
+import {
+    commands,
+    env,
+    Uri,
+    window,
+    workspace,
+    Range,
+    Selection,
+    TextEditorRevealType,
+    ProgressLocation,
+    Disposable,
+} from 'vscode'
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition, isStackInTransientState } from '../utils'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { Command } from 'vscode-languageclient/node'
@@ -531,11 +542,7 @@ async function changeSetSteps(
     }
 
     if (selectedEnvironment && (shouldSaveParameters || optionalFlags?.shouldSaveOptions)) {
-        await promptToSaveToFile(
-            await getEnvironmentDir(selectedEnvironment),
-            optionalFlags,
-            parameters
-        )
+        await promptToSaveToFile(await getEnvironmentDir(selectedEnvironment), optionalFlags, parameters)
     }
 
     const capabilitiesResult = await getCapabilities(client, templateUri)

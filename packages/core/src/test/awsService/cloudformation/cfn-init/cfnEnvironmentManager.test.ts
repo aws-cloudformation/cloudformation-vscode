@@ -17,7 +17,7 @@ import { OnStackFailure } from '@aws-sdk/client-cloudformation'
 import * as environmentApi from '../../../../awsService/cloudformation/cfn-init/cfnEnvironmentApi'
 import { getTestWindow } from '../../../shared/vscode/window'
 
-describe.only('CfnEnvironmentManager', () => {
+describe('CfnEnvironmentManager', () => {
     let environmentManager: CfnEnvironmentManager
     let mockAuth: sinon.SinonStubbedInstance<Auth>
     let mockWorkspaceState: any

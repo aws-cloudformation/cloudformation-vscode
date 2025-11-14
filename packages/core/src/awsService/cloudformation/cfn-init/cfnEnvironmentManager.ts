@@ -27,7 +27,13 @@ import { DocumentInfo } from './cfnEnvironmentRequestType'
 import { parseCfnEnvironmentFiles } from './cfnEnvironmentApi'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { Parameter } from '@aws-sdk/client-cloudformation'
-import { convertRecordToParameters, convertRecordToTags, getConfigPath, getEnvironmentDir, getProjectDir } from './utils'
+import {
+    convertRecordToParameters,
+    convertRecordToTags,
+    getConfigPath,
+    getEnvironmentDir,
+    getProjectDir,
+} from './utils'
 
 export class CfnEnvironmentManager implements Disposable {
     private readonly selectedEnvironmentKey = 'aws.cloudformation.selectedEnvironment'
