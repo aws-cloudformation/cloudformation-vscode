@@ -13,7 +13,7 @@ import {
     DeploymentConfig,
     CfnEnvironmentFileSelectorItem as DeploymentFileDetail,
     CfnEnvironmentFileSelectorItem,
-    UNSELECTED_VALUE,
+    unselectedValue,
 } from './cfnProjectTypes'
 import path from 'path'
 import fs from '../../../shared/fs/fs'
@@ -203,7 +203,7 @@ export class CfnEnvironmentManager implements Disposable {
 
         // unselect environment if an environment was manually deleted
         if (environmentName && !availableEnvironments[environmentName]) {
-            await this.setSelectedEnvironment(UNSELECTED_VALUE, availableEnvironments)
+            await this.setSelectedEnvironment(unselectedValue, availableEnvironments)
 
             return undefined
         }

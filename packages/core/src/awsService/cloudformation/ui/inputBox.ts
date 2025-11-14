@@ -135,7 +135,7 @@ async function getParameterValue(parameter: TemplateParameter, prefill?: string)
 export async function confirmCapabilities(capabilities: Capability[]): Promise<Capability[] | undefined> {
     // Confirm if user wants to use detected capabilities
     const useDetected = await window.showQuickPick(['Yes', 'No, modify capabilities'], {
-        placeHolder: `Use capabilities: ${capabilities.join(', ') || '(none)'}?`,
+        placeHolder: `Proceed with detected capabilities: ${capabilities.join(', ') || '(none)'}?`,
         canPickMany: false,
     })
 
@@ -148,14 +148,18 @@ export async function confirmCapabilities(capabilities: Capability[]): Promise<C
     }
 
     // Allow user to modify capabilities
-    const allCapabilities: Capability[] = [
-        Capability.CAPABILITY_IAM,
-        Capability.CAPABILITY_NAMED_IAM,
-        Capability.CAPABILITY_AUTO_EXPAND,
-    ]
+    const allCapabilities = new Map([
+        [Capability.CAPABILITY_IAM, 'Allows deployment to create IAM resources'],
+        [Capability.CAPABILITY_NAMED_IAM, 'Allows deployment to create named IAM resources'],
+        [Capability.CAPABILITY_AUTO_EXPAND, 'Allows deployment to create resources using macros']
+    ])
 
     const selected = await window.showQuickPick(
-        allCapabilities.map((cap) => ({ label: cap, picked: capabilities.includes(cap) })),
+        Array.from(allCapabilities.entries()).map(([cap, description]) => ({ 
+            label: cap, 
+            description: description,
+            picked: capabilities.includes(cap) 
+        })),
         {
             placeHolder: 'Select capabilities to use',
             canPickMany: true,
