@@ -27,12 +27,9 @@ import { DocumentInfo } from './cfnEnvironmentRequestType'
 import { parseCfnEnvironmentFiles } from './cfnEnvironmentApi'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { Parameter } from '@aws-sdk/client-cloudformation'
-import { convertRecordToParameters, convertRecordToTags } from './utils'
+import { convertRecordToParameters, convertRecordToTags, getConfigPath, getEnvironmentDir, getProjectDir } from './utils'
 
 export class CfnEnvironmentManager implements Disposable {
-    private readonly cfnProjectPath = 'cfn-project'
-    private readonly configFile = 'cfn-config.json'
-    private readonly environmentsDirectory = 'environments'
     private readonly selectedEnvironmentKey = 'aws.cloudformation.selectedEnvironment'
     private readonly auth = Auth.instance
     private listeners: (() => void)[] = []
@@ -99,8 +96,8 @@ export class CfnEnvironmentManager implements Disposable {
     }
 
     private async isProjectInitialized(): Promise<boolean> {
-        const configPath = await this.getConfigPath()
-        const projectDirectory = await this.getProjectDir()
+        const configPath = await getConfigPath()
+        const projectDirectory = await getProjectDir()
 
         return (await fs.existsFile(configPath)) && (await fs.existsDir(projectDirectory))
     }
@@ -136,7 +133,7 @@ export class CfnEnvironmentManager implements Disposable {
     }
 
     public async fetchAvailableEnvironments(): Promise<CfnEnvironmentLookup> {
-        const configPath = await this.getConfigPath()
+        const configPath = await getConfigPath()
         const config = JSON.parse(await fs.readFileText(configPath)) as CfnConfig
 
         return config.environments
@@ -154,7 +151,7 @@ export class CfnEnvironmentManager implements Disposable {
         }
 
         try {
-            const environmentDir = await this.getEnvironmentDir(environmentName)
+            const environmentDir = await getEnvironmentDir(environmentName)
             const files = await fs.readdir(environmentDir)
 
             const filesToParse: DocumentInfo[] = await Promise.all(
@@ -256,30 +253,6 @@ export class CfnEnvironmentManager implements Disposable {
 
             return convertRecordToParameters(filteredParameters)
         }
-    }
-
-    public async getEnvironmentDir(environmentName: string): Promise<string> {
-        const workspaceRoot = this.getWorkspaceRoot()
-        return path.join(workspaceRoot, this.cfnProjectPath, this.environmentsDirectory, environmentName)
-    }
-
-    private async getConfigPath(): Promise<string> {
-        const workspaceRoot = this.getWorkspaceRoot()
-        return path.join(workspaceRoot, this.cfnProjectPath, this.configFile)
-    }
-
-    private async getProjectDir(): Promise<string> {
-        const workspaceRoot = this.getWorkspaceRoot()
-        return path.join(workspaceRoot, this.cfnProjectPath)
-    }
-
-    private getWorkspaceRoot(): string {
-        const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
-        if (!workspaceRoot) {
-            throw new Error('You must open a workspace to use CFN environment commands')
-        }
-
-        return workspaceRoot
     }
 
     dispose(): void {

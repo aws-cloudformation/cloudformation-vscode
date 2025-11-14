@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType, ProgressLocation } from 'vscode'
+import { commands, env, Uri, window, workspace, Range, Selection, TextEditorRevealType, ProgressLocation, Disposable } from 'vscode'
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition, isStackInTransientState } from '../utils'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { Command } from 'vscode-languageclient/node'
@@ -72,7 +72,7 @@ import { CfnInitCliCaller } from '../cfn-init/cfnInitCliCaller'
 import { CfnInitUiInterface } from '../cfn-init/cfnInitUiInterface'
 import { ChangeSetDeletion } from '../stacks/actions/changeSetDeletionWorkflow'
 import { fs } from '../../../shared/fs/fs'
-import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
+import { convertParametersToRecord, convertTagsToRecord, getEnvironmentDir } from '../cfn-init/utils'
 import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
 import { ResourceIdentifierDocumentationUrl } from '../artifacts/awsDocumentationLinks'
 import { CfnEnvironmentFileSelectorItem } from '../cfn-init/cfnProjectTypes'
@@ -532,7 +532,7 @@ async function changeSetSteps(
 
     if (selectedEnvironment && (shouldSaveParameters || optionalFlags?.shouldSaveOptions)) {
         await promptToSaveToFile(
-            await environmentManager.getEnvironmentDir(selectedEnvironment),
+            await getEnvironmentDir(selectedEnvironment),
             optionalFlags,
             parameters
         )
@@ -953,5 +953,11 @@ export function addRelatedResourcesCommand(relatedResourcesManager: RelatedResou
     return commands.registerCommand(commandKey('api.addRelatedResources'), async (node?: ResourceTypeNode) => {
         const selectedResourceType = node?.typeName
         await relatedResourcesManager.addRelatedResources(selectedResourceType)
+    })
+}
+
+export function selectEnvironmentCommand(explorer: CloudFormationExplorer): Disposable {
+    return commands.registerCommand(commandKey('environment.select'), async () => {
+        await explorer.environmentManager.selectEnvironment()
     })
 }
