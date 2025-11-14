@@ -233,15 +233,15 @@ jobs:
             - name: Setup CloudFormation LSP Server
               run: |
                   bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
-                  LSP_FILE=$(find .lsp-server -name "cfn-lsp-server-standalone.js" | head -1)
+                  REPO_ROOT=$(pwd)
+                  LSP_FILE=$(find "$REPO_ROOT/.lsp-server" -name "cfn-lsp-server-standalone.js" 2>/dev/null | head -1)
                   if [ -z "$LSP_FILE" ]; then
                     echo "Error: cfn-lsp-server-standalone.js not found"
-                    echo "Contents of .lsp-server:"
-                    ls -la .lsp-server || echo ".lsp-server directory not found"
+                    echo "Contents of $REPO_ROOT/.lsp-server:"
+                    ls -la "$REPO_ROOT/.lsp-server" || echo ".lsp-server directory not found"
                     exit 1
                   fi
                   LSP_DIR=$(dirname "$LSP_FILE")
-                  LSP_DIR=$(cd "$LSP_DIR" && pwd)
                   echo "Setting __CLOUDFORMATIONLSP_PATH=$LSP_DIR"
                   echo "__CLOUDFORMATIONLSP_PATH=$LSP_DIR" >> $GITHUB_ENV
             - run: npm ci
