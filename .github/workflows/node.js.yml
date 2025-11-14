@@ -248,4 +248,4 @@ jobs:
             - name: CloudFormation E2E Tests
               uses: coactions/setup-xvfb@v1
               with:
-                  run: npm run testE2E -w packages/toolkit
+                  run: npm run testE2ECfn -w packages/toolkit
