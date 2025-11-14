@@ -75,6 +75,7 @@ import { fs } from '../../../shared/fs/fs'
 import { convertParametersToRecord, convertTagsToRecord } from '../cfn-init/utils'
 import { DescribeStackRequest } from '../stacks/actions/stackActionProtocol'
 import { ResourceIdentifierDocumentationUrl } from '../artifacts/awsDocumentationLinks'
+import { CfnEnvironmentFileSelectorItem } from '../cfn-init/cfnProjectTypes'
 
 export function deployTemplateFromStacksMenuCommand() {
     return commands.registerCommand(commandKey('api.deployTemplateFromStacksMenu'), async () => {
@@ -412,7 +413,11 @@ async function changeSetSteps(
     templateUri: string | undefined,
     stackName: string | undefined
 ): Promise<UserInputtedTemplateParameters | undefined> {
-    await environmentManager.refreshSelectedEnvironment()
+    try {
+        await environmentManager.refreshSelectedEnvironment()
+    } catch (error) {
+        getLogger().warn(`Failed to refresh seelcted environment: ${extractErrorMessage(error)}`)
+    }
 
     templateUri ??= await getTemplatePath(documentManager)
     if (!templateUri) {
@@ -477,7 +482,13 @@ async function changeSetSteps(
     const paramDefinition = await getTemplateParameters(client, templateUri)
     let parameters: Parameter[] | undefined
 
-    const environmentFile = await environmentManager.selectEnvironmentFile(templateUri, paramDefinition)
+    let environmentFile: CfnEnvironmentFileSelectorItem | undefined
+
+    try {
+        environmentFile = await environmentManager.selectEnvironmentFile(templateUri, paramDefinition)
+    } catch (error) {
+        getLogger().warn(`Failed to select environment file:: ${extractErrorMessage(error)}`)
+    }
 
     if (paramDefinition.length > 0) {
         parameters = environmentFile?.compatibleParameters
@@ -510,7 +521,14 @@ async function changeSetSteps(
 
     const optionalFlags = await promptForOptionalFlags(environmentFile?.optionalFlags, stackDetails)
     const shouldSaveParameters = parameters && parameters.length > 0 && !environmentFile
-    const selectedEnvironment = environmentManager.getSelectedEnvironmentName()
+
+    let selectedEnvironment: string | undefined
+
+    try {
+        selectedEnvironment = environmentManager.getSelectedEnvironmentName()
+    } catch (error) {
+        getLogger().warn(`Failed to get selected environment: ${extractErrorMessage(error)}`)
+    }
 
     if (selectedEnvironment && (shouldSaveParameters || optionalFlags?.shouldSaveOptions)) {
         await promptToSaveToFile(
