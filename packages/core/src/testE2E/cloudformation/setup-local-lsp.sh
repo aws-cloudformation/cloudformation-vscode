@@ -8,13 +8,10 @@
 set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo "SCRIPT_DIR: $SCRIPT_DIR"
 
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
-echo "REPO_ROOT: $REPO_ROOT"
 
 LSP_DIR="$REPO_ROOT/.lsp-server"
-echo "LSP_DIR: $LSP_DIR"
 
 echo "Setting up CloudFormation LSP server for E2E tests..."
 
