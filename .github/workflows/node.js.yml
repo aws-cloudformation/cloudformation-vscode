@@ -139,18 +139,10 @@ jobs:
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
-            - name: Setup CloudFormation LSP Server
-              run: |
-                  bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
-                  echo "__CLOUDFORMATIONLSP_PATH=$(pwd)/.lsp-server" >> $GITHUB_ENV
             - name: Tests
               uses: coactions/setup-xvfb@v1
               with:
                   run: npm run test -w packages/${{ matrix.package }}
-            - name: E2E Tests
-              uses: coactions/setup-xvfb@v1
-              with:
-                  run: npm run testE2E -w packages/${{ matrix.package }}
             - name: Code coverage for ${{ matrix.package }}
               env:
                   # Unset NODE_OPTIONS because of https://github.com/codecov/uploader/issues/475
@@ -209,15 +201,8 @@ jobs:
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
-            - name: Setup CloudFormation LSP Server
-              shell: bash
-              run: |
-                  bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
-                  echo "__CLOUDFORMATIONLSP_PATH=$(pwd)/.lsp-server" >> $GITHUB_ENV
             - name: Tests
               run: npm run test -w packages/${{ matrix.package }}
-            - name: E2E Tests
-              run: npm run testE2E -w packages/${{ matrix.package }}
             - name: Code coverage for ${{ matrix.package }}
               env:
                   # Unset NODE_OPTIONS because of https://github.com/codecov/uploader/issues/475
@@ -229,3 +214,31 @@ jobs:
                   verbose: true
                   file: ./coverage/${{ matrix.package }}/lcov.info
                   token: ${{ secrets.CODECOV_TOKEN }}
+
+    cfn-integ-test:
+        needs: lint-commits
+        name: CloudFormation E2E Test
+        runs-on: macos-latest
+        env:
+            VSCODE_TEST_VERSION: stable
+            NODE_OPTIONS: '--max-old-space-size=8192'
+            AWS_TOOLKIT_TEST_CACHE_DIR: '/tmp/.vscode-test/'
+            AWS_TOOLKIT_TEST_USER_DIR: '/tmp/.vscode-test/user-data/'
+        steps:
+            - uses: actions/checkout@v4
+            - name: Use Node.js 18.x
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 18.x
+            - run: npm ci
+            - name: Setup CloudFormation LSP Server
+              run: |
+                  bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh > lsp-setup.log
+                  cat lsp-setup.log
+                  LSP_PATH=$(grep "✓ LSP server ready at:" lsp-setup.log | sed 's/.*✓ LSP server ready at: //')
+                  echo "Setting __CLOUDFORMATIONLSP_PATH=$LSP_PATH"
+                  echo "__CLOUDFORMATIONLSP_PATH=$LSP_PATH" >> $GITHUB_ENV
+            - name: CloudFormation E2E Tests
+              uses: coactions/setup-xvfb@v1
+              with:
+                  run: npm run testE2E -w packages/toolkit

@@ -52,14 +52,27 @@ curl -sL -o lsp-server.zip "$DOWNLOAD_URL"
 unzip -q lsp-server.zip
 rm lsp-server.zip
 
-# Verify
-if [ ! -f "cfn-lsp-server-standalone.js" ]; then
-    echo "Error: cfn-lsp-server-standalone.js not found after extraction"
+# Find the actual LSP server file
+LSP_FILE=$(find . -name "cfn-lsp-server-standalone.js" | head -1)
+if [ -z "$LSP_FILE" ]; then
+    echo "Error: cfn-lsp-server-standalone.js not found in extracted files"
     exit 1
 fi
 
+LSP_SERVER_DIR=$(dirname "$LSP_FILE")
+LSP_SERVER_DIR=$(cd "$LSP_SERVER_DIR" && pwd)
+echo "Found LSP server at: $LSP_SERVER_DIR"
+
+# Verify required files
+REQUIRED_FILES=("cfn-lsp-server-standalone.js" "package.json" "pyodide-worker.js" "node_modules" "assets" "bin")
+for file in "${REQUIRED_FILES[@]}"; do
+    if [ ! -e "$LSP_SERVER_DIR/$file" ]; then
+        echo "Warning: $file not found in $LSP_SERVER_DIR"
+    fi
+done
+
 echo ""
-echo "✓ LSP server ready at: $LSP_DIR"
+echo "✓ LSP server ready at: $LSP_SERVER_DIR"
 echo ""
 echo "Run tests with:"
-echo "__CLOUDFORMATIONLSP_PATH=\"$LSP_DIR\" npm run testE2E -w packages/toolkit"
+echo "__CLOUDFORMATIONLSP_PATH=\"$LSP_SERVER_DIR\" npm run testE2E -w packages/toolkit"
