@@ -7,12 +7,25 @@ import { window, StatusBarAlignment, StatusBarItem, ThemeColor, QuickPickItem, c
 import { StackActionPhase } from '../stacks/actions/stackActionRequestType'
 import { commandKey } from '../utils'
 
+const OperationTypeValidation = 'Validation' as const
+const OperationTypeDeployment = 'Deployment' as const
+const StatusBarLabel = 'AWS CloudFormation'
+const StatusValidating = 'Validating'
+const StatusValidated = 'Validated'
+const StatusDeploying = 'Deploying'
+const StatusDeployed = 'Deployed'
+const StatusValidationFailed = 'Validation Failed'
+const StatusDeploymentFailed = 'Deployment Failed'
+const StatusProcessing = 'Processing'
+const NoOperationsMessage = 'No active operations'
+
 interface OperationInfo {
     stackName: string
-    type: 'Validation' | 'Deployment'
+    type: typeof OperationTypeValidation | typeof OperationTypeDeployment
     changeSetName?: string
     startTime: Date
     phase: StackActionPhase
+    released: boolean
 }
 
 interface StatusBarHandle {
@@ -30,7 +43,11 @@ class SharedStatusBar {
     private operations: Map<number, OperationInfo> = new Map()
     private nextId = 0
 
-    acquire(stackName: string, type: 'Validation' | 'Deployment', changeSetName?: string): StatusBarHandle {
+    acquire(
+        stackName: string,
+        type: typeof OperationTypeValidation | typeof OperationTypeDeployment,
+        changeSetName?: string
+    ): StatusBarHandle {
         if (this.disposeTimer) {
             clearTimeout(this.disposeTimer)
             this.disposeTimer = undefined
@@ -55,6 +72,7 @@ class SharedStatusBar {
             changeSetName,
             startTime: new Date(),
             phase: StackActionPhase.VALIDATION_IN_PROGRESS,
+            released: false,
         })
 
         this.updateDisplay()
@@ -87,22 +105,46 @@ class SharedStatusBar {
             return
         }
 
-        const total = this.activeCount + this.completedCount + this.failedCount
+        const unreleasedOperations = Array.from(this.operations.values()).filter((op) => !op.released)
+        const total = unreleasedOperations.length
 
-        if (this.activeCount > 0) {
-            this.statusBarItem.text = `$(sync~spin) AWS CloudFormation (${total})`
-            this.statusBarItem.backgroundColor = undefined
-        } else if (this.failedCount > 0) {
-            this.statusBarItem.text = `$(error) AWS CloudFormation (${total})`
-            this.statusBarItem.backgroundColor = new ThemeColor('statusBarItem.errorBackground')
-        } else {
-            this.statusBarItem.text = `$(check) AWS CloudFormation (${total})`
-            this.statusBarItem.backgroundColor = undefined
+        if (total === 1) {
+            const operation = unreleasedOperations[0]
+            const verb = operation.type === OperationTypeValidation ? StatusValidating : StatusDeploying
+            const pastVerb = operation.type === OperationTypeValidation ? StatusValidated : StatusDeployed
+            const isOperationFailed = isFailurePhase(operation.phase)
+
+            if (this.activeCount > 0) {
+                this.statusBarItem.text = `$(sync~spin) ${verb} ${operation.stackName}`
+                this.statusBarItem.backgroundColor = undefined
+            } else if (isOperationFailed) {
+                const failedStatus =
+                    operation.type === OperationTypeValidation ? StatusValidationFailed : StatusDeploymentFailed
+                this.statusBarItem.text = `$(error) ${failedStatus}: ${operation.stackName}`
+                this.statusBarItem.backgroundColor = new ThemeColor('statusBarItem.errorBackground')
+            } else {
+                this.statusBarItem.text = `$(check) ${pastVerb} ${operation.stackName}`
+                this.statusBarItem.backgroundColor = undefined
+            }
+        } else if (total > 1) {
+            if (this.activeCount > 0) {
+                this.statusBarItem.text = `$(sync~spin) ${StatusBarLabel} (${total})`
+                this.statusBarItem.backgroundColor = undefined
+            } else if (this.failedCount > 0) {
+                this.statusBarItem.text = `$(error) ${StatusBarLabel} (${total})`
+                this.statusBarItem.backgroundColor = new ThemeColor('statusBarItem.errorBackground')
+            } else {
+                this.statusBarItem.text = `$(check) ${StatusBarLabel} (${total})`
+                this.statusBarItem.backgroundColor = undefined
+            }
         }
     }
 
     private release(id: number): void {
-        this.operations.delete(id)
+        const operation = this.operations.get(id)
+        if (operation) {
+            operation.released = true
+        }
         this.refCount--
 
         if (this.refCount === 0) {
@@ -134,14 +176,14 @@ class SharedStatusBar {
 
         if (items.length === 0) {
             items.push({
-                label: '$(info) No active operations',
+                label: `$(info) ${NoOperationsMessage}`,
                 description: '',
             })
         }
 
         const quickPick = window.createQuickPick()
         quickPick.items = items
-        quickPick.placeholder = 'AWS CloudFormation Operations'
+        quickPick.placeholder = `${StatusBarLabel} Operations`
         quickPick.canSelectMany = false
         quickPick.matchOnDescription = false
         quickPick.matchOnDetail = false
@@ -179,19 +221,19 @@ function getPhaseIcon(phase: StackActionPhase): string {
 function getPhaseLabel(phase: StackActionPhase): string {
     switch (phase) {
         case StackActionPhase.VALIDATION_IN_PROGRESS:
-            return 'Validating'
+            return StatusValidating
         case StackActionPhase.VALIDATION_COMPLETE:
-            return 'Validated'
+            return StatusValidated
         case StackActionPhase.VALIDATION_FAILED:
-            return 'Validation Failed'
+            return StatusValidationFailed
         case StackActionPhase.DEPLOYMENT_IN_PROGRESS:
-            return 'Deploying'
+            return StatusDeploying
         case StackActionPhase.DEPLOYMENT_COMPLETE:
-            return 'Deployed'
+            return StatusDeployed
         case StackActionPhase.DEPLOYMENT_FAILED:
-            return 'Deployment Failed'
+            return StatusDeploymentFailed
         default:
-            return 'Processing'
+            return StatusProcessing
     }
 }
 
@@ -206,7 +248,7 @@ function formatElapsed(startTime: Date): string {
 
 export function createDeploymentStatusBar(
     stackName: string,
-    type: 'Validation' | 'Deployment',
+    type: typeof OperationTypeValidation | typeof OperationTypeDeployment,
     changeSetName?: string
 ): StatusBarHandle {
     return sharedStatusBar.acquire(stackName, type, changeSetName)
