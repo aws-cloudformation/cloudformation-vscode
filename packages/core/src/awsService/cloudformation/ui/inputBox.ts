@@ -20,6 +20,7 @@ import {
 import { DocumentManager } from '../documents/documentManager'
 import path from 'path'
 import fs from '../../../shared/fs/fs'
+import { unselectedValue } from '../cfn-init/cfnProjectTypes'
 
 export async function getTemplatePath(documentManager: DocumentManager): Promise<string | undefined> {
     const validTemplates = documentManager
@@ -175,14 +176,25 @@ export async function shouldImportResources(): Promise<boolean> {
 
 export async function chooseOptionalFlagSuggestion(): Promise<string | undefined> {
     const choice = await window.showQuickPick(
-        [OptionalFlagMode.Skip, OptionalFlagMode.Input, OptionalFlagMode.DevFriendly],
+        [
+            {
+                label: OptionalFlagMode.Input,
+            },
+            {
+                label: OptionalFlagMode.DevFriendly,
+            },
+            {
+                label: OptionalFlagMode.Skip,
+                description: 'Skip optional flags',
+            },
+        ],
         {
             placeHolder: 'Enter optional change set flags?',
             ignoreFocusOut: true,
         }
     )
 
-    return choice
+    return choice?.label
 }
 
 export async function getTags(previousTags?: Tag[]): Promise<Tag[] | undefined> {
@@ -241,7 +253,7 @@ export async function getImportExistingResources(): Promise<boolean | undefined>
 
 export async function getOnStackFailure(stackExists?: boolean): Promise<OnStackFailure | undefined> {
     const options: Array<{ label: string; description: string; value: OnStackFailure }> = [
-        { label: 'Do Nothing', description: 'Leave stack in failed state', value: OnStackFailure.DO_NOTHING },
+        { label: 'Skip for Now', description: 'Leave stack in failed state', value: OnStackFailure.DO_NOTHING },
         { label: 'Rollback', description: 'Rollback to previous state', value: OnStackFailure.ROLLBACK },
     ]
 
@@ -368,6 +380,9 @@ export async function getProjectName(prefillValue: string | undefined) {
             if (!v.trim()) {
                 return 'Required'
             }
+            if (v.trim() === unselectedValue) {
+                return `Project name cannot be ${unselectedValue}`
+            }
             if (!/^[a-zA-Z0-9_-]{1,64}$/.test(v.trim())) {
                 return 'Must be 1-64 characters, alphanumeric with hyphens and underscores only'
             }
@@ -463,20 +478,20 @@ export async function shouldSaveFlagsToFile(): Promise<boolean | undefined> {
     const choice = await window.showQuickPick(
         [
             {
-                label: 'Save Options to file',
+                label: 'Save options to file',
                 description: 'Save the deployment options to a file in your environment',
                 value: 'save',
             },
             {
-                label: 'Do not save options to file',
-                description: 'Do not save options to environment file',
-                value: 'skip',
-            },
-            {
-                label: 'Configure in Settings',
+                label: 'Configure in settings',
                 description:
                     'Open CloudFormation Environment settings (settings will not affect this current deployment)',
                 value: 'configure',
+            },
+            {
+                label: 'Skip for now',
+                description: 'Do not save options to environment file',
+                value: 'skip',
             },
         ],
         {
