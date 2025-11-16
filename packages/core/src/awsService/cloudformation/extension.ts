@@ -187,7 +187,7 @@ async function startClient(context: ExtensionContext) {
         client,
         relatedResourceSelector,
         resourceSelector,
-        resourcesManager.importResourceStates.bind(resourcesManager)
+        resourcesManager
     )
     const changeSetManager = new ChangeSetsManager(client)
     const environmentSelector = new CfnEnvironmentSelector()
@@ -205,6 +205,8 @@ async function startClient(context: ExtensionContext) {
         globals.regionProvider,
         environmentManager
     )
+
+    resourceSelector.setRefreshCallback(() => cfnExplorer.refresh())
 
     resourcesManager.addListener(() => {
         cfnExplorer.refresh()
