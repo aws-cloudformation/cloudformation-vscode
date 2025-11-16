@@ -16,6 +16,7 @@ import {
     Disposable,
 } from 'vscode'
 import { commandKey, extractErrorMessage, findParameterDescriptionPosition, isStackInTransientState } from '../utils'
+import { handleLspError } from '../utils/onlineErrorHandler'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { Command } from 'vscode-languageclient/node'
 import * as yaml from 'js-yaml'
@@ -103,7 +104,7 @@ export function executeChangeSetCommand(client: LanguageClient, coordinator: Sta
 
                 await deployment.deploy()
             } catch (error) {
-                showErrorMessage(`Error executing change set: ${extractErrorMessage(error)}`)
+                await handleLspError(error, 'Error executing change set')
             }
         }
     )
@@ -122,7 +123,7 @@ export function deleteChangeSetCommand(client: LanguageClient) {
 
             await changeSetDeletion.delete()
         } catch (error) {
-            showErrorMessage(`Error deleting change set: ${extractErrorMessage(error)}`)
+            await handleLspError(error, 'Error deleting change set')
         }
     })
 }
@@ -144,7 +145,7 @@ export function viewChangeSetCommand(client: LanguageClient, diffProvider: DiffW
             void diffProvider.updateData(params.stackName, describeChangeSetResult.changes, params.changeSetName, true)
             void commands.executeCommand(commandKey('diff.focus'))
         } catch (error) {
-            showErrorMessage(`Error viewing change set: ${extractErrorMessage(error)}`)
+            await handleLspError(error, 'Error viewing change set')
         }
     })
 }
@@ -197,7 +198,7 @@ export function deployTemplateCommand(
 
             await validation.validate()
         } catch (error) {
-            showErrorMessage(`Error deploying template ${extractErrorMessage(error)}`)
+            await handleLspError(error, 'Error deploying template')
         }
     })
 }
@@ -563,7 +564,7 @@ export function rerunValidateAndDeployCommand() {
             }
             await lastValidation.validate()
         } catch (error) {
-            showErrorMessage(`Error rerunning validation: ${error instanceof Error ? error.message : String(error)}`)
+            await handleLspError(error, 'Error rerunning validation')
         }
     })
 }
@@ -632,9 +633,13 @@ export function importResourceStateCommand(resourcesManager: ResourcesManager) {
     return commands.registerCommand(
         commandKey('api.importResourceState'),
         async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
-            const nodes = selectedNodes ?? (node ? [node] : [])
-            const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
-            await resourcesManager.importResourceStates(resourceNodes)
+            try {
+                const nodes = selectedNodes ?? (node ? [node] : [])
+                const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
+                await resourcesManager.importResourceStates(resourceNodes)
+            } catch (error) {
+                await handleLspError(error, 'Error importing resource state')
+            }
         }
     )
 }
@@ -643,9 +648,13 @@ export function cloneResourceStateCommand(resourcesManager: ResourcesManager) {
     return commands.registerCommand(
         commandKey('api.cloneResourceState'),
         async (node?: ResourceNode, selectedNodes?: ResourceNode[]) => {
-            const nodes = selectedNodes ?? (node ? [node] : [])
-            const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
-            await resourcesManager.cloneResourceStates(resourceNodes)
+            try {
+                const nodes = selectedNodes ?? (node ? [node] : [])
+                const resourceNodes = nodes.filter((n) => n.contextValue === ResourceContextValue)
+                await resourcesManager.cloneResourceStates(resourceNodes)
+            } catch (error) {
+                await handleLspError(error, 'Error cloning resource state')
+            }
         }
     )
 }
@@ -666,8 +675,12 @@ export function copyResourceIdentifierCommand() {
 }
 
 export function refreshAllResourcesCommand(resourcesManager: ResourcesManager) {
-    return commands.registerCommand(commandKey('api.refreshAllResources'), () => {
-        resourcesManager.refreshAllResources()
+    return commands.registerCommand(commandKey('api.refreshAllResources'), async () => {
+        try {
+            await resourcesManager.refreshAllResources()
+        } catch (error) {
+            await handleLspError(error, 'Error refreshing resources')
+        }
     })
 }
 
@@ -698,7 +711,11 @@ export function refreshResourceListCommand(resourcesManager: ResourcesManager, e
             resourceTypeNode = selected.node
         }
 
-        resourcesManager.refreshResourceList(resourceTypeNode.typeName)
+        try {
+            await resourcesManager.refreshResourceList(resourceTypeNode.typeName)
+        } catch (error) {
+            await handleLspError(error, 'Error refreshing resource list')
+        }
     })
 }
 
@@ -710,7 +727,11 @@ export function focusDiffCommand() {
 
 export function getStackManagementInfoCommand(resourcesManager: ResourcesManager) {
     return commands.registerCommand(commandKey('api.getStackManagementInfo'), async (resourceNode?: ResourceNode) => {
-        await resourcesManager.getStackManagementInfo(resourceNode)
+        try {
+            await resourcesManager.getStackManagementInfo(resourceNode)
+        } catch (error) {
+            await handleLspError(error, 'Error getting stack management info')
+        }
     })
 }
 
@@ -780,8 +801,12 @@ export function loadMoreResourcesCommand(explorer: CloudFormationExplorer) {
             node = selected.node
         }
 
-        await node.loadMoreResources()
-        explorer.refresh(node)
+        try {
+            await node.loadMoreResources()
+            explorer.refresh(node)
+        } catch (error) {
+            await handleLspError(error, 'Error loading more resources')
+        }
     })
 }
 
@@ -807,8 +832,12 @@ export function loadMoreStacksCommand(explorer: CloudFormationExplorer) {
                 title: 'Loading More Stacks',
             },
             async () => {
-                await stacksNode.loadMoreStacks()
-                explorer.refresh(stacksNode)
+                try {
+                    await stacksNode.loadMoreStacks()
+                    explorer.refresh(stacksNode)
+                } catch (error) {
+                    await handleLspError(error, 'Error loading more stacks')
+                }
             }
         )
     })
@@ -816,28 +845,32 @@ export function loadMoreStacksCommand(explorer: CloudFormationExplorer) {
 
 export function searchResourceCommand(explorer: CloudFormationExplorer, resourcesManager: ResourcesManager) {
     return commands.registerCommand(commandKey('api.searchResource'), async (node: ResourceTypeNode) => {
-        const identifier = await window.showInputBox({
-            prompt: `Enter ${node.label} identifier to add to list`,
-            placeHolder: 'Resource identifier must match exactly',
-        })
+        try {
+            const identifier = await window.showInputBox({
+                prompt: `Enter ${node.label} identifier to add to list`,
+                placeHolder: 'Resource identifier must match exactly',
+            })
 
-        if (!identifier) {
-            return
-        }
-
-        const result = await resourcesManager.searchResource(node.label as string, identifier)
-
-        if (result.found) {
-            void window.showInformationMessage(`${identifier} (${node.label}) has been added to the list`)
-            explorer.refresh(node)
-        } else {
-            const action = await window.showErrorMessage(
-                `${node.label} with identifier '${identifier}' was not found. The identifier must match exactly.`,
-                'See Documentation'
-            )
-            if (action === 'See Documentation') {
-                void env.openExternal(Uri.parse(ResourceIdentifierDocumentationUrl))
+            if (!identifier) {
+                return
             }
+
+            const result = await resourcesManager.searchResource(node.label as string, identifier)
+
+            if (result.found) {
+                void window.showInformationMessage(`${identifier} (${node.label}) has been added to the list`)
+                explorer.refresh(node)
+            } else {
+                const action = await window.showErrorMessage(
+                    `${node.label} with identifier '${identifier}' was not found. The identifier must match exactly.`,
+                    'See Documentation'
+                )
+                if (action === 'See Documentation') {
+                    void env.openExternal(Uri.parse(ResourceIdentifierDocumentationUrl))
+                }
+            }
+        } catch (error) {
+            await handleLspError(error, 'Error searching for resource')
         }
     })
 }
@@ -850,8 +883,12 @@ export function refreshChangeSetsCommand(explorer: CloudFormationExplorer) {
 
 export function loadMoreChangeSetsCommand(explorer: CloudFormationExplorer) {
     return commands.registerCommand(commandKey('api.loadMoreChangeSets'), async (node: StackChangeSetsNode) => {
-        await node.loadMoreChangeSets()
-        explorer.refresh(node)
+        try {
+            await node.loadMoreChangeSets()
+            explorer.refresh(node)
+        } catch (error) {
+            await handleLspError(error, 'Error loading more change sets')
+        }
     })
 }
 
@@ -862,30 +899,34 @@ export function viewStackCommand(
     resourcesProvider: StackResourcesWebviewProvider
 ) {
     return commands.registerCommand(commandKey('stack.view'), async (node?: StackNode) => {
-        let stackName: string | undefined
+        try {
+            let stackName: string | undefined
 
-        if (node?.stack.StackName) {
-            stackName = node.stack.StackName
-        } else {
-            stackName = await getStackName()
-            if (!stackName) {
-                return
+            if (node?.stack.StackName) {
+                stackName = node.stack.StackName
+            } else {
+                stackName = await getStackName()
+                if (!stackName) {
+                    return
+                }
             }
+
+            await coordinator.setStack(stackName)
+
+            await overviewProvider.showStackOverview(stackName)
+
+            const stackStatus = coordinator.currentStackStatus
+
+            await resourcesProvider.updateData(stackName)
+
+            if (stackStatus && !isStackInTransientState(stackStatus)) {
+                await outputsProvider.showOutputs(stackName)
+            }
+
+            await commands.executeCommand(commandKey('stack.overview.focus'))
+        } catch (error) {
+            await handleLspError(error, 'Error viewing stack')
         }
-
-        await coordinator.setStack(stackName)
-
-        await overviewProvider.showStackOverview(stackName)
-
-        const stackStatus = coordinator.currentStackStatus
-
-        await resourcesProvider.updateData(stackName)
-
-        if (stackStatus && !isStackInTransientState(stackStatus)) {
-            await outputsProvider.showOutputs(stackName)
-        }
-
-        await commands.executeCommand(commandKey('stack.overview.focus'))
     })
 }
 
