@@ -34,7 +34,7 @@ export class CfnLspInstaller extends BaseLspInstaller {
         super(
             {
                 manifestUrl: 'github',
-                supportedVersions: '0.*.*',
+                supportedVersions: '<2.0.0',
                 id: CfnLspName,
                 suppressPromptPrefix: 'cfnLsp',
             },
