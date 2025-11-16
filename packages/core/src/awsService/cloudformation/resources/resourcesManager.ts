@@ -236,7 +236,7 @@ export class ResourcesManager {
     ): Promise<void> {
         const editor = window.activeTextEditor
         if (!editor) {
-            showErrorMessage('No active editor')
+            showErrorMessage('Open a CloudFormation template to author resource state')
             return
         }
 
@@ -388,7 +388,11 @@ export class ResourcesManager {
                 resourceIdentifier: node.resourceIdentifier,
             }))
         } else {
-            selections = await this.resourceSelector.selectResources()
+            selections = await this.resourceSelector.selectResources(true, undefined, {
+                getCached: (type) => this.resources.get(type),
+                loadMore: (type, token) => this.loadMoreResources(type, token),
+                search: (type, id) => this.searchResource(type, id),
+            })
         }
 
         if (selections.length === 0) {
@@ -435,7 +439,11 @@ export class ResourcesManager {
         if (resourceNode?.resourceIdentifier) {
             resourceIdentifier = resourceNode.resourceIdentifier
         } else {
-            const selection = await this.resourceSelector.selectSingleResource()
+            const selection = await this.resourceSelector.selectSingleResource({
+                getCached: (type) => this.resources.get(type),
+                loadMore: (type, token) => this.loadMoreResources(type, token),
+                search: (type, id) => this.searchResource(type, id),
+            })
             if (!selection) {
                 return
             }
