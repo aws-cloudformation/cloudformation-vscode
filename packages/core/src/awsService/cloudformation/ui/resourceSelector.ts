@@ -6,7 +6,7 @@ import { getLogger } from '../../../shared/logger'
 
 import { window } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient/node'
-import { ResourceTypesRequest, ListResourcesRequest, ResourceList } from '../cfn/resourceRequestTypes'
+import { ResourceTypesRequest, ListResourcesRequest, ResourceList } from '../resources/resourceRequestTypes'
 import { getLogger } from '../../../shared/logger/logger'
 
 export interface ResourceSelectionResult {

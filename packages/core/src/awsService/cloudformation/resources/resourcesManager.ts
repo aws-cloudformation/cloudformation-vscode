@@ -20,7 +20,8 @@ import {
     StackMgmtInfoRequest,
     SearchResourceRequest,
     SearchResourceResult,
-} from '../cfn/resourceRequestTypes'
+    RemoveResourceTypeRequest,
+} from './resourceRequestTypes'
 
 import { showErrorMessage } from '../ui/message'
 import { ProgressLocation, SnippetString, window, env, Position, Range } from 'vscode'
@@ -60,6 +61,7 @@ export class ResourcesManager {
             ResourcesManager.resourceTypesKey,
             this.selectedResourceTypes.filter((type) => type !== typeToRemove)
         )
+        await this.client.sendRequest(RemoveResourceTypeRequest, typeToRemove)
         this.notifyAllListeners()
     }
 
