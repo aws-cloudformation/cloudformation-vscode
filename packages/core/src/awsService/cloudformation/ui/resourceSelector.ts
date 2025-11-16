@@ -6,7 +6,7 @@ import { getLogger } from '../../../shared/logger'
 
 import { window } from 'vscode'
 import { LanguageClient } from 'vscode-languageclient/node'
-import { ResourceTypesRequest, ListResourcesRequest, ResourceList } from '../cfn/resourceRequestTypes'
+import { ResourceTypesRequest, ListResourcesRequest, ResourceList } from '../resources/resourceRequestTypes'
 import { getLogger } from '../../../shared/logger/logger'
 
 export interface ResourceSelectionResult {
@@ -70,26 +70,8 @@ export class ResourceSelector {
             const allSelections: ResourceSelectionResult[] = []
 
             for (const resourceType of selectedTypes) {
-                const resourceIdentifiers = await this.getResourceIdentifiers(resourceType)
-                if (resourceIdentifiers.length === 0) {
-                    void window.showWarningMessage(`No resources found for type: ${resourceType}`)
-                    continue
-                }
-
-                const result = await window.showQuickPick(resourceIdentifiers, {
-                    canPickMany: multiSelect,
-                    placeHolder: `Select ${resourceType} identifiers`,
-                    title: `Select from all ${resourceType} Resources`,
-                })
-
-                if (!result) {
-                    continue
-                }
-
-                const identifiers = Array.isArray(result) ? result : [result]
-                for (const identifier of identifiers) {
-                    allSelections.push({ resourceType, resourceIdentifier: identifier })
-                }
+                const selections = await this.selectResourceIdentifiers(resourceType, multiSelect)
+                allSelections.push(...selections)
             }
 
             return allSelections
@@ -99,31 +81,83 @@ export class ResourceSelector {
         }
     }
 
+    private async selectResourceIdentifiers(
+        resourceType: string,
+        multiSelect: boolean
+    ): Promise<ResourceSelectionResult[]> {
+        const loadMoreLabel = '$(sync) Load More...'
+        const searchLabel = '$(search) Search by Identifier...'
+        let identifiers: string[] = []
+        let nextToken: string | undefined
+        const selections: ResourceSelectionResult[] = []
+
+        while (true) {
+            const response = await this.client.sendRequest(ListResourcesRequest, {
+                resources: [{ resourceType, nextToken }],
+            })
+
+            const resource = response.resources.find((r: { typeName: string }) => r.typeName === resourceType)
+            if (!resource) {
+                void window.showWarningMessage(`No resources found for type: ${resourceType}`)
+                return []
+            }
+
+            identifiers = resource.resourceIdentifiers
+            nextToken = resource.nextToken
+
+            if (identifiers.length === 0 && !nextToken) {
+                void window.showWarningMessage(`No resources found for type: ${resourceType}`)
+                return []
+            }
+
+            const items = [...identifiers]
+            if (nextToken) {
+                items.push(loadMoreLabel)
+            }
+            items.push(searchLabel)
+
+            const result = await window.showQuickPick(items, {
+                canPickMany: multiSelect,
+                placeHolder: `Select ${resourceType} identifiers`,
+                title: `Select ${resourceType} Resources`,
+            })
+
+            if (!result) {
+                return selections
+            }
+
+            const picked = Array.isArray(result) ? result : [result]
+
+            if (picked.includes(loadMoreLabel)) {
+                continue
+            }
+
+            if (picked.includes(searchLabel)) {
+                const identifier = await window.showInputBox({
+                    prompt: `Enter ${resourceType} identifier`,
+                    placeHolder: 'Resource identifier must match exactly',
+                })
+
+                if (identifier) {
+                    selections.push({ resourceType, resourceIdentifier: identifier })
+                }
+
+                if (!multiSelect) {
+                    return selections
+                }
+                continue
+            }
+
+            for (const identifier of picked) {
+                selections.push({ resourceType, resourceIdentifier: identifier })
+            }
+
+            return selections
+        }
+    }
+
     async selectSingleResource(): Promise<ResourceSelectionResult | undefined> {
         const result = await this.selectResources(false)
         return result[0]
-    }
-
-    private async getResourceIdentifiers(resourceType: string, cachedResources?: ResourceList[]): Promise<string[]> {
-        // First try to use cached resources from CfnPanel
-        if (cachedResources) {
-            const cachedResource = cachedResources.find((r) => r.typeName === resourceType)
-            if (cachedResource) {
-                return cachedResource.resourceIdentifiers
-            }
-        }
-
-        // If not cached, fetch from server
-        try {
-            const resourcesResponse = await this.client.sendRequest(ListResourcesRequest, {
-                resources: [{ resourceType }],
-            })
-
-            const resources = resourcesResponse.resources.find((r: { typeName: string }) => r.typeName === resourceType)
-            return resources?.resourceIdentifiers ?? []
-        } catch (error) {
-            getLogger().error(`Failed to get resources for type ${resourceType}:`, error)
-            return []
-        }
     }
 }

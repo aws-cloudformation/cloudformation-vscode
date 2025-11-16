@@ -10,6 +10,7 @@ import { LanguageClient } from 'vscode-languageclient/node'
 import {
     ListResourcesRequest,
     RefreshResourcesRequest,
+    RemoveResourceTypeRequest,
     ResourceList,
     ResourceSelection,
     ResourceStackManagementResult,
@@ -20,7 +21,7 @@ import {
     StackMgmtInfoRequest,
     SearchResourceRequest,
     SearchResourceResult,
-} from '../cfn/resourceRequestTypes'
+} from './resourceRequestTypes'
 
 import { showErrorMessage } from '../ui/message'
 import { ProgressLocation, SnippetString, window, env, Position, Range } from 'vscode'
@@ -60,6 +61,7 @@ export class ResourcesManager {
             ResourcesManager.resourceTypesKey,
             this.selectedResourceTypes.filter((type) => type !== typeToRemove)
         )
+        await this.client.sendRequest(RemoveResourceTypeRequest, typeToRemove)
         this.notifyAllListeners()
     }
 
