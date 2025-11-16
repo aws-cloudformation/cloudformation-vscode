@@ -82,6 +82,7 @@ import { selectEnvironmentCommand } from './commands/environmentCommands'
 import { CfnInitUiInterface } from './cfn-init/cfnInitUiInterface'
 import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
 import { CfnEnvironmentFileSelector } from './ui/cfnEnvironmentFileSelector'
+import { fs } from '../../shared/fs/fs'
 
 let client: LanguageClient
 let clientDisposables: Disposable[] = []
@@ -101,6 +102,9 @@ async function startClient(context: ExtensionContext) {
         new RemoteLspServerProvider(),
     ])
     const serverFile = await serverProvider.serverExecutable()
+    if (!(await fs.existsFile(serverFile))) {
+        throw new Error(`CloudFormation LSP ${serverFile} not found`)
+    }
     getLogger().info(`Found CloudFormation LSP executable: ${serverFile}`)
     const serverRootDir = await serverProvider.serverRootDir()
 

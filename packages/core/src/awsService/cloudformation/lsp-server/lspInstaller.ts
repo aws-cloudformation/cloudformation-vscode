@@ -46,6 +46,10 @@ export class CfnLspInstaller extends BaseLspInstaller {
 
                     try {
                         const manifest = await this.githubManifest.getManifest()
+                        log.info(
+                            `Creating CloudFormation LSP manifest for ${this.githubManifest.environment}`,
+                            manifest.versions.map((v) => v.serverVersion)
+                        )
 
                         // Cache in CloudFormation-specific global state storage
                         globals.globalState.tryUpdate(cfnManifestStorageKey, {
