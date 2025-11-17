@@ -11,6 +11,7 @@ import {
     ResourceList,
     SearchResourceResult,
 } from '../resources/resourceRequestTypes'
+import { handleLspError } from '../utils/onlineErrorHandler'
 import { getLogger } from '../../../shared/logger/logger'
 
 export interface ResourceSelectionResult {
@@ -96,7 +97,7 @@ export class ResourceSelector {
 
             return allSelections
         } catch (error) {
-            void window.showErrorMessage('Failed to select resources')
+            await handleLspError(error, 'Error selecting resources')
             return []
         }
     }
@@ -187,16 +188,11 @@ export class ResourceSelector {
     }
 
     private async fetchResourceList(resourceType: string): Promise<ResourceList | undefined> {
-        try {
-            const response = await this.client.sendRequest(ListResourcesRequest, {
-                resources: [{ resourceType }],
-            })
+        const response = await this.client.sendRequest(ListResourcesRequest, {
+            resources: [{ resourceType }],
+        })
 
-            return response.resources.find((r: { typeName: string }) => r.typeName === resourceType)
-        } catch (error) {
-            getLogger().error(`Failed to fetch resources for type ${resourceType}:`, error)
-            return undefined
-        }
+        return response.resources.find((r: { typeName: string }) => r.typeName === resourceType)
     }
 
     async selectSingleResource(resourceOperations?: ResourceOperations): Promise<ResourceSelectionResult | undefined> {
