@@ -12,7 +12,7 @@ export class GitHubManifestAdapter {
     constructor(
         private readonly repoOwner: string,
         private readonly repoName: string,
-        private readonly environment: CfnLspServerEnvType
+        readonly environment: CfnLspServerEnvType
     ) {}
 
     async getManifest(): Promise<Manifest> {

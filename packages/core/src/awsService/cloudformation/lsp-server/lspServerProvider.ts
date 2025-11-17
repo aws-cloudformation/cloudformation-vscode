@@ -58,7 +58,7 @@ export class LspServerProvider implements LspServerResolverI, Disposable {
                 this._serverRootDir = dir
                 return
             } catch (err) {
-                getLogger().error(`Failed to resolve CloudFormation LSP provider ${provider.constructor.name}`, err)
+                getLogger().error(`Failed to resolve CloudFormation LSP provider ${provider.name()}`, err)
             }
         }
     }
