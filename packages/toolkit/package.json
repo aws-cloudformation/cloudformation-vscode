@@ -5659,6 +5659,14 @@
                 "{git,gitlens,conflictResolution,vscode-local-history}:/**/*.tc.json": "default",
                 "{git,gitlens,conflictResolution,vscode-local-history}:/**/*.{asl.json,asl.yaml,asl.yml}": "default"
             }
+        },
+        "[cloudformation]": {
+            "editor.quickSuggestions": {
+                "other": "on",
+                "comments": "off",
+                "strings": "on"
+            },
+            "editor.suggest.showWords": false
         }
     },
     "devDependencies": {},
