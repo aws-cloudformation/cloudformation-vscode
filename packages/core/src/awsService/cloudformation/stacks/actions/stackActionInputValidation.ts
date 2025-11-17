@@ -57,10 +57,6 @@ export function validateChangeSetName(value: string): string | undefined {
 }
 
 export function validateParameterValue(input: string, param: TemplateParameter): string | undefined {
-    if (!input && !param.Default) {
-        return `Parameter ${param.name} is required`
-    }
-
     const actualValue = input ?? param.Default?.toString() ?? ''
 
     // Handle CommaDelimitedList validation

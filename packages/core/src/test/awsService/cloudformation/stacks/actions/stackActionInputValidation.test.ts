@@ -66,6 +66,15 @@ describe('validateParameterValue', function () {
             assert.strictEqual(validateParameterValue('2', param), undefined)
             assert.strictEqual(validateParameterValue('3', param), 'Value must be one of: 1, 2')
         })
+
+        it('should handle empty string values', function () {
+            const param: TemplateParameter = {
+                name: 'TestParam',
+                Type: 'String',
+            }
+
+            assert.strictEqual(validateParameterValue('', param), undefined)
+        })
     })
 
     describe('Number parameters', function () {
