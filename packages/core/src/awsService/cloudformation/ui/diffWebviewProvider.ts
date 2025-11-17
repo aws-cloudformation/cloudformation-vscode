@@ -195,13 +195,13 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
             const hasDriftDetails = rc.details?.some(
                 (detail) => detail.Target?.Drift || detail.Target?.LiveResourceDrift
             )
-            let driftDisplay = ''
-            if (driftStatus === 'DELETED') {
-                driftDisplay = '⚠️ Deleted'
-            } else if (hasDriftDetails) {
-                driftDisplay = '⚠️ Modified'
-            } else if (driftStatus && driftStatus !== 'IN_SYNC') {
+            let driftDisplay = driftStatus || ''
+            let driftDisplayColor = 'var(--vscode-foreground)'
+            if (driftStatus === 'IN_SYNC') {
+                driftDisplayColor = 'var(--vscode-gitDecoration-addedResourceForeground)'
+            } else if (driftStatus && (driftStatus === 'MODIFIED' || driftStatus === 'DELETED')) {
                 driftDisplay = `⚠️ ${driftStatus}`
+                driftDisplayColor = 'var(--vscode-gitDecoration-modifiedResourceForeground)'
             }
 
             tableHtml += `<tr style="border-left: 4px solid ${borderColor}; color: var(--vscode-foreground);">
@@ -215,7 +215,7 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
                 <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center;">${rc.replacement ?? 'N/A'}</td>${
                     hasDrift
                         ? `
-                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; color: ${driftDisplay ? 'var(--vscode-editorWarning-foreground)' : 'var(--vscode-foreground)'}; font-weight: ${driftDisplay ? 'bold' : 'normal'};">${driftDisplay || '-'}</td>`
+                <td style="word-wrap: break-word; border: 1px solid var(--vscode-panel-border); padding: 4px; text-align: center; color: ${driftDisplayColor}; font-weight: ${driftDisplay ? 'bold' : 'normal'};">${driftDisplay || '-'}</td>`
                         : ''
                 }
             </tr>`
