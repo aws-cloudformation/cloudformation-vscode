@@ -142,7 +142,14 @@ export function viewChangeSetCommand(client: LanguageClient, diffProvider: DiffW
                 stackName: params.stackName,
             })
 
-            void diffProvider.updateData(params.stackName, describeChangeSetResult.changes, params.changeSetName, true)
+            void diffProvider.updateData(
+                params.stackName,
+                describeChangeSetResult.changes,
+                params.changeSetName,
+                true,
+                [],
+                describeChangeSetResult.deploymentMode
+            )
             void commands.executeCommand(commandKey('diff.focus'))
         } catch (error) {
             await handleLspError(error, 'Error viewing change set')
