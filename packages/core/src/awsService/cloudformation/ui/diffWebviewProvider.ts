@@ -4,7 +4,7 @@
  */
 
 import { WebviewView, WebviewViewProvider, commands, Disposable } from 'vscode'
-import { StackChange, ValidationDetail } from '../stacks/actions/stackActionRequestType'
+import { DeploymentMode, StackChange, ValidationDetail } from '../stacks/actions/stackActionRequestType'
 import { DiffViewHelper } from './diffViewHelper'
 import { commandKey } from '../utils'
 import { StackViewCoordinator } from './stackViewCoordinator'
@@ -23,6 +23,7 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
     private totalPages: number = 0
     private readonly disposables: Disposable[] = []
     private validationDetail: ValidationDetail[] = []
+    private deploymentMode?: DeploymentMode
 
     constructor(private readonly coordinator: StackViewCoordinator) {
         this.disposables.push(
@@ -44,7 +45,8 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
         changes: StackChange[] = [],
         changeSetName?: string,
         enableDeployments = false,
-        validationDetail?: ValidationDetail[]
+        validationDetail?: ValidationDetail[],
+        deploymentMode?: DeploymentMode
     ) {
         this.stackName = stackName
         this.changes = changes
@@ -55,6 +57,7 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
         if (validationDetail) {
             this.validationDetail = validationDetail
         }
+        this.deploymentMode = deploymentMode
 
         await this.coordinator.setChangeSetMode(stackName, true)
         if (this._view) {
@@ -139,15 +142,18 @@ export class DiffWebviewProvider implements WebviewViewProvider, Disposable {
             `
         }
 
-        // Check if any resource has drift
+        // Check if REVERT_DRIFT change set or any resource has drift
         // TODO: adapt if we do real backend pagination
-        const hasDrift = changes.some(
-            (change) =>
-                change.resourceChange?.resourceDriftStatus ||
-                change.resourceChange?.details?.some(
-                    (detail) => detail.Target?.Drift || detail.Target?.LiveResourceDrift
-                )
-        )
+        // TODO: remove resource fallback once server is passing deploymentMode
+        const hasDrift =
+            this.deploymentMode === DeploymentMode.REVERT_DRIFT ||
+            changes.some(
+                (change) =>
+                    change.resourceChange?.resourceDriftStatus ||
+                    change.resourceChange?.details?.some(
+                        (detail) => detail.Target?.Drift || detail.Target?.LiveResourceDrift
+                    )
+            )
 
         let tableHtml = `
             <table style="width: 100%; border-collapse: collapse; border: 1px solid var(--vscode-panel-border);">

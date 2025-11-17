@@ -12,6 +12,7 @@ import {
     ResourceToImport,
     ChangeSetOptionalFlags,
     ValidationDetail,
+    DeploymentMode,
 } from './stackActionRequestType'
 import { LanguageClient } from 'vscode-languageclient/node'
 import { showErrorMessage, showValidationStarted, showValidationSuccess, showValidationFailure } from '../../ui/message'
@@ -114,7 +115,10 @@ export class Validation {
                             if (validationResult.state === StackActionState.SUCCESSFUL) {
                                 showValidationSuccess(this.stackName)
 
-                                this.showDiffView(describeValidationStatusResult.ValidationDetails ?? [])
+                                this.showDiffView(
+                                    describeValidationStatusResult.ValidationDetails,
+                                    describeValidationStatusResult.deploymentMode
+                                )
                             } else {
                                 showValidationFailure(
                                     this.stackName,
@@ -152,13 +156,14 @@ export class Validation {
         }, 1000)
     }
 
-    private showDiffView(validationDetail?: ValidationDetail[]) {
+    private showDiffView(validationDetail?: ValidationDetail[], deploymentMode?: DeploymentMode) {
         void this.diffProvider.updateData(
             this.stackName,
             this.changes,
             this.changeSetName,
             this.shouldEnableDeployment,
-            validationDetail
+            validationDetail,
+            deploymentMode
         )
         void commands.executeCommand(commandKey('diff.focus'))
     }
