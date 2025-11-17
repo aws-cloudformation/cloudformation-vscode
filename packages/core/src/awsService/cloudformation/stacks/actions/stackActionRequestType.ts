@@ -155,6 +155,7 @@ export type Failable = {
 export type DescribeValidationStatusResult = GetStackActionStatusResult &
     Failable & {
         ValidationDetails?: ValidationDetail[]
+        deploymentMode?: DeploymentMode
     }
 
 export type DescribeDeploymentStatusResult = GetStackActionStatusResult &
@@ -235,6 +236,7 @@ export type DescribeChangeSetParams = ChangeSetReference
 export type DescribeChangeSetResult = ChangeSetInfo & {
     stackName: string
     changes?: StackChange[]
+    deploymentMode?: DeploymentMode
 }
 
 export type StackInfo = {
