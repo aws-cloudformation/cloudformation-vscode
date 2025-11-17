@@ -1496,6 +1496,10 @@
                 {
                     "command": "aws.cloudformation.api.deployTemplateFromStacksMenu",
                     "when": "false"
+                },
+                {
+                    "command": "aws.cloudformation.server.restartServer",
+                    "when": "false"
                 }
             ],
             "editor/title": [
