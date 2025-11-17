@@ -201,10 +201,6 @@ export class CfnEnvironmentManager implements Disposable {
     }
 
     public async refreshSelectedEnvironment() {
-        if (!workspace.workspaceFolders?.[0]) {
-            return
-        }
-
         const environmentName = this.getSelectedEnvironmentName()
         const availableEnvironments = await this.fetchAvailableEnvironments()
 
