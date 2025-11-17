@@ -7,6 +7,7 @@ import { strict as assert } from 'assert'
 import * as sinon from 'sinon'
 import { CfnEnvironmentManager } from '../../../../awsService/cloudformation/cfn-init/cfnEnvironmentManager'
 import { Auth } from '../../../../auth/auth'
+import { Connection } from '../../../../auth/connection'
 import { globals } from '../../../../shared'
 import { workspace, commands } from 'vscode'
 import fs from '../../../../shared/fs/fs'
@@ -39,8 +40,8 @@ describe('CfnEnvironmentManager', () => {
                 type: 'iam',
                 label: 'test-profile',
                 state: 'valid',
-            } as any,
-        } as any
+            } as unknown as Connection,
+        } as sinon.SinonStubbedInstance<Auth>
 
         sinon.stub(Auth, 'instance').get(() => mockAuth)
 
@@ -52,11 +53,11 @@ describe('CfnEnvironmentManager', () => {
 
         mockEnvironmentSelector = {
             selectEnvironment: sinon.stub(),
-        } as any
+        } as unknown as sinon.SinonStubbedInstance<CfnEnvironmentSelector>
 
         mockEnvironmentFileSelector = {
             selectEnvironmentFile: sinon.stub(),
-        } as any
+        } as unknown as sinon.SinonStubbedInstance<CfnEnvironmentFileSelector>
 
         fsStub = sinon.stub(fs, 'readFileText')
         // Mock project as initialized by default
@@ -154,7 +155,7 @@ describe('CfnEnvironmentManager', () => {
                 type: 'iam',
                 label: 'test-profile',
                 state: 'valid',
-            } as any
+            } as unknown as Connection
             mockAuth.getConnection.resolves(mockConnection)
 
             const listener = sinon.stub()

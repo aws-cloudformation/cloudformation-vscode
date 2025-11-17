@@ -44,6 +44,7 @@ import {
     deleteChangeSetCommand,
     viewChangeSetCommand,
     deployTemplateFromStacksMenuCommand,
+    selectEnvironmentCommand,
 } from './commands/cfnCommands'
 import { openStackTemplateCommand } from './commands/openStackTemplate'
 import { selectRegionCommand } from './commands/regionCommands'
@@ -78,7 +79,6 @@ import { getLogger } from '../../shared/logger/logger'
 import { ChangeSetsManager } from './stacks/changeSetsManager'
 import { CfnEnvironmentManager } from './cfn-init/cfnEnvironmentManager'
 import { CfnEnvironmentSelector } from './ui/cfnEnvironmentSelector'
-import { selectEnvironmentCommand } from './commands/environmentCommands'
 import { CfnInitUiInterface } from './cfn-init/cfnInitUiInterface'
 import { CfnInitCliCaller } from './cfn-init/cfnInitCliCaller'
 import { CfnEnvironmentFileSelector } from './ui/cfnEnvironmentFileSelector'
