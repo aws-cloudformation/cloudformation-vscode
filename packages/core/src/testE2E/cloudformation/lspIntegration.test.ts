@@ -13,15 +13,34 @@ describe('CloudFormation LSP Integration E2E', function () {
     let testDir: string
 
     before(async function () {
+        console.log('=== CloudFormation LSP E2E Test Setup ===')
+        console.log(`Node version: ${process.version}`)
+        console.log(`Platform: ${process.platform}`)
+
         const extension = vscode.extensions.getExtension('amazonwebservices.aws-toolkit-vscode')
+        console.log(`Extension found: ${!!extension}`)
+        console.log(`Extension active: ${extension?.isActive}`)
+
         if (extension && !extension.isActive) {
+            console.log('Activating AWS Toolkit extension...')
+            const startTime = Date.now()
             await extension.activate()
+            const activationTime = Date.now() - startTime
+            console.log(`Extension activated successfully in ${activationTime}ms`)
+        } else if (extension?.isActive) {
+            console.log('Extension already active')
         }
 
         testDir = await mkdtemp(path.join(os.tmpdir(), 'cfn-lsp-test-'))
+        console.log(`Test directory created: ${testDir}`)
 
         // Wait for LSP server to download and initialize
+        console.log('Waiting 20 seconds for LSP server to download and initialize...')
+        const waitStart = Date.now()
         await new Promise((resolve) => setTimeout(resolve, 20000))
+        const waitTime = Date.now() - waitStart
+        console.log(`Wait complete after ${waitTime}ms`)
+        console.log('=== Setup Complete ===\n')
     })
 
     after(async function () {
