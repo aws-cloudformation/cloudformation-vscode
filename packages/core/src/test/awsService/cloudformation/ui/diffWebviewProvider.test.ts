@@ -243,7 +243,7 @@ describe('DiffWebviewProvider', function () {
             const html = setupProviderWithChanges('test-stack', changes)
 
             assert.ok(html.includes('Drift Status'))
-            assert.ok(html.includes('⚠️ Deleted'))
+            assert.ok(html.includes('⚠️ DELETED'))
         })
 
         it('should not show drift status column when no drift is detected', function () {
@@ -289,7 +289,7 @@ describe('DiffWebviewProvider', function () {
             assert.ok(html.includes('Drift: Actual'))
             assert.ok(html.includes('template-value'))
             assert.ok(html.includes('live-value'))
-            assert.ok(html.includes('⚠️ Modified'))
+            assert.ok(html.includes('⚠️ MODIFIED'))
         })
 
         it('should show drift status column when deploymentMode is REVERT_DRIFT', function () {
