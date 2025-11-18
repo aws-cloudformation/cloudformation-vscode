@@ -33,15 +33,31 @@ esac
 
 NODE_VERSION="22"
 
-# Fetch latest release
+# Fetch latest release with retry logic
+MAX_RETRIES=3
+RETRY_DELAY=240
+RETRY_COUNT=0
+
 echo "Fetching latest LSP server release..."
 RELEASE_URL="https://api.github.com/repos/aws-cloudformation/cloudformation-languageserver/releases/latest"
-DOWNLOAD_URL=$(curl -s "$RELEASE_URL" | grep "browser_download_url.*${PLATFORM}-${ARCH}-node${NODE_VERSION}.zip" | cut -d'"' -f4 | head -1)
 
-if [ -z "$DOWNLOAD_URL" ]; then
-    echo "Error: Could not find LSP server release for ${PLATFORM}-${ARCH}-node${NODE_VERSION}"
-    exit 1
-fi
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    DOWNLOAD_URL=$(curl -s "$RELEASE_URL" | grep "browser_download_url.*${PLATFORM}-${ARCH}-node${NODE_VERSION}.zip" | cut -d'"' -f4 | head -1)
+    
+    if [ -n "$DOWNLOAD_URL" ]; then
+        echo "Successfully fetched release URL"
+        break
+    fi
+    
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+        echo "Could not find LSP server release for ${PLATFORM}-${ARCH}-node${NODE_VERSION}. Waiting ${RETRY_DELAY} seconds before retry... (Attempt $RETRY_COUNT/$MAX_RETRIES)"
+        sleep $RETRY_DELAY
+    else
+        echo "Error: Could not find LSP server release for ${PLATFORM}-${ARCH}-node${NODE_VERSION} after $MAX_RETRIES attempts"
+        exit 1
+    fi
+done
 
 # Clean and recreate directory
 rm -rf "$LSP_DIR"

@@ -251,7 +251,8 @@ jobs:
                   run: npm run testE2ECfn -w packages/toolkit
 
     cfn-integ-test-ubuntu:
-        needs: cfn-integ-test-macos
+        needs: lint-commits
+        # needs: cfn-integ-test-macos
         name: CloudFormation E2E Test (Ubuntu)
         runs-on: ubuntu-latest
         env:
