@@ -230,20 +230,6 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: 18.x
-            - name: Setup CloudFormation LSP Server
-              run: |
-                  bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
-                  REPO_ROOT=$(pwd)
-                  LSP_FILE=$(find "$REPO_ROOT/.lsp-server" -name "cfn-lsp-server-standalone.js" 2>/dev/null | head -1)
-                  if [ -z "$LSP_FILE" ]; then
-                    echo "Error: cfn-lsp-server-standalone.js not found"
-                    echo "Contents of $REPO_ROOT/.lsp-server:"
-                    ls -la "$REPO_ROOT/.lsp-server" || echo ".lsp-server directory not found"
-                    exit 1
-                  fi
-                  LSP_DIR=$(dirname "$LSP_FILE")
-                  echo "Setting __CLOUDFORMATIONLSP_PATH=$LSP_DIR"
-                  echo "__CLOUDFORMATIONLSP_PATH=$LSP_DIR" >> $GITHUB_ENV
             - run: npm ci
             - name: CloudFormation E2E Tests
               uses: coactions/setup-xvfb@v1
@@ -251,8 +237,8 @@ jobs:
                   run: npm run testE2ECfn -w packages/toolkit
 
     cfn-integ-test-ubuntu:
-        needs: lint-commits
         # needs: cfn-integ-test-macos
+        needs: lint-commits
         name: CloudFormation E2E Test (Ubuntu)
         runs-on: ubuntu-latest
         env:
@@ -266,22 +252,26 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: 18.x
-            - name: Setup CloudFormation LSP Server
-              run: |
-                  bash packages/core/src/testE2E/cloudformation/setup-local-lsp.sh
-                  REPO_ROOT=$(pwd)
-                  LSP_FILE=$(find "$REPO_ROOT/.lsp-server" -name "cfn-lsp-server-standalone.js" 2>/dev/null | head -1)
-                  if [ -z "$LSP_FILE" ]; then
-                    echo "Error: cfn-lsp-server-standalone.js not found"
-                    echo "Contents of $REPO_ROOT/.lsp-server:"
-                    ls -la "$REPO_ROOT/.lsp-server" || echo ".lsp-server directory not found"
-                    exit 1
-                  fi
-                  LSP_DIR=$(dirname "$LSP_FILE")
-                  echo "Setting __CLOUDFORMATIONLSP_PATH=$LSP_DIR"
-                  echo "__CLOUDFORMATIONLSP_PATH=$LSP_DIR" >> $GITHUB_ENV
             - run: npm ci
             - name: CloudFormation E2E Tests
               uses: coactions/setup-xvfb@v1
               with:
                   run: npm run testE2ECfn -w packages/toolkit
+
+    cfn-integ-test-windows:
+        # needs: cfn-integ-test-ubuntu
+        needs: lint-commits
+        name: CloudFormation E2E Test (Windows)
+        runs-on: windows-latest
+        env:
+            VSCODE_TEST_VERSION: stable
+            NODE_OPTIONS: '--max-old-space-size=8192'
+        steps:
+            - uses: actions/checkout@v4
+            - name: Use Node.js 18.x
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 18.x
+            - run: npm ci
+            - name: CloudFormation E2E Tests
+              run: npm run testE2ECfn -w packages/toolkit

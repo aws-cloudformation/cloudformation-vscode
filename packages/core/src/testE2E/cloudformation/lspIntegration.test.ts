@@ -13,27 +13,15 @@ describe('CloudFormation LSP Integration E2E', function () {
     let testDir: string
 
     before(async function () {
-        const envPath = process.env.__CLOUDFORMATIONLSP_PATH
-        console.log(`__CLOUDFORMATIONLSP_PATH = ${envPath}`)
-
-        if (envPath) {
-            console.log(`Using local LSP server from: ${envPath}`)
-        } else {
-            console.log('No __CLOUDFORMATIONLSP_PATH set, will download LSP from GitHub')
-        }
-
         const extension = vscode.extensions.getExtension('amazonwebservices.aws-toolkit-vscode')
-        console.log(`Extension found: ${!!extension}, isActive: ${extension?.isActive}`)
         if (extension && !extension.isActive) {
-            console.log('Activating extension...')
             await extension.activate()
-            console.log('Extension activated')
         }
 
         testDir = await mkdtemp(path.join(os.tmpdir(), 'cfn-lsp-test-'))
-        console.log('Waiting for LSP server to be ready...')
-        await new Promise((resolve) => setTimeout(resolve, 10000))
-        console.log('Lsp wait time over...')
+
+        // Wait for LSP server to download and initialize
+        await new Promise((resolve) => setTimeout(resolve, 20000))
     })
 
     after(async function () {
