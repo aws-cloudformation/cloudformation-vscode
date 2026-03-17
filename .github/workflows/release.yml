@@ -16,6 +16,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   get-configs:
     uses: ./.github/workflows/configs.yml
@@ -31,13 +34,13 @@ jobs:
         with:
           ref: ${{ inputs.tag }}
           fetch-tags: true
-      
+
       - name: Get version from package.json
         id: get-version
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
+
       - name: Validate tag matches version
         id: validate-tag
         run: |
@@ -47,27 +50,28 @@ jobs:
           if [[ "$TAG" == "v$VERSION" ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=false" >> $GITHUB_OUTPUT
-          elif [[ "$TAG" =~ ^v$VERSION-[0-9]{12}-alpha$ ]]; then
+          elif [[ "$TAG" =~ ^v$VERSION-.*-alpha$ ]]; then
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "is-prerelease=true" >> $GITHUB_OUTPUT
+          elif [[ "$TAG" == "v$VERSION-alpha" ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=true" >> $GITHUB_OUTPUT
           elif [[ "$TAG" =~ ^v$VERSION-beta$ ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=true" >> $GITHUB_OUTPUT
           else
-            echo "Error: Tag ($TAG) must be v$VERSION, v$VERSION-yyyymmddhhmm-alpha, or v$VERSION-beta"
+            echo "Error: Tag ($TAG) must be v$VERSION, v$VERSION-alpha, v$VERSION-<branch>-alpha, or v$VERSION-beta"
             exit 1
           fi
 
   build-and-test:
-    needs: [get-configs, version-and-tag]
+    needs: [ get-configs, version-and-tag ]
     uses: ./.github/workflows/build-and-test.yml
     with:
       ref: ${{ needs.version-and-tag.outputs.tag }}
 
-  bundle-and-release:
-    needs: [get-configs, version-and-tag, build-and-test]
-    permissions:
-      contents: write
+  bundle:
+    needs: [ get-configs, version-and-tag, build-and-test ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -79,16 +83,16 @@ jobs:
         shell: bash
         run: echo "Bundling from branch=$(git rev-parse --abbrev-ref HEAD), commit=$(git rev-parse HEAD), tag=$(git describe --tags --exact-match)"
 
-      - name: Setup Node.js ${{ needs.get-configs.outputs.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ needs.get-configs.outputs.node-version }}
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Bundle
+      - name: Bundle (${{ matrix.node-version }})
         shell: bash
         run: |
           TAG=${{ needs.version-and-tag.outputs.tag }}

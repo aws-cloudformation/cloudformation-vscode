@@ -1,43 +1,47 @@
-import { ExtensionContext } from 'vscode';
-import { join } from 'path';
-import { mkdirSync, existsSync } from 'fs';
+import { dirname } from 'path';
+import { LoggerFactory } from '../utils/Logger';
 import { LspServerProviderI } from './LspServerProvider';
-import { isDevelopment } from '../utils';
-import { LocalServerManager } from './remote/LocalServerManager';
-import { CachedCfnLspServerDirName } from './LspServerConfig';
-import { RemoteManifest } from './remote/RemoteManifest';
-
-const RemoteAssetUrl = 'https://d2485r7obgomg5.cloudfront.net';
+import { GitHubManifest } from './manifest/GitHubManifest';
+import { LspServerResolver } from './resolver/LspServerResolver';
 
 export class CfnRemoteLspServerProvider implements LspServerProviderI {
-    private readonly manifest: RemoteManifest;
-    private readonly serverManager: LocalServerManager;
-    private readonly serversRoot: string;
+    private readonly log = LoggerFactory.getLogger('RemoteLspServerProvider');
+    private serverPath?: string;
+    private rootDir?: string;
 
-    constructor(private readonly context: ExtensionContext) {
-        this.serversRoot = join(context.extensionPath, 'bundle', CachedCfnLspServerDirName);
-        if (!existsSync(this.serversRoot)) {
-            mkdirSync(this.serversRoot, { recursive: true });
-        }
-
-        this.manifest = new RemoteManifest(RemoteAssetUrl, this.serversRoot);
-        this.serverManager = new LocalServerManager(context, this.manifest, this.serversRoot);
+    name(): string {
+        return 'RemoteCfnLspServerProvider';
     }
 
     canProvide(): boolean {
-        return !isDevelopment();
+        return true;
     }
 
-    serverExecutable(): Promise<string> {
-        return this.serverManager.serverExecutable();
+    async serverExecutable(): Promise<string> {
+        if (this.serverPath) {
+            return this.serverPath;
+        }
+
+        const manifest = await new GitHubManifest().getManifest();
+        const resolver = new LspServerResolver(manifest);
+        const result = await resolver.resolve();
+
+        resolver.cleanOldVersions(result.version);
+
+        this.serverPath = result.serverPath;
+        this.rootDir = dirname(result.serverPath);
+        return this.serverPath;
     }
 
-    serverRootDir(): Promise<string> {
-        return this.serverManager.serverRootDir();
+    async serverRootDir(): Promise<string> {
+        if (!this.rootDir) {
+            await this.serverExecutable();
+        }
+        if (!this.rootDir) {
+            throw new Error('Failed to resolve LSP server root directory');
+        }
+        return this.rootDir;
     }
 
-    close() {
-        this.manifest.close();
-        this.serverManager.close();
-    }
+    close() {}
 }

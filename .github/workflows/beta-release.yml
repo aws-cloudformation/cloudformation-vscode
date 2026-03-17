@@ -3,18 +3,12 @@ run-name: Release Beta ${{ inputs.version }} ${{ github.actor }} ${{ github.even
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'The version to release. Can be the same as or higher than the version in main.'
-        required: true
-        type: string
+
+permissions:
+  contents: read
 
 jobs:
-  get-configs:
-    uses: ./.github/workflows/configs.yml
-
-  promote-main-to-beta:
-    needs: [get-configs]
+  create-beta-tag:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,48 +21,27 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Setup Node.js ${{ needs.get-configs.outputs.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ needs.get-configs.outputs.node-version }}
-          cache: 'npm'
-
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Bump Version and Tag
+      - name: Tag
         id: version-and-tag
         run: |
           PKG_VERSION=$(jq -r .version package.json)
-          INPUT_VERSION="${{ inputs.version }}"
-          HIGHEST_VERSION=$(printf "%s\n%s" "$PKG_VERSION" "$INPUT_VERSION" | sort -V | tail -n1)
 
-          if [ "$INPUT_VERSION" == "$PKG_VERSION" ]; then
-            echo "Input version matches package.json. No version bump needed on main."
-          elif [ "$HIGHEST_VERSION" == "$INPUT_VERSION" ]; then
-            echo "Bumping version on the main branch..."
-            npm version --no-git-tag-version "$INPUT_VERSION"
+          TAG="v${PKG_VERSION}-beta"
+          git tag "$TAG"
+          echo "Created tag from branch=$(git rev-parse --abbrev-ref HEAD), commit=$(git rev-parse HEAD), tag=$(git describe --tags --exact-match)"
 
-            git add package.json package-lock.json
-            git commit -m "chore(release): Bump version to $INPUT_VERSION"
-            git push origin main
-          else
-            echo "::error::Input version ($INPUT_VERSION) must be >= current version ($PKG_VERSION)."
-            exit 1
-          fi
-
-          FULL_TAG="v${INPUT_VERSION}-beta"
-          git tag "$FULL_TAG"
-          git push origin "$FULL_TAG"
-
-          echo "tag=$FULL_TAG" >> $GITHUB_OUTPUT
+          git push origin "$TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
   call-release:
-    needs: [promote-main-to-beta]
+    needs: [create-beta-tag]
     uses: ./.github/workflows/release.yml
     permissions:
       contents: write
     with:
-      tag: ${{ needs.promote-main-to-beta.outputs.tag }}
+      tag: ${{ needs.create-beta-tag.outputs.tag }}

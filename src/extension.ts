@@ -1,214 +1,172 @@
-import { ExtensionContext, window, languages } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
-import { CloseAction, ErrorAction } from 'vscode-languageclient/lib/common/client';
-import { v4 as uuidv4 } from 'uuid';
-import { formatMessage, toString } from './utils';
+import { randomBytes } from 'crypto';
+import { ExtensionContext, languages, window } from 'vscode';
 import {
-    describeTemplate,
-    optimizeTemplate,
-    recommendRelatedResources,
-    restartCommand,
-    selectProfileCommand,
-    aiButtonCommand,
-    generateTemplate,
-} from './commands/LspCommands';
-import {
-    deployTemplateCommand,
-    validateTemplateCommand,
-    rerunLastValidationCommand,
-    importResourceStateCommand,
-    cloneResourceStateCommand,
-    selectResourceTypesCommand,
-    addResourceTypesCommand,
-    refreshAllResourcesCommand,
-    refreshResourceListCommand,
-    copyResourceIdentifierCommand,
-    viewStackDiffCommand,
-    focusDiffCommand,
-    getStackManagementInfoCommand,
-    extractToParameterPositionCursorCommand,
-    getStackManagementInfoCommandPalette,
-} from './commands/CfnCommands';
-import { openStackTemplateCommand } from './commands/OpenStackTemplate';
-import { AwsCredentialsService } from './auth/awsCredentials';
-import { ExtensionId, ExtensionName, Version } from './ExtensionConfig';
-import { CfnPanel } from './cfn/CfnPanel';
-import { StacksSectionUI } from './stacks/StacksSectionUI';
-import { refreshCommand, StacksManager } from './stacks/StacksManager';
-import { DiffWebviewProvider } from './ui/DiffWebviewProvider';
-import { DocumentManager } from './documents/DocumentManager';
-import { DocumentsSectionUI } from './documents/DocumentsSectionUI';
-import { DocumentPreview } from './documents/DocumentPreview';
-import { ResourcesManager } from './resources/ResourcesManager';
-import { ResourceSelector } from './ui/ResourceSelector';
-import { ResourcesSectionUI } from './resources/ResourcesSectionUI';
+    CloseAction,
+    ErrorAction,
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+    TransportKind,
+} from 'vscode-languageclient/node';
+import { AwsCredentialsService } from './auth/AwsCredentials';
+import { restartCommand, updateRegion } from './commands/Commands';
 import { CfnInlineCompletionProvider } from './inlineCompletion/InlineCompletionProvider';
-import { StackActionCodeLensProvider } from './codelens/StackActionCodeLensProvider';
-import { LspServerResolver } from './lsp-server/LspServerProvider';
 import { CfnDevLspServerProvider } from './lsp-server/CfnDevLspServerProvider';
 import { CfnRemoteLspServerProvider } from './lsp-server/CfnRemoteLspServerProvider';
+import { LspServerResolver } from './lsp-server/LspServerProvider';
+import { getClientId } from './telemetry/ClientId';
+import { handleTelemetryOptIn } from './telemetry/TelemetryOptIn';
+import { ExtensionId, ExtensionName, ExtensionVersion } from './utils/ExtensionConfig';
+import { initFileSystem } from './utils/FileSystem';
+import { LoggerFactory } from './utils/Logger';
+import { extractErrorMessage, formatMessage } from './utils/Utils';
 
-let client: LanguageClient;
+const outputChannel = window.createOutputChannel(ExtensionName);
+LoggerFactory.initialize(outputChannel);
+const log = LoggerFactory.getLogger('Extension');
+
+let client: LanguageClient | undefined;
+let awsCredentials: AwsCredentialsService | undefined;
 
 export async function activate(context: ExtensionContext) {
-    const serverProvider = new LspServerResolver([
-        new CfnDevLspServerProvider(context),
-        new CfnRemoteLspServerProvider(context),
-    ]);
-    const serverFile = await serverProvider.serverExecutable();
+    initFileSystem(context);
+    context.subscriptions.push(
+        restartCommand(async () => {
+            log.info('Restarting server...');
+            await initialize(context);
+        }),
+        outputChannel,
+    );
 
-    const envOptions = {
-        NODE_OPTIONS: '--enable-source-maps',
-    };
+    await initialize(context);
+}
 
-    const serverOptions: ServerOptions = {
-        run: {
-            module: serverFile,
-            transport: TransportKind.ipc,
-            options: {
-                env: envOptions,
+/* eslint-disable require-atomic-updates */
+async function initialize(context: ExtensionContext) {
+    if (client) {
+        await client.stop();
+        client = undefined;
+    }
+
+    if (awsCredentials) {
+        awsCredentials.dispose();
+        awsCredentials = undefined;
+    }
+
+    if (client) {
+        throw new Error('LSP client is still running');
+    }
+
+    if (awsCredentials) {
+        throw new Error('AWS service is still running');
+    }
+
+    try {
+        log.info(`Activating v${ExtensionVersion}`);
+
+        const telemetryEnabled = await handleTelemetryOptIn(context);
+        const clientId = await getClientId(context.globalState);
+
+        const serverProvider = new LspServerResolver([
+            new CfnDevLspServerProvider(context),
+            new CfnRemoteLspServerProvider(),
+        ]);
+        const serverFile = await serverProvider.serverExecutable();
+        log.info(`Server executable: ${serverFile}`);
+
+        const envOptions = {
+            NODE_OPTIONS: '--enable-source-maps',
+        };
+
+        const serverOptions: ServerOptions = {
+            run: {
+                module: serverFile,
+                transport: TransportKind.ipc,
+                options: { env: envOptions },
             },
-        },
-        debug: {
-            module: serverFile,
-            transport: TransportKind.ipc,
-            options: {
-                execArgv: ['--no-lazy'],
-                env: envOptions,
-            },
-        },
-    };
-
-    const clientOptions: LanguageClientOptions = {
-        documentSelector: [
-            { scheme: 'file', language: 'plaintext' },
-            { scheme: 'file', language: 'cloudformation' },
-            { scheme: 'file', language: 'template' },
-            { scheme: 'file', language: 'json' },
-            { scheme: 'file', language: 'yaml' },
-            { scheme: 'file', pattern: '**/*.txt' },
-            { scheme: 'file', pattern: '**/*.template' },
-            { scheme: 'file', pattern: '**/*.cfn' },
-            { scheme: 'file', pattern: '**/*.json' },
-            { scheme: 'file', pattern: '**/*.yaml' },
-        ],
-        initializationOptions: {
-            handledSchemaProtocols: ['file'],
-            clientInfo: {
-                extension: {
-                    name: ExtensionId,
-                    version: Version,
+            debug: {
+                module: serverFile,
+                transport: TransportKind.ipc,
+                options: {
+                    execArgv: ['--no-lazy'],
+                    env: envOptions,
                 },
-                clientId: uuidv4(),
             },
-        },
-        errorHandler: {
-            error: (error, message, count) => {
-                window.showErrorMessage(formatMessage(`Error count = ${count}): ${toString(message)}`));
-                return { action: ErrorAction.Continue };
+        };
+
+        const clientOptions: LanguageClientOptions = {
+            outputChannel,
+            documentSelector: [
+                { scheme: 'file', language: 'plaintext' },
+                { scheme: 'file', language: 'cloudformation' },
+                { scheme: 'file', language: 'template' },
+                { scheme: 'file', language: 'json' },
+                { scheme: 'file', language: 'yaml' },
+                { scheme: 'file', pattern: '**/*.txt' },
+                { scheme: 'file', pattern: '**/*.template' },
+                { scheme: 'file', pattern: '**/*.cfn' },
+                { scheme: 'file', pattern: '**/*.json' },
+                { scheme: 'file', pattern: '**/*.yaml' },
+            ],
+            initializationOptions: {
+                handledSchemaProtocols: ['file'],
+                aws: {
+                    clientInfo: {
+                        extension: {
+                            name: ExtensionId,
+                            version: ExtensionVersion,
+                        },
+                        clientId,
+                    },
+                    telemetryEnabled,
+                    encryption: {
+                        key: randomBytes(32).toString('base64'),
+                        mode: 'JWT',
+                    },
+                },
             },
-            closed: () => {
-                window.showWarningMessage(formatMessage(`Server connection closed`));
-                return { action: CloseAction.DoNotRestart };
+            errorHandler: {
+                error: (error, message) => {
+                    log.error(message);
+                    window.showErrorMessage(formatMessage(`Error: ${extractErrorMessage(error)}`));
+                    return { action: ErrorAction.Continue };
+                },
+                closed: () => {
+                    log.warn('Server connection closed');
+                    return { action: CloseAction.DoNotRestart };
+                },
             },
-        },
-    };
+        };
 
-    client = new LanguageClient(ExtensionId, ExtensionName, serverOptions, clientOptions);
+        client = new LanguageClient(ExtensionId, ExtensionName, serverOptions, clientOptions);
+        awsCredentials = new AwsCredentialsService(context);
 
-    const stacksManager = new StacksManager(client);
-    const stacksSection = new StacksSectionUI();
-    stacksManager.addListener(stacksSection.onChange());
+        const documentSelector = [
+            { scheme: 'file', language: 'cloudformation' },
+            { scheme: 'file', language: 'yaml' },
+            { scheme: 'file', language: 'json' },
+        ];
 
-    const documentManager = new DocumentManager(client);
-    const documentSection = new DocumentsSectionUI();
-    documentManager.addListener(documentSection.onChange());
+        await client.start();
+        const inlineCompletionProvider = languages.registerInlineCompletionItemProvider(
+            documentSelector,
+            new CfnInlineCompletionProvider(client),
+        );
 
-    const resourceSelector = new ResourceSelector(client);
-    const resourcesManager = new ResourcesManager(client, resourceSelector);
-    const resourcesSection = new ResourcesSectionUI();
-    resourcesManager.addListener(resourcesSection.onChange());
+        context.subscriptions.push(
+            client,
+            awsCredentials,
+            serverProvider,
+            inlineCompletionProvider,
+            updateRegion(awsCredentials),
+            outputChannel,
+        );
 
-    const cfnPanel = new CfnPanel([resourcesSection, stacksSection, documentSection]);
-    const credentialsService = new AwsCredentialsService(context, stacksManager, resourcesManager);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const preview = new DocumentPreview(client);
-
-    // Create diff webview provider
-    const diffProvider = new DiffWebviewProvider();
-
-    const documentSelector = [
-        { scheme: 'file', language: 'cloudformation' },
-        { scheme: 'file', language: 'yaml' },
-        { scheme: 'file', language: 'json' },
-    ];
-
-    client
-        .start()
-        .then(() => {
-            const inlineCompletionProvider = languages.registerInlineCompletionItemProvider(
-                documentSelector,
-                new CfnInlineCompletionProvider(client),
-            );
-
-            const codeLensProvider = languages.registerCodeLensProvider(
-                documentSelector,
-                new StackActionCodeLensProvider(client),
-            );
-
-            context.subscriptions.push(
-                client,
-                inlineCompletionProvider,
-                codeLensProvider,
-                stacksManager,
-                window.createTreeView('aws.cloudformation', {
-                    treeDataProvider: cfnPanel,
-                    showCollapseAll: true,
-                    canSelectMany: true,
-                }),
-                addResourceTypesCommand(resourcesManager),
-                refreshAllResourcesCommand(resourcesManager),
-                refreshResourceListCommand(resourcesManager),
-                copyResourceIdentifierCommand(),
-                selectResourceTypesCommand(resourcesManager),
-                ...importResourceStateCommand(resourcesManager),
-                ...cloneResourceStateCommand(resourcesManager),
-                getStackManagementInfoCommand(resourcesManager),
-                getStackManagementInfoCommandPalette(resourcesManager),
-                window.registerWebviewViewProvider('aws.cloudformation.diff', diffProvider),
-                viewStackDiffCommand(),
-                focusDiffCommand(),
-                restartCommand(client),
-                selectProfileCommand(credentialsService),
-                validateTemplateCommand(client, stacksManager, diffProvider, documentManager),
-                deployTemplateCommand(client, stacksManager, documentManager),
-                refreshCommand(stacksManager),
-                openStackTemplateCommand(client),
-                describeTemplate(client, () => {
-                    return documentManager.get();
-                }),
-                optimizeTemplate(client, () => {
-                    return documentManager.get();
-                }),
-                generateTemplate(client),
-                aiButtonCommand(client, documentManager),
-                recommendRelatedResources(client, () => {
-                    return documentManager.get();
-                }),
-                rerunLastValidationCommand(),
-                extractToParameterPositionCursorCommand(),
-                credentialsService,
-                serverProvider,
-            );
-
-            return credentialsService.initialize(client);
-        })
-        .catch((err) => {
-            window.showErrorMessage(
-                formatMessage(`Failed to start ${err instanceof Error ? err.message : toString(err)}`),
-            );
-        });
+        await awsCredentials.initialize(client);
+    } catch (err) {
+        log.error(err, 'Activation failed');
+        window.showErrorMessage(formatMessage(extractErrorMessage(err)));
+    }
 }
 
 export function deactivate(): Thenable<void> | undefined {
