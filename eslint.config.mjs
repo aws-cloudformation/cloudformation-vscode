@@ -4,6 +4,9 @@ import tseslint from 'typescript-eslint';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginImport from 'eslint-plugin-import';
 import eslintPluginPromise from 'eslint-plugin-promise';
+import eslintPluginSecurity from 'eslint-plugin-security';
+import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+import vitest from '@vitest/eslint-plugin';
 
 export default tseslint.config([
     globalIgnores([
@@ -13,17 +16,26 @@ export default tseslint.config([
         'out/',
         'node_modules/',
         'eslint.config.mjs',
-        'jest.*.js',
         'webpack.*.js',
+        'vitest.*.ts',
         '**/*.json',
         '**/*.yaml',
         '**/*.zip',
         '**/.DS_Store',
         '**/.tsbuildinfo',
+        '**/*.md',
+        'src/services/guard/assets/**',
+        'sbom/',
+        'vendor/',
+        'tst/__mocks__'
     ]),
     eslint.configs.recommended,
-    tseslint.configs.recommendedTypeChecked,
-    eslintPluginPrettierRecommended,
+    ...tseslint.configs.recommendedTypeChecked,
+    eslintPluginImport.flatConfigs.recommended,
+    eslintPluginImport.flatConfigs.typescript,
+    eslintPluginPromise.configs['flat/recommended'],
+    eslintPluginUnicorn.configs['flat/recommended'],
+    eslintPluginSecurity.configs.recommended,
     {
         languageOptions: {
             parserOptions: {
@@ -31,60 +43,123 @@ export default tseslint.config([
                 tsconfigRootDir: import.meta.dirname,
             },
         },
-    },
-    {
-        files: ['**'],
         settings: {
-            'import/core-modules': ['vscode'],
+            'import/resolver': {
+                typescript: {
+                    project: 'tsconfig.json',
+                },
+            },
         },
-        extends: [
-            eslintPluginImport.flatConfigs.recommended,
-            eslintPluginImport.flatConfigs.typescript,
-            eslintPluginPromise.configs['flat/recommended'],
-        ],
         rules: {
-            '@typescript-eslint/no-unused-vars': ['error', { caughtErrors: 'none', argsIgnorePattern: '^_' }],
-            eqeqeq: 'error',
-            'promise/catch-or-return': 'off',
-            'promise/always-return': 'off',
+            // --- General Code Quality & Best Practices ---
+            'no-console': 'error',
+            'no-debugger': 'error',
+            eqeqeq: ['error', 'always'],
+            'require-atomic-updates': 'error',
 
-            // TypeScript strict rules
-            '@typescript-eslint/no-floating-promises': 'error',
-            '@typescript-eslint/await-thenable': 'error',
+            // --- TypeScript-ESLint Rules (Strict & Quality) ---
+            '@typescript-eslint/no-unused-vars': ['error', { caughtErrors: 'none', argsIgnorePattern: '^_' }],
+            '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true }],
             '@typescript-eslint/no-misused-promises': 'error',
             '@typescript-eslint/no-non-null-assertion': 'error',
             '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as' }],
-            '@typescript-eslint/prefer-nullish-coalescing': 'error',
-            '@typescript-eslint/prefer-optional-chain': 'error',
             'no-return-await': 'off',
             '@typescript-eslint/return-await': ['error', 'always'],
+            '@typescript-eslint/prefer-nullish-coalescing': 'error',
+            '@typescript-eslint/prefer-optional-chain': 'error',
+            '@typescript-eslint/prefer-readonly': 'error',
+            'prefer-const': 'error',
 
-            // Import rules
+            // --- Import Plugin Rules (Organization & Quality) ---
+            'import/order': [
+                'error',
+                {
+                    groups: [
+                        'builtin', // Node.js built-in modules (fs, path, etc.)
+                        'external', // npm packages
+                        'internal', // Internal modules (configured via settings)
+                        'parent', // Parent directory imports (../)
+                        'sibling', // Same directory imports (./)
+                        'index', // Index file imports (./index)
+                    ],
+                    'newlines-between': 'never',
+                    alphabetize: {
+                        order: 'asc',
+                        caseInsensitive: true,
+                    },
+                },
+            ],
             'import/no-self-import': 'error',
             'import/no-useless-path-segments': 'error',
-            'import/no-deprecated': 'warn',
+            'import/no-deprecated': 'error',
             'import/first': 'error',
             'import/no-duplicates': ['error', { 'prefer-inline': true }],
+            'import/no-namespace': 'error',
+            'import/no-named-as-default-member': 'error',
 
-            // Error prevention
-            'no-template-curly-in-string': 'error',
-            'no-unreachable-loop': 'error',
-            'require-atomic-updates': 'error',
-            'array-callback-return': 'error',
-            'no-constructor-return': 'error',
-            'no-promise-executor-return': 'error',
-            'no-unmodified-loop-condition': 'error',
-            'no-unused-private-class-members': 'error',
+            // --- Code Quality Plugin Overrides ---
+            'unicorn/filename-case': 'off',
+            'unicorn/prevent-abbreviations': 'off',
+            'unicorn/prefer-at': 'off',
+            'unicorn/prefer-module': 'off',
+            'unicorn/prefer-node-protocol': 'off',
+            'unicorn/prefer-ternary': 'off',
+            'unicorn/catch-error-name': 'off',
+            'unicorn/prefer-string-raw': 'off',
+            'unicorn/import-style': [
+                'error',
+                {
+                    styles: {
+                        path: {
+                            named: true,
+                        },
+                    },
+                },
+            ],
+            'unicorn/prefer-string-replace-all': 'warn',
 
-            // Security rules
-            'no-eval': 'error',
-            'no-implied-eval': 'error',
-            'no-new-func': 'error',
+            'security/detect-object-injection': 'off',
+            'security/detect-non-literal-fs-filename': 'off',
+
+            'promise/always-return': 'off',
+            'promise/catch-or-return': 'off',
+        },
+    },
+    {
+        files: ['src/**'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        {
+                            name: 'os',
+                            importNames: ['userInfo'],
+                            message: 'userInfo is not supported in sandbox Linux environments',
+                        },
+                        {
+                            name: 'fs',
+                            importNames: ['readFileSync', 'readFile'],
+                            message: 'Use methods in FileSystem.ts',
+                        },
+                    ],
+                },
+            ],
         },
     },
     {
         files: ['tst/**'],
+        plugins: {
+            vitest,
+        },
+        languageOptions: {
+            globals: {
+                ...vitest.environments.env.globals,
+            },
+        },
         rules: {
+            'security/detect-non-literal-regexp': 'off',
+            'vitest/no-disabled-tests': 'error',
             '@typescript-eslint/no-unsafe-argument': 'off',
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/unbound-method': 'off',
@@ -92,6 +167,41 @@ export default tseslint.config([
             '@typescript-eslint/no-unsafe-member-access': 'off',
             '@typescript-eslint/no-unsafe-call': 'off',
             '@typescript-eslint/no-non-null-assertion': 'off',
+            'unicorn/no-useless-undefined': 'off',
+            'unicorn/numeric-separators-style': 'off',
+            'import/no-namespace': 'off',
+            'unicorn/no-null': 'off',
+            'unicorn/consistent-function-scoping': 'off',
+            'import/first': 'off',
+            'unicorn/switch-case-braces': 'off',
+            '@typescript-eslint/no-unsafe-return': 'off',
+            'vitest/no-conditional-expect': 'off',
         },
     },
+    {
+        files: ['tools/**'],
+        rules: {
+            'no-console': 'off',
+            'no-empty': 'off',
+            'import/order': 'off',
+            'import/first': 'off',
+            'import/no-namespace': 'off',
+            'import/no-unresolved': 'off',
+            '@typescript-eslint/no-unsafe-member-access': 'off',
+            '@typescript-eslint/no-unsafe-call': 'off',
+            '@typescript-eslint/no-non-null-assertion': 'off',
+            '@typescript-eslint/no-unsafe-argument': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-unused-expressions': 'off',
+            '@typescript-eslint/ban-ts-comment': 'off',
+            '@typescript-eslint/no-unsafe-assignment': 'off',
+            '@typescript-eslint/restrict-template-expressions': 'off',
+            'unicorn/import-style': 'off',
+            'unicorn/no-null': 'off',
+            'unicorn/prefer-string-replace-all': 'off',
+            'unicorn/prefer-top-level-await': 'off',
+            'unicorn/no-process-exit': 'off',
+        },
+    },
+    eslintPluginPrettierRecommended,
 ]);

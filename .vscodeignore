@@ -8,7 +8,6 @@
 !syntaxes/**
 !resources/**
 
-!package.json
 !LICENSE
 !NOTICE
 !THIRD-PARTY-LICENSES.txt

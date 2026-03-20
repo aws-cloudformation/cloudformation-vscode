@@ -28,12 +28,15 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   get-configs:
     uses: ./.github/workflows/configs.yml
 
   build-test-nodejs:
-    needs: [get-configs]
+    needs: [ get-configs ]
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v5
@@ -57,5 +60,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Lint and Test
-        run: npm run lint && npm run test
+      - name: Code Quality
+        run: npm run lint && npm run check:duplicates
+
+      - name: Test
+        run: npm run test

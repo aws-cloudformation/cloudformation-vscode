@@ -1,41 +1,67 @@
 import { Disposable } from 'vscode';
-import { toString } from '../utils';
+import { LoggerFactory } from '../utils/Logger';
 
 export interface LspServerResolverI {
     serverExecutable(): Promise<string>;
     serverRootDir(): Promise<string>;
 }
 
+export const CfnLspServerFile = 'cfn-lsp-server-standalone.js';
+
 export interface LspServerProviderI extends LspServerResolverI {
     canProvide(): boolean;
+    name(): string;
     close(): Promise<unknown> | void;
 }
 
 export class LspServerResolver implements LspServerResolverI, Disposable {
-    private readonly provider: LspServerProviderI;
+    private readonly log = LoggerFactory.getLogger('LspServerProvider');
+    private readonly matchedProviders: LspServerProviderI[];
+    private resolved?: { executable: string; rootDir: string };
 
-    constructor(private readonly providers: LspServerProviderI[]) {
-        const matches = this.providers.filter((provider) => {
-            return provider.canProvide();
-        });
+    constructor(providers: LspServerProviderI[]) {
+        this.matchedProviders = providers.filter((p) => p.canProvide());
 
-        if (matches.length !== 1) {
-            throw new Error(`Matched with ${matches.length} CloudFormation LSP providers: ${toString(matches)}`);
+        if (this.matchedProviders.length === 0) {
+            throw new Error('No server providers available');
         }
 
-        this.provider = matches[0];
-        console.debug(`Found CloudFormation LSP provider: ${this.provider.constructor.name}`);
+        this.log.info(`Available providers: ${this.matchedProviders.map((p) => p.name()).join(', ')}`);
     }
 
-    serverExecutable(): Promise<string> {
-        return this.provider.serverExecutable();
+    async serverExecutable(): Promise<string> {
+        const result = await this.evaluateProviders();
+        return result.executable;
     }
 
-    serverRootDir(): Promise<string> {
-        return this.provider.serverRootDir();
+    async serverRootDir(): Promise<string> {
+        const result = await this.evaluateProviders();
+        return result.rootDir;
+    }
+
+    private async evaluateProviders(): Promise<{ executable: string; rootDir: string }> {
+        if (this.resolved) {
+            return this.resolved;
+        }
+
+        for (const provider of this.matchedProviders) {
+            try {
+                const executable = await provider.serverExecutable();
+                const rootDir = await provider.serverRootDir();
+                this.resolved = { executable, rootDir };
+                this.log.info(`Using ${provider.name()}`);
+                return this.resolved;
+            } catch (err) {
+                this.log.warn(err, `${provider.name()} failed`);
+            }
+        }
+
+        throw new Error('All server providers failed');
     }
 
     dispose() {
-        return this.provider.close();
+        for (const provider of this.matchedProviders) {
+            void provider.close();
+        }
     }
 }

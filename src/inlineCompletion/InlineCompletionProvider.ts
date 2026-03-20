@@ -8,18 +8,23 @@ import {
     TextDocument,
 } from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
+import { LoggerFactory } from '../utils/Logger';
 
 export class CfnInlineCompletionProvider implements InlineCompletionItemProvider {
     constructor(private readonly client: LanguageClient) {}
+
+    private get log() {
+        return LoggerFactory.getLogger('InlineCompletion');
+    }
 
     async provideInlineCompletionItems(
         document: TextDocument,
         position: Position,
         context: InlineCompletionContext,
         token: CancellationToken,
-    ): Promise<InlineCompletionItem[] | null> {
+    ): Promise<InlineCompletionItem[] | undefined> {
         if (!this.client.isRunning()) {
-            return null;
+            return;
         }
 
         try {
@@ -39,13 +44,13 @@ export class CfnInlineCompletionProvider implements InlineCompletionItemProvider
             if (result) {
                 return result.items;
             }
-            return null;
+            return;
         } catch (error) {
             if (token.isCancellationRequested) {
-                return null;
+                return;
             }
-            console.error('Inline completion error:', error);
-            return null;
+            this.log.error(error, 'Inline completion error');
+            return;
         }
     }
 }

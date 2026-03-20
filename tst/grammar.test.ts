@@ -1,12 +1,13 @@
 import * as fs from 'fs';
-import * as path from 'path';
+import { join } from 'path';
+import { describe, beforeAll, it, expect } from 'vitest';
 
 describe('CloudFormation Grammar', () => {
     let grammar: any;
 
     beforeAll(() => {
         // Load grammar
-        const grammarPath = path.join(__dirname, '../syntaxes/cloudformation.tmLanguage.json');
+        const grammarPath = join(__dirname, '../syntaxes/cloudformation.tmLanguage.json');
         grammar = JSON.parse(fs.readFileSync(grammarPath, 'utf8'));
     });
 
@@ -34,9 +35,9 @@ describe('CloudFormation Grammar', () => {
         it('should have repository with required patterns', () => {
             const requiredPatterns = ['cfn-top-level-keys', 'cfn-logical-ids', 'cfn-functions'];
 
-            requiredPatterns.forEach((pattern) => {
+            for (const pattern of requiredPatterns) {
                 expect(grammar.repository[pattern]).toBeDefined();
-            });
+            }
         });
     });
 
@@ -57,9 +58,9 @@ describe('CloudFormation Grammar', () => {
                 'Outputs:',
             ];
 
-            validSections.forEach((section) => {
+            for (const section of validSections) {
                 expect(regex.test(section)).toBe(true);
-            });
+            }
 
             expect(regex.test('InvalidSection:')).toBe(false);
         });
@@ -121,9 +122,9 @@ describe('CloudFormation Grammar', () => {
                 'keyword.control.cloudformation.function',
             ];
 
-            expectedScopes.forEach((scope) => {
+            for (const scope of expectedScopes) {
                 expect(grammarString).toContain(scope);
-            });
+            }
         });
 
         it('should use hierarchical scope naming', () => {
