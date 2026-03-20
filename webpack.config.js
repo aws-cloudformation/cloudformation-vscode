@@ -1,60 +1,10 @@
 const { resolve } = require('path');
 const webpack = require('webpack');
 
-const commonConfig = {
-    mode: 'production',
-    devtool: 'source-map',
-    resolve: {
-        extensions: ['.ts', '.js', '.node'],
-    },
-    module: {
-        rules: [
-            {
-                test: /\.ts$/,
-                use: [
-                    {
-                        loader: 'ts-loader',
-                        options: {
-                            configFile: 'tsconfig.bundle.json',
-                            transpileOnly: false,
-                        },
-                    },
-                ],
-                exclude: /node_modules/,
-            },
-            {
-                test: /\.node$/,
-                use: {
-                    loader: 'node-loader',
-                    options: {
-                        name: '[name].[ext]',
-                    },
-                },
-            },
-        ],
-    },
-    optimization: {
-        minimize: false,
-        moduleIds: 'deterministic',
-        chunkIds: 'deterministic',
-        usedExports: true,
-        sideEffects: false,
-    },
-    stats: {
-        colors: true,
-        modules: false,
-        children: false,
-        chunks: false,
-        chunkModules: false,
-    },
-    performance: {
-        hints: 'warning',
-    },
-};
-
 const standaloneConfig = {
-    ...commonConfig,
+    mode: 'production',
     target: 'node',
+    devtool: 'source-map',
     entry: './src/extension.ts',
     output: {
         clean: true,
@@ -67,12 +17,42 @@ const standaloneConfig = {
     externals: {
         vscode: 'commonjs vscode',
     },
+    resolve: {
+        extensions: ['.ts', '.js', '.json'],
+    },
+    node: {
+        __dirname: false,
+    },
+    module: {
+        rules: [
+            {
+                test: /\.ts$/,
+                use: [
+                    {
+                        loader: 'ts-loader',
+                        options: {
+                            configFile: 'tsconfig.bundle.json',
+                            transpileOnly: true,
+                        },
+                    },
+                ],
+                exclude: /node_modules/,
+            },
+        ],
+    },
+    optimization: {
+        minimize: false,
+        moduleIds: 'named',
+        chunkIds: 'named',
+    },
+    stats: 'normal',
+    performance: {
+        hints: 'warning',
+    },
 };
 
 module.exports = (env = {}) => {
     const nodeEnv = env.env;
-
-   // Validate env
     const validEnvs = ['alpha', 'beta', 'prod'];
     if (!validEnvs.includes(nodeEnv)) {
         console.error(`Invalid env: ${nodeEnv}. Valid options: ${validEnvs.join(', ')}`);

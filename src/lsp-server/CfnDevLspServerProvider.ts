@@ -1,55 +1,63 @@
 import { dirname, join } from 'path';
-import { existsSync, readdirSync } from 'fs';
 import { ExtensionContext } from 'vscode';
-import { LspServerProviderI } from './LspServerProvider';
-import { isDevelopment, toString } from '../utils';
-import { CfnLspServerFile } from './LspServerConfig';
+import { fsExists, fsReaddir } from '../utils/FileSystem';
+import { isDevelopment, toString } from '../utils/Utils';
+import { CfnLspServerFile, LspServerProviderI } from './LspServerProvider';
 
 export class CfnDevLspServerProvider implements LspServerProviderI {
-    constructor(private readonly context: ExtensionContext) {}
+    private readonly devServerLocation?: string;
+
+    constructor(context: ExtensionContext) {
+        this.devServerLocation = findServerInDevelopment(context.extensionPath);
+    }
+
+    name(): string {
+        return 'DevCfnLspServerProvider';
+    }
 
     canProvide(): boolean {
-        return isDevelopment();
+        return isDevelopment() && this.devServerLocation !== undefined;
     }
 
     serverExecutable(): Promise<string> {
-        return Promise.resolve(this.findServerInDevelopment());
+        if (!this.devServerLocation) {
+            return Promise.reject(new Error('No dev server location'));
+        }
+        return Promise.resolve(this.devServerLocation);
     }
 
     serverRootDir(): Promise<string> {
-        return Promise.resolve(dirname(this.findServerInDevelopment()));
-    }
-
-    private findServerInDevelopment(): string {
-        const parentDir = dirname(this.context.extensionPath);
-        const possibleLocations = [];
-
-        // Get all directories in parent directory
-        const siblingDirs = readdirSync(parentDir, { withFileTypes: true })
-            .filter((dirent) => dirent.isDirectory())
-            .map((dirent) => dirent.name);
-
-        // Check each sibling directory for bundle/development structure
-        for (const siblingDir of siblingDirs) {
-            const serverPath = join(parentDir, siblingDir, 'bundle', 'development', CfnLspServerFile);
-            if (existsSync(serverPath)) {
-                possibleLocations.push(serverPath);
-            }
+        if (!this.devServerLocation) {
+            return Promise.reject(new Error('No dev server location'));
         }
-
-        const validLocations = possibleLocations.filter((path) => {
-            return existsSync(path);
-        });
-
-        if (validLocations.length !== 1) {
-            throw Error(
-                `Found ${validLocations.length} locations with server executable file: ${toString(possibleLocations)}`,
-            );
-        }
-
-        console.debug(`Found dev server ${validLocations[0]}`);
-        return validLocations[0];
+        return Promise.resolve(dirname(this.devServerLocation));
     }
 
     close() {}
+}
+
+function findServerInDevelopment(extensionPath: string): string | undefined {
+    const parentDir = dirname(extensionPath);
+
+    const siblingDirs = fsReaddir(parentDir)
+        .filter((dirent) => dirent.isDirectory())
+        .map((dirent) => dirent.name);
+
+    const validLocations: string[] = [];
+    for (const siblingDir of siblingDirs) {
+        const serverPath = join(parentDir, siblingDir, 'bundle', 'development', CfnLspServerFile);
+        if (fsExists(serverPath)) {
+            validLocations.push(serverPath);
+        }
+    }
+
+    if (validLocations.length === 1) {
+        return validLocations[0];
+    }
+
+    if (validLocations.length > 1) {
+        throw new Error(`Found ${validLocations.length} dev server locations: ${toString(validLocations)}`);
+    }
+
+    return undefined;
 }
