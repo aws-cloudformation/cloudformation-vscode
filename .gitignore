@@ -8,13 +8,12 @@
 *.tsbuildinfo
 *.node
 .DS_Store
-*.vsix
-*.backup
 tools/*
 !tools/*.ts
-**/.aws-cfn-storage
-/extension
 /oss-attribution
 /tmp-tst
 /jscpd
 /tmp
+*.vsix
+*.backup
+/extension

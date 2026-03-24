@@ -1,5 +1,14 @@
 # AWS CloudFormation Extension for VS Code
 
+<div align="center">
+
+[![build](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml)
+&nbsp;
+[![CodeQL](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/github-code-scanning/codeql)
+
+</div>
+
+
 ## Overview
 
 This VS Code extension provides comprehensive language server support for AWS CloudFormation templates, delivering
