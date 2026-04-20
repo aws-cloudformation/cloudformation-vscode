@@ -54,7 +54,7 @@ function getCacheDir(): string {
 }
 
 export function getLspDownloadDir(): string {
-    return join(getCacheDir(), 'aws', 'toolkits', 'language-servers', 'cloudformation-languageserver');
+    return join(getCacheDir(), 'aws', 'language-servers', 'cloudformation-languageserver');
 }
 
 export function fsExists(path: string): boolean {
@@ -86,5 +86,24 @@ export function fsWriteFile(path: string, data: Buffer): void {
 export function fsRemove(path: string): void {
     if (nodeFs.existsSync(path)) {
         nodeFs.rmSync(path, { recursive: true, force: true });
+    }
+}
+
+export function fsWriteFileAtomic(filePath: string, data: string): void {
+    const tmpPath = `${filePath}.tmp.${process.pid}`;
+    nodeFs.writeFileSync(tmpPath, data, 'utf8');
+    nodeFs.renameSync(tmpPath, filePath);
+}
+
+export function fsRename(oldPath: string, newPath: string): void {
+    nodeFs.renameSync(oldPath, newPath);
+}
+
+export function isPidAlive(pid: number): boolean {
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch {
+        return false;
     }
 }

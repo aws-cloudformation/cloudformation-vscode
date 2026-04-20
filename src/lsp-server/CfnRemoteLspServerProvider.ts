@@ -1,13 +1,11 @@
 import { dirname } from 'path';
-import { LoggerFactory } from '../utils/Logger';
 import { LspServerProviderI } from './LspServerProvider';
-import { GitHubManifest } from './manifest/GitHubManifest';
+import { InUseTracker } from './resolver/InUseTracker';
 import { LspServerResolver } from './resolver/LspServerResolver';
 
 export class CfnRemoteLspServerProvider implements LspServerProviderI {
-    private readonly log = LoggerFactory.getLogger('RemoteLspServerProvider');
-    private serverPath?: string;
-    private rootDir?: string;
+    private readonly inUseTracker = new InUseTracker();
+    private resolved?: { serverPath: string; rootDir: string; versionDir: string };
 
     name(): string {
         return 'RemoteCfnLspServerProvider';
@@ -18,30 +16,35 @@ export class CfnRemoteLspServerProvider implements LspServerProviderI {
     }
 
     async serverExecutable(): Promise<string> {
-        if (this.serverPath) {
-            return this.serverPath;
+        if (this.resolved) {
+            return this.resolved.serverPath;
         }
 
-        const manifest = await new GitHubManifest().getManifest();
-        const resolver = new LspServerResolver(manifest);
+        const resolver = new LspServerResolver();
         const result = await resolver.resolve();
 
+        const versionDir = resolver.versionDirFor(result.version);
+        // Write marker BEFORE cleanup so peer processes see us as in-use
+        this.inUseTracker.writeMarker(versionDir, 'cloudformation-vscode');
         resolver.cleanOldVersions(result.version);
 
-        this.serverPath = result.serverPath;
-        this.rootDir = dirname(result.serverPath);
-        return this.serverPath;
+        this.resolved = { serverPath: result.serverPath, rootDir: dirname(result.serverPath), versionDir };
+        return result.serverPath;
     }
 
     async serverRootDir(): Promise<string> {
-        if (!this.rootDir) {
+        if (!this.resolved) {
             await this.serverExecutable();
         }
-        if (!this.rootDir) {
+        if (!this.resolved) {
             throw new Error('Failed to resolve LSP server root directory');
         }
-        return this.rootDir;
+        return this.resolved.rootDir;
     }
 
-    close() {}
+    close() {
+        if (this.resolved) {
+            this.inUseTracker.removeMarker(this.resolved.versionDir);
+        }
+    }
 }
