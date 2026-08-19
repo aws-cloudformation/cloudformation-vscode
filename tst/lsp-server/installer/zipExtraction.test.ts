@@ -218,8 +218,12 @@ describe('BaseLspInstaller - zip extraction', () => {
     });
 
     it('rejects zip entries with path traversal (..)', async () => {
+        // The ZIP extracts into <testDir>/language-servers/zip-test-server/<ver>.tmp.<x>/server/.
+        // A malicious entry with "../../../../<sentinel>" would escape to <testDir>/<sentinel>.
+        // Use a unique sentinel that cannot pre-exist on any real system.
+        const sentinel = `__zip-traversal-sentinel-${Date.now()}.txt`;
         const zipData = createMinimalZip([
-            { name: '../../../etc/passwd', content: 'malicious' },
+            { name: `../../../../${sentinel}`, content: 'malicious' },
             { name: ServerFile, content: 'server' },
         ]);
 
@@ -258,7 +262,9 @@ describe('BaseLspInstaller - zip extraction', () => {
 
         const installer = new BaseLspInstaller(makeConfig(testDir), new NodeFileSystem(), fetcher);
         await expect(installer.resolve()).rejects.toThrow();
-        expect(nodeFs.existsSync(join(testDir, '..', '..', 'etc', 'passwd'))).toBe(false);
+
+        // The traversal would resolve to exactly <testDir>/<sentinel> — verify it was never written
+        expect(nodeFs.existsSync(join(testDir, sentinel))).toBe(false);
     });
 
     it('validates required server file before atomic rename', async () => {

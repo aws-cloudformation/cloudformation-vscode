@@ -12,10 +12,14 @@ describe('platform detection', () => {
     });
 
     describe('detectPlatformTarget (default, no injection)', () => {
-        it('returns current platform and arch on non-linux', () => {
-            // This test runs on the current platform (macOS in dev)
+        it('returns current platform and arch', () => {
             const target = detectPlatformTarget();
-            expect(target.platform).toBe(process.platform === 'linux' ? expect.any(String) : process.platform);
+            if (process.platform === 'linux') {
+                // On Linux the detector may resolve to native or legacy target
+                expect(['linux', 'linuxglib2.28']).toContain(target.platform);
+            } else {
+                expect(target.platform).toBe(process.platform);
+            }
             expect(target.arch).toBe(process.arch);
         });
     });
