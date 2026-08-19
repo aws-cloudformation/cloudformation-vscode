@@ -53,8 +53,12 @@ function getCacheDir(): string {
     }
 }
 
-export function getLspDownloadDir(): string {
-    return join(getCacheDir(), 'aws', 'toolkits', 'language-servers', 'cloudformation-languageserver');
+/**
+ * Base directory for the shared language-server installation layout.
+ * Default: `<platform-cache>/aws/toolkits`
+ */
+export function getLspBaseDir(): string {
+    return join(getCacheDir(), 'aws', 'toolkits');
 }
 
 export function fsExists(path: string): boolean {
