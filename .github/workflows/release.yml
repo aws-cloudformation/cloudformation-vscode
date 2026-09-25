@@ -5,14 +5,14 @@ on:
   workflow_call:
     inputs:
       tag:
-        description: "The tag to release (v1.0.0-beta, v1.0.0)"
+        description: "The tag to release (v1.0.0-alpha, v1.0.0-beta, v1.0.0)"
         required: true
         type: string
 
   workflow_dispatch:
     inputs:
       tag:
-        description: "The tag to release (v1.0.0-beta, v1.0.0)"
+        description: "The tag to release (v1.0.0-alpha, v1.0.0-beta, v1.0.0)"
         required: true
         type: string
 
@@ -30,7 +30,7 @@ jobs:
       tag: ${{ steps.validate-tag.outputs.tag }}
       is-prerelease: ${{ steps.validate-tag.outputs.is-prerelease }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.tag }}
           fetch-tags: true
@@ -66,17 +66,23 @@ jobs:
 
   build-and-test:
     needs: [ get-configs, version-and-tag ]
+    permissions:
+      contents: read
+      code-quality: write
     uses: ./.github/workflows/build-and-test.yml
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
     with:
       ref: ${{ needs.version-and-tag.outputs.tag }}
+      runs-on: ${{ matrix.os }}
 
-  release:
+  bundle:
     needs: [ get-configs, version-and-tag, build-and-test ]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ needs.version-and-tag.outputs.tag }}
           fetch-tags: true
@@ -86,7 +92,7 @@ jobs:
         run: echo "Bundling from branch=$(git rev-parse --abbrev-ref HEAD), commit=$(git rev-parse HEAD), tag=$(git describe --tags --exact-match)"
 
       - name: Setup Node.js ${{ needs.get-configs.outputs.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get-configs.outputs.node-version }}
           cache: 'npm'
@@ -106,21 +112,61 @@ jobs:
             npm run bundle:prod
           fi
 
-      - name: Set release asset name
-        id: set-asset-name
-        shell: bash
-        run: |
-          APP_NAME=${{ needs.get-configs.outputs.app-name }}
-          ASSET_NAME="${APP_NAME}*.vsix"
-          echo "ASSET_NAME=${ASSET_NAME}" >> $GITHUB_OUTPUT
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vsix
+          path: ${{ needs.get-configs.outputs.app-name }}*.vsix
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    needs: [ version-and-tag, bundle ]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: artifacts
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        env:
-          ASSET_NAME: ${{ steps.set-asset-name.outputs.ASSET_NAME }}
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version-and-tag.outputs.tag }}
           prerelease: ${{ needs.version-and-tag.outputs.is-prerelease }}
-          files: ${{ env.ASSET_NAME }}
+          files: artifacts/*.vsix
           generate_release_notes: true
           fail_on_unmatched_files: true
+
+  publish:
+    needs: [ version-and-tag, release ]
+    if: needs.version-and-tag.outputs.is-prerelease == 'false'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vsix
+          path: artifacts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Publish to Visual Studio Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx --yes @vscode/vsce@4.0.0 publish --packagePath artifacts/*.vsix --skip-duplicate
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx --yes ovsx@1.2.0 publish --packagePath artifacts/*.vsix --skip-duplicate

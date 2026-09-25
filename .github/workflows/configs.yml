@@ -17,7 +17,7 @@ jobs:
   get-versions:
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: '22.x'
+      NODE_VERSION: '24.x'
     outputs:
       node-version: ${{ env.NODE_VERSION }}
     steps:
@@ -28,7 +28,7 @@ jobs:
   get-app-name:
     runs-on: ubuntu-latest
     env:
-      APP_NAME: 'cloudformation-vscode'
+      APP_NAME: 'aws-cloudformation-vscode'
     outputs:
       app-name: ${{ env.APP_NAME }}
     steps:

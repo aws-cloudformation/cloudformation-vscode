@@ -15,6 +15,12 @@ on:
         required: true
         type: string
 
+      upload-coverage:
+        description: 'Whether to upload the code coverage report (only runs on ubuntu-latest).'
+        required: false
+        type: boolean
+        default: false
+
   workflow_dispatch:
     inputs:
       runs-on:
@@ -28,6 +34,12 @@ on:
         required: true
         type: string
 
+      upload-coverage:
+        description: 'Whether to upload the code coverage report (only runs on ubuntu-latest).'
+        required: false
+        type: boolean
+        default: false
+
 permissions:
   contents: read
 
@@ -38,8 +50,11 @@ jobs:
   build-test-nodejs:
     needs: [ get-configs ]
     runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+      code-quality: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
           fetch-tags: true
@@ -49,7 +64,7 @@ jobs:
         run: echo "Building from branch=$(git rev-parse --abbrev-ref HEAD), commit=$(git rev-parse HEAD), tag=$(git describe --tags --exact-match)"
 
       - name: Setup Node.js ${{ needs.get-configs.outputs.node-version }} (${{ runner.os }})
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.get-configs.outputs.node-version }}
           cache: 'npm'
@@ -65,3 +80,11 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      - name: Upload coverage report
+        if: inputs.upload-coverage && inputs.runs-on == 'ubuntu-latest'
+        uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage/cobertura-coverage.xml
+          language: TypeScript
+          label: code-coverage/vitest

@@ -15,13 +15,12 @@ describe('ClientId / telemetry', () => {
     beforeEach(() => {
         LoggerFactory.reset();
         LoggerFactory.initialize(window.createOutputChannel('test'));
+        const data: Record<string, unknown> = {};
         mockState = {
-            data: {},
-            get: function (key: string) {
-                return this.data[key];
-            },
-            update: function (key: string, value: unknown): Promise<void> {
-                this.data[key] = value;
+            data,
+            get: (key: string) => data[key],
+            update: (key: string, value: unknown): Promise<void> => {
+                data[key] = value;
                 return Promise.resolve();
             },
         };

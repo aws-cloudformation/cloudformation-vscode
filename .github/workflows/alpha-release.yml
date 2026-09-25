@@ -20,7 +20,7 @@ jobs:
     outputs:
       tag: ${{ steps.version-and-tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref || 'main' }}
           fetch-depth: 0
@@ -53,7 +53,11 @@ jobs:
   call-release:
     needs: [create-alpha-tag]
     uses: ./.github/workflows/release.yml
+    secrets: inherit
     permissions:
       contents: write
+      pull-requests: write
+      id-token: write
+      code-quality: write
     with:
       tag: ${{ needs.create-alpha-tag.outputs.tag }}

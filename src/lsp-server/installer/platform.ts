@@ -32,7 +32,7 @@ function defaultDeps(): LinuxDetectorDeps {
         env: process.env,
         existsSync: nodeFs.existsSync,
         execSync: execSync as LinuxDetectorDeps['execSync'],
-        readFileSync: (p, enc) => nodeFs.readFileSync(p, enc) as unknown as string,
+        readFileSync: (p, enc) => nodeFs.readFileSync(p, enc),
     };
 }
 

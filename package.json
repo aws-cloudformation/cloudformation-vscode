@@ -1,31 +1,41 @@
 {
-    "name": "cloudformation-vscode",
+    "name": "aws-iac-vscode",
     "displayName": "AWS CloudFormation",
     "version": "1.0.0",
-    "id": "aws.cloudformation",
-    "description": "AWS CloudFormation Language Server",
-    "publisher": "aws",
+    "description": "AWS CloudFormation language support: validation, completion, hover documentation, and cfn-lint diagnostics for JSON and YAML templates.",
+    "publisher": "amazonwebservices",
     "author": "Amazon Web Services (AWS)",
     "license": "Apache-2.0",
+    "homepage": "https://github.com/aws-cloudformation/cloudformation-vscode#readme",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aws-cloudformation/cloudformation-vscode"
+    },
+    "bugs": {
+        "url": "https://github.com/aws-cloudformation/cloudformation-vscode/issues"
+    },
+    "qna": "https://github.com/aws-cloudformation/cloudformation-vscode/issues",
+    "pricing": "Free",
+    "galleryBanner": {
+        "color": "#232F3E",
+        "theme": "dark"
+    },
     "main": "./out/src/extension.js",
     "engines": {
-        "vscode": "^1.75.0",
-        "node": ">=22.15.0 <22.17.0",
-        "npm": ">=10.5.0"
+        "vscode": "^1.91.0",
+        "node": ">=24.0.0",
+        "npm": ">=11.0.0"
     },
     "keywords": [
-        "Amazon Web Services (AWS)",
+        "AWS",
         "Amazon",
         "CloudFormation",
-        "Infrastructure as Code (IaC)",
-        "Language Server"
+        "Infrastructure as Code",
+        "cfn-lint"
     ],
     "categories": [
-        "Amazon Web Services (AWS)",
-        "Amazon",
-        "CloudFormation",
-        "Infrastructure as Code (IaC)",
-        "Language Server"
+        "Programming Languages",
+        "Linters"
     ],
     "scripts": {
         "vscode:prepublish": "echo 'Package already built'",
@@ -45,42 +55,41 @@
     },
     "dependencies": {
         "@base2/pretty-print-object": "1.0.2",
-        "axios": "1.13.6",
-        "semver": "7.7.4",
-        "ts-essentials": "10.1.1",
-        "uuid": "13.0.0",
-        "vscode-languageclient": "9.0.1",
-        "yauzl": "3.2.1"
+        "axios": "1.20.0",
+        "semver": "7.8.5",
+        "ts-essentials": "10.2.1",
+        "vscode-languageclient": "10.1.2",
+        "yauzl": "3.4.0"
     },
     "devDependencies": {
-        "@eslint/js": "9.39.2",
-        "@types/node": "25.5.0",
-        "@types/semver": "7.7.1",
-        "@types/vscode": "1.110.0",
-        "@types/yauzl": "2.10.3",
-        "@vitest/coverage-v8": "4.0.18",
-        "@vitest/eslint-plugin": "1.6.6",
-        "@vscode/vsce": "3.7.1",
+        "@eslint/js": "9.39.5",
+        "@types/node": "26.6.2",
+        "@types/semver": "7.8.0",
+        "@types/vscode": "1.91.0",
+        "@types/yauzl": "3.4.0",
+        "@vitest/coverage-v8": "4.1.11",
+        "@vitest/eslint-plugin": "1.6.27",
+        "@vscode/vsce": "4.0.0",
         "cross-env": "10.1.0",
-        "eslint": "9.39.2",
+        "eslint": "9.39.5",
         "eslint-config-prettier": "10.1.8",
-        "eslint-import-resolver-typescript": "4.4.4",
+        "eslint-import-resolver-typescript": "4.4.5",
         "eslint-plugin-import": "2.32.0",
-        "eslint-plugin-prettier": "5.5.5",
-        "eslint-plugin-promise": "7.2.1",
-        "eslint-plugin-security": "3.0.1",
-        "eslint-plugin-unicorn": "62.0.0",
+        "eslint-plugin-prettier": "5.5.6",
+        "eslint-plugin-promise": "7.3.0",
+        "eslint-plugin-security": "4.0.1",
+        "eslint-plugin-unicorn": "65.0.1",
         "husky": "9.1.7",
-        "jscpd": "4.0.8",
-        "prettier": "3.8.1",
-        "ts-loader": "9.5.4",
-        "tsx": "4.21.0",
-        "typescript": "5.9.3",
-        "typescript-eslint": "8.54.0",
-        "vitest": "4.0.18",
-        "webpack": "5.105.4",
-        "webpack-bundle-analyzer": "5.2.0",
-        "webpack-cli": "7.0.2"
+        "jscpd": "5.3.2",
+        "prettier": "3.9.9",
+        "ts-loader": "9.6.2",
+        "tsx": "4.23.15",
+        "typescript": "6.0.3",
+        "typescript-eslint": "8.70.1",
+        "vitest": "4.1.11",
+        "webpack": "5.111.1",
+        "webpack-bundle-analyzer": "5.4.0",
+        "webpack-cli": "7.2.3"
     },
     "activationEvents": [
         "onStartupFinished",

@@ -195,7 +195,7 @@ function makeDirent(name: string, isDir: boolean): nodeFs.Dirent {
         isSocket: () => false,
         isSymbolicLink: () => false,
         parentPath: '',
-    } as nodeFs.Dirent;
+    };
 }
 
 class MockFetcher {

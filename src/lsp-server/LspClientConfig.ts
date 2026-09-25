@@ -17,12 +17,6 @@ export const CfnDocumentSelector: TextDocumentFilter[] = [
     { scheme: 'file', pattern: '**/*.yml' },
 ];
 
-/**
- * Appended by the server to every command id it advertises or emits, so this extension and the AWS Toolkit can
- * host the server in the same window without registering the same command twice.
- */
-export const CfnLspCommandSuffix = CfnLspClientName;
-
 const serverEnvironment = { NODE_OPTIONS: '--enable-source-maps' };
 
 const encryptionKey = randomBytes(32);
@@ -54,7 +48,7 @@ export function cfnInitializationOptions(telemetryEnabled: boolean, clientId: st
                 },
                 clientId,
             },
-            commandSuffix: CfnLspCommandSuffix,
+            commandSuffix: CfnLspClientName,
             telemetryEnabled,
             encryption: {
                 key: encryptionKey.toString('base64'),

@@ -8,66 +8,90 @@
 
 </div>
 
-
 ## Overview
 
-This VS Code extension provides comprehensive language server support for AWS CloudFormation templates, delivering
-intelligent editing capabilities for Infrastructure as Code development.
+Language support for AWS CloudFormation templates in JSON and YAML, powered by the
+[AWS CloudFormation Language Server](https://github.com/aws-cloudformation/cloudformation-languageserver).
+The extension starts and manages the language server and adds an AWS region selector to the status bar.
 
 ## Features
 
-### Language Support
+### Editing
 
-- **Multi-format Support**: Works with JSON, YAML, and plain text CloudFormation templates
-- **Syntax Validation**: Real-time syntax checking and error detection
-- **Schema Validation**: CloudFormation resource schema validation against AWS specifications
-- **Syntax Highlighting**: CloudFormation-specific syntax highlighting for `.template`, `.cfn`, `.json`, `.txt`, and
-  `.yaml` files
-- **Language Detection**: Automatic CloudFormation content detection
-- **Bracket Matching**: Intelligent bracket matching and auto-indentation
+- **Completion**: resource types, properties, intrinsic functions, template sections, and references to parameters,
+  conditions, and mappings, including inline completions while you type
+- **Hover documentation**: contextual help for resources, properties, and functions
+- **Go to definition**: navigate to the definition of a referenced parameter, resource, condition, or mapping
+- **Document symbols**: template structure in the Outline view and breadcrumbs
 
-### Intelligent Code Assistance
+### Validation
 
-- **Auto-completion**: Context-aware suggestions for CloudFormation resources, properties, and values
-- **Resource Completion**: Auto-complete AWS resource types (e.g., `AWS::EC2::Instance`, `AWS::S3::Bucket`)
-- **Property Completion**: Context-aware property suggestions for each resource type
-- **Intrinsic Functions**: Auto-complete CloudFormation intrinsic functions (`!Ref`, `!GetAtt`, `!Sub`, etc.)
-- **Parameter & Output References**: Smart completion for template parameters and outputs
-- **Condition References**: Auto-complete condition names and logical functions
-- **Hover Documentation**: Inline documentation for AWS resources and properties
-- **Go to Definition**: Navigate to resource definitions within templates
-- **Code Actions**: Quick fixes and refactoring suggestions
+- **Syntax**: immediate feedback on JSON and YAML errors
+- **Schema**: resource schema validation using the schemas of the selected AWS region
+- **cfn-lint**: linting with the bundled cfn-lint (no local Python installation required) or a local `cfn-lint`
+  executable of your choice, with configurable delay and rule customization
+- **CloudFormation Guard**: policy-as-code validation against managed rule packs (default:
+  `cis-aws-benchmark-level-1`) or a custom rules file
 
-### CloudFormation Linting
+### Code actions and code lenses
 
-- **cfn-lint Integration**: Built-in CloudFormation linting using cfn-lint rules
-- **Real-time Validation**: Lint-on-change with configurable delay (default: 3 seconds)
-- **Comprehensive Rule Coverage**: Validates template structure, resource properties, and AWS best practices
-- **Pyodide-powered**: Runs cfn-lint in a WebAssembly environment for fast, local validation
-- **Template Structure Validation**: Verify CloudFormation template structure and requirements
-- **Configurable Validation**: Adjust linting sensitivity and delay settings
+- Quick fixes for diagnostics, extracting hardcoded values to parameters, and inserting related resources
+- Code lenses to validate and deploy a template and to open the template of a managed stack
 
-### AWS Integration
+### File support
 
-- **AWS Profile Management**: Select and manage AWS profiles for authentication
-- **CloudFormation Stack Operations**: List and interact with existing CloudFormation stacks
-- **Region-aware Schema Loading**: Load AWS resource schemas for specific regions
-- **AWS API Integration**: Direct integration with CloudFormation, IAM, and STS APIs
-- **Multi-region Support**: Work with resources across different AWS regions
-- **Credential Management**: Support for various AWS authentication methods
+- A `CloudFormation` language mode with syntax highlighting for `.template` and `.cfn` files
+- CloudFormation templates in `.json`, `.yaml`, `.yml`, and `.txt` files
+
+## Requirements
+
+- Visual Studio Code 1.91 or later
+- Internet access on first activation: the extension downloads a verified release of the language server into the
+  VS Code cache directory. Later activations reuse the cached install and fall back to it when a newer release cannot be
+  downloaded.
+
+AWS-backed features (regional schemas, template validation, deployment, stack operations) use the region selected in
+the status bar and the AWS credentials available to the language server process through the AWS SDK default credential
+provider chain.
+
+## Commands
+
+| Command                             | Description                                                    |
+| ----------------------------------- | -------------------------------------------------------------- |
+| `AWS CloudFormation: Update Region` | Select the AWS region used for schemas and AWS-backed features |
+| `AWS CloudFormation: Restart LSP`   | Restart the language server                                    |
+
+## Settings
+
+| Setting                                                    | Default                         | Description                                                              |
+| ---------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------ |
+| `aws.cloudformation.hover.enabled`                         | `true`                          | Enable hover documentation                                               |
+| `aws.cloudformation.completion.enabled`                    | `true`                          | Enable completion                                                        |
+| `aws.cloudformation.diagnostics.cfnLint.enabled`           | `true`                          | Enable cfn-lint diagnostics                                              |
+| `aws.cloudformation.diagnostics.cfnLint.lintOnChange`      | `true`                          | Run cfn-lint when the document changes                                   |
+| `aws.cloudformation.diagnostics.cfnLint.delayMs`           | `3000`                          | Delay before running cfn-lint after a change                             |
+| `aws.cloudformation.diagnostics.cfnLint.path`              | `""`                            | Path to a local cfn-lint executable; empty uses the bundled version      |
+| `aws.cloudformation.diagnostics.cfnLint.customization`     | `{ "includeChecks": ["I"] }`    | cfn-lint rule customization (ignore, include, mandatory, regions, ...)   |
+| `aws.cloudformation.diagnostics.cfnGuard.enabled`          | `true`                          | Enable CloudFormation Guard diagnostics                                  |
+| `aws.cloudformation.diagnostics.cfnGuard.validateOnChange` | `true`                          | Run cfn-guard when the document changes                                  |
+| `aws.cloudformation.diagnostics.cfnGuard.delayMs`          | `1000`                          | Delay before running cfn-guard after a change                            |
+| `aws.cloudformation.diagnostics.cfnGuard.enabledRulePacks` | `["cis-aws-benchmark-level-1"]` | Managed rule packs to validate against                                   |
+| `aws.cloudformation.diagnostics.cfnGuard.rulesFile`        | `""`                            | Path to a custom cfn-guard rules file; empty uses the enabled rule packs |
+| `aws.cloudformation.server.trace`                          | `"off"`                         | Trace communication with the language server (`messages`, `verbose`)     |
+| `aws.cloudformation.telemetry.enabled`                     | `false`                         | Share anonymous usage telemetry with AWS                                 |
+| `aws.cloudformation.telemetry.logLevel`                    | `"info"`                        | Log level of the extension output channel                                |
+
+## Telemetry
+
+Telemetry is off by default. On first activation the extension asks whether to share anonymous usage data with AWS;
+you can change the choice at any time with `aws.cloudformation.telemetry.enabled`. See the language server's
+[telemetry documentation](https://github.com/aws-cloudformation/cloudformation-languageserver/tree/main/src/telemetry)
+for what is collected.
 
 ## Installation
 
-This extension can be installed from the VS Code marketplace or by installing the .vsix package directly.
-
-## Supported File Types
-
-The extension activates for the following file types and patterns:
-
-- CloudFormation templates (`.template`, `.cfn`)
-- JSON files (`.json`)
-- YAML files (`.yaml`, `.yml`)
-- Plain text files (`.txt`)
+Install **AWS CloudFormation** from the Visual Studio Code Marketplace or Open VSX, or install a `.vsix` package from
+the [releases page](https://github.com/aws-cloudformation/cloudformation-vscode/releases).
 
 ## License
 

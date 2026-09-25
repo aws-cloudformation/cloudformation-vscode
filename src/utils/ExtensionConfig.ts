@@ -1,6 +1,7 @@
 import Pkg from '../../package.json';
 
-export const ExtensionId = Pkg.id;
+// Namespace for contributed commands, settings and persisted state; must stay stable across marketplace renames.
+export const ExtensionId = 'aws.cloudformation';
 export const ExtensionName = Pkg.displayName;
 export const ExtensionVersion = Pkg.version;
 export const ExtensionConfigKey = 'aws.cloudformation';
@@ -8,7 +9,7 @@ export const ExtensionConfigKey = 'aws.cloudformation';
 /**
  * Client key identifying this IDE client to the CloudFormation LSP.
  */
-export const CfnLspClientName = 'cloudformation-vscode';
+export const CfnLspClientName = 'iac-vscode';
 
 export type BuildEnvironment = 'alpha' | 'beta' | 'prod';
 

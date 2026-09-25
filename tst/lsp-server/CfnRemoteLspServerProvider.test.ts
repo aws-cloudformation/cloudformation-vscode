@@ -5,6 +5,8 @@ import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { window } from 'vscode';
 import { CfnRemoteLspServerProvider } from '../../src/lsp-server/CfnRemoteLspServerProvider';
 import { CfnLspInstaller } from '../../src/lsp-server/installer/CfnLspInstaller';
+import { LspResolver } from '../../src/lsp-server/LspLauncher';
+import { LspServerResolver } from '../../src/lsp-server/LspServerProvider';
 import { LoggerFactory } from '../../src/utils/Logger';
 
 vi.mock('vscode');
@@ -169,10 +171,9 @@ describe('Installer → Provider → Launcher integration: failed managed path i
         const provider = new CfnRemoteLspServerProvider('prod', offlineInstaller);
 
         // Build the LspResolver that wraps provider + serverResolver
-        const { LspServerResolver } = await import('../../src/lsp-server/LspServerProvider');
         const serverResolver = new LspServerResolver([provider]);
 
-        const resolver: import('../../src/lsp-server/LspLauncher').LspResolver = {
+        const resolver: LspResolver = {
             resolve: async () => await serverResolver.serverExecutable(),
             invalidate: () => {
                 serverResolver.resetResolution();

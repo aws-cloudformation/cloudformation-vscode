@@ -44,9 +44,7 @@ function packageVsix(): void {
     writeFileSync(pkgPath, JSON.stringify(vsixPkg, undefined, 2));
     try {
         console.log('\n📦 Creating VSIX...\n');
-        run(
-            `npx @vscode/vsce package --allow-missing-repository --no-dependencies --baseContentUrl file://. --out ${outputName}`,
-        );
+        run(`npx @vscode/vsce package --no-dependencies --out ${outputName}`);
 
         if (!existsSync(outputName)) {
             throw new Error('VSIX output file not found');
