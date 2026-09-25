@@ -5,14 +5,14 @@ on:
   workflow_call:
     inputs:
       tag:
-        description: "The tag to release (v1.0.0-alpha, v1.0.0-beta, v1.0.0)"
+        description: "The tag to release (1.0.0-beta, 1.0.0)"
         required: true
         type: string
 
   workflow_dispatch:
     inputs:
       tag:
-        description: "The tag to release (v1.0.0-alpha, v1.0.0-beta, v1.0.0)"
+        description: "The tag to release (1.0.0-beta, 1.0.0)"
         required: true
         type: string
 
@@ -47,20 +47,14 @@ jobs:
           VERSION=${{ steps.get-version.outputs.version }}
           TAG=${{ inputs.tag }}
           
-          if [[ "$TAG" == "v$VERSION" ]]; then
+          if [[ "$TAG" == "$VERSION" ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=false" >> $GITHUB_OUTPUT
-          elif [[ "$TAG" =~ ^v$VERSION-.*-alpha$ ]]; then
-            echo "tag=$TAG" >> $GITHUB_OUTPUT
-            echo "is-prerelease=true" >> $GITHUB_OUTPUT
-          elif [[ "$TAG" == "v$VERSION-alpha" ]]; then
-            echo "tag=$TAG" >> $GITHUB_OUTPUT
-            echo "is-prerelease=true" >> $GITHUB_OUTPUT
-          elif [[ "$TAG" =~ ^v$VERSION-beta$ ]]; then
+          elif [[ "$TAG" == "$VERSION-beta" ]]; then
             echo "tag=$TAG" >> $GITHUB_OUTPUT
             echo "is-prerelease=true" >> $GITHUB_OUTPUT
           else
-            echo "Error: Tag ($TAG) must be v$VERSION, v$VERSION-alpha, v$VERSION-<branch>-alpha, or v$VERSION-beta"
+            echo "Error: Tag ($TAG) must be $VERSION or $VERSION-beta"
             exit 1
           fi
 
@@ -104,9 +98,7 @@ jobs:
         shell: bash
         run: |
           TAG=${{ needs.version-and-tag.outputs.tag }}
-          if [[ "$TAG" =~ -alpha$ ]]; then
-            npm run bundle:alpha
-          elif [[ "$TAG" =~ -beta$ ]]; then
+          if [[ "$TAG" =~ -beta$ ]]; then
             npm run bundle:beta
           else
             npm run bundle:prod
@@ -116,7 +108,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: vsix
-          path: ${{ needs.get-configs.outputs.app-name }}*.vsix
+          path: '*.vsix'
           if-no-files-found: error
           retention-days: 1
 

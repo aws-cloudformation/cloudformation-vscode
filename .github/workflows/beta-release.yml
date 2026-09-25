@@ -31,7 +31,7 @@ jobs:
         run: |
           PKG_VERSION=$(jq -r .version package.json)
 
-          TAG="v${PKG_VERSION}-beta"
+          TAG="${PKG_VERSION}-beta"
           git tag "$TAG"
           echo "Created tag from branch=$(git rev-parse --abbrev-ref HEAD), commit=$(git rev-parse HEAD), tag=$(git describe --tags --exact-match)"
 

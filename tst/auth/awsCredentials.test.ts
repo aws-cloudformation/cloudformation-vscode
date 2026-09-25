@@ -8,7 +8,7 @@ vi.mock('vscode');
 vi.mock('vscode-languageclient/node');
 vi.mock('vscode-languageclient');
 
-const SuffixedUpdateRegionCommand = '/command/region/update.cloudformation-vscode';
+const SuffixedUpdateRegionCommand = '/command/region/update.iac-vscode';
 
 describe('AwsCredentialsService', () => {
     let service: AwsCredentialsService;

@@ -39,7 +39,7 @@ function packageVsix(): void {
     vsixPkg.main = `${bundleDir}/${pkg.name as string}.js`;
 
     const suffix = buildEnv === 'prod' ? '' : `-${buildEnv}`;
-    const outputName = `${pkg.name as string}-${pkg.version as string}${suffix}.vsix`;
+    const outputName = `${pkg.name as string}${suffix}.vsix`;
 
     writeFileSync(pkgPath, JSON.stringify(vsixPkg, undefined, 2));
     try {

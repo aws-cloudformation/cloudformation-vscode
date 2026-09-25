@@ -6,9 +6,6 @@ on:
       node-version:
         description: "Node.js version"
         value: ${{ jobs.get-versions.outputs.node-version }}
-      app-name:
-        description: "Application name"
-        value: ${{ jobs.get-app-name.outputs.app-name }}
 
 permissions:
   contents: read
@@ -24,13 +21,3 @@ jobs:
       - name: Provide Versions
         run: |
           echo "Exporting Node.js version = ${{ env.NODE_VERSION }}"
-
-  get-app-name:
-    runs-on: ubuntu-latest
-    env:
-      APP_NAME: 'aws-cloudformation-vscode'
-    outputs:
-      app-name: ${{ env.APP_NAME }}
-    steps:
-      - name: Provide App Name
-        run: echo "Exporting app name = ${{ env.APP_NAME }}"

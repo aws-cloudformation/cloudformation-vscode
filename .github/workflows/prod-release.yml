@@ -35,8 +35,8 @@ jobs:
         id: version-and-tag
         run: |
           INPUT_VERSION="${{ inputs.version }}"
-          BETA_TAG="v$INPUT_VERSION-beta"
-          PROD_TAG="v$INPUT_VERSION"
+          BETA_TAG="$INPUT_VERSION-beta"
+          PROD_TAG="$INPUT_VERSION"
           
           # Check if beta tag exists
           if ! git tag -l | grep -q "^$BETA_TAG$"; then
