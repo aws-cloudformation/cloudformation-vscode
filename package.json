@@ -118,7 +118,7 @@
             {
                 "title": "CloudFormation Language Server",
                 "properties": {
-                    "aws.cloudformation.server.trace": {
+                    "aws.cloudformation.trace.server": {
                         "type": "string",
                         "enum": [
                             "off",

@@ -34,7 +34,7 @@ export interface LspServerLifecycleConfig<T, R> extends LspServerLifecycleHooks 
 }
 
 /**
- * Startup-recovery policy for the managed language server, shared with the AWS Toolkits:
+ * Startup-recovery policy for the managed language server:
  *
  * - {@link launchWithRetry}: a process-start failure invalidates the installation and retries exactly once.
  * - {@link createErrorHandler}: errors continue, an unexpected close does not auto-restart (a restart is the

@@ -1,10 +1,10 @@
 # AWS CloudFormation Extension for Visual Studio Code
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Main CI](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/github-code-scanning/codeql)
+[![Main CI](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/github-code-scanning/codeql)
 
-[![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faws-cloudformation%2Fcloudformation-languageserver%2Frefs%2Fheads%2Fmain%2Fpackage.json&query=%24.engines.node&label=Node.js&color=339933&logo=node.js&logoColor=white)](https://github.com/aws-cloudformation/cloudformation-vscode/blob/main/package.json)
+[![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faws-cloudformation%2Fcloudformation-vscode%2Frefs%2Fheads%2Fmain%2Fpackage.json&query=%24.engines.node&label=Node.js&color=339933&logo=node.js&logoColor=white)](https://github.com/aws-cloudformation/cloudformation-vscode/blob/main/package.json)
 [![Latest Release](https://img.shields.io/github/v/release/aws-cloudformation/cloudformation-vscode?include_prereleases&sort=semver)](https://github.com/aws-cloudformation/cloudformation-vscode/releases)
 [![Downloads](https://img.shields.io/github/downloads/aws-cloudformation/cloudformation-vscode/total.svg)](https://github.com/aws-cloudformation/cloudformation-vscode/releases)
 
@@ -12,7 +12,9 @@
 
 Language support for AWS CloudFormation templates in JSON and YAML, powered by the
 [AWS CloudFormation Language Server](https://github.com/aws-cloudformation/cloudformation-languageserver).
-The extension starts and manages the language server and adds an AWS region selector to the status bar.
+
+The extension is a standalone client for the language server: it installs and updates the server, keeps it running,
+and adds an AWS region selector to the status bar.
 
 ## Features
 
@@ -23,6 +25,8 @@ The extension starts and manages the language server and adds an AWS region sele
 - **Hover documentation**: contextual help for resources, properties, and functions
 - **Go to definition**: navigate to the definition of a referenced parameter, resource, condition, or mapping
 - **Document symbols**: template structure in the Outline view and breadcrumbs
+- **Code actions**: quick fixes for diagnostics, extracting hardcoded values to parameters, and inserting related
+  resources
 
 ### Validation
 
@@ -33,33 +37,41 @@ The extension starts and manages the language server and adds an AWS region sele
 - **CloudFormation Guard**: policy-as-code validation against managed rule packs (default:
   `cis-aws-benchmark-level-1`) or a custom rules file
 
-### Code actions and code lenses
-
-- Quick fixes for diagnostics, extracting hardcoded values to parameters, and inserting related resources
-- Code lenses to validate and deploy a template and to open the template of a managed stack
-
 ### File support
 
 - A `CloudFormation` language mode with syntax highlighting for `.template` and `.cfn` files
 - CloudFormation templates in `.json`, `.yaml`, `.yml`, and `.txt` files
 
+## Getting started
+
+1. Install the extension (see [Installation](#installation)).
+2. Open a CloudFormation template. The language server starts automatically and diagnostics appear in the editor and
+   the Problems view.
+3. Pick the AWS region whose resource schemas you want to validate against: click the `AWS Region` item in the status
+   bar or run `AWS CloudFormation: Update Region`. The default is `us-east-1`, and the choice is remembered across
+   sessions.
+
 ## Requirements
 
 - Visual Studio Code 1.91 or later
 - Internet access on first activation: the extension downloads a verified release of the language server into the
-  VS Code cache directory. Later activations reuse the cached install and fall back to it when a newer release cannot be
-  downloaded.
+  user cache directory (`~/Library/Caches/aws/language-servers` on macOS, `%LOCALAPPDATA%\aws\language-servers` on
+  Windows, `~/.cache/aws/language-servers` on Linux). Later activations reuse the cached install and fall back to it
+  when a newer release cannot be downloaded. Regional resource schemas are downloaded on demand from the public
+  CloudFormation schema endpoint of the selected region.
 
-AWS-backed features (regional schemas, template validation, deployment, stack operations) use the region selected in
-the status bar and the AWS credentials available to the language server process through the AWS SDK default credential
-provider chain.
+### AWS account access
+
+The extension does not currently pass AWS credentials to the language server. Everything above works without an AWS
+account. Server features that call AWS APIs on your behalf, such as deploying a template, listing stacks, server-side
+template validation, and importing resource state, are not available in this extension.
 
 ## Commands
 
-| Command                             | Description                                                    |
-| ----------------------------------- | -------------------------------------------------------------- |
-| `AWS CloudFormation: Update Region` | Select the AWS region used for schemas and AWS-backed features |
-| `AWS CloudFormation: Restart LSP`   | Restart the language server                                    |
+| Command                             | Description                                           |
+| ----------------------------------- | ----------------------------------------------------- |
+| `AWS CloudFormation: Update Region` | Select the AWS region whose resource schemas are used |
+| `AWS CloudFormation: Restart LSP`   | Restart the language server                           |
 
 ## Settings
 
@@ -77,9 +89,9 @@ provider chain.
 | `aws.cloudformation.diagnostics.cfnGuard.delayMs`          | `1000`                          | Delay before running cfn-guard after a change                            |
 | `aws.cloudformation.diagnostics.cfnGuard.enabledRulePacks` | `["cis-aws-benchmark-level-1"]` | Managed rule packs to validate against                                   |
 | `aws.cloudformation.diagnostics.cfnGuard.rulesFile`        | `""`                            | Path to a custom cfn-guard rules file; empty uses the enabled rule packs |
-| `aws.cloudformation.server.trace`                          | `"off"`                         | Trace communication with the language server (`messages`, `verbose`)     |
+| `aws.cloudformation.trace.server`                          | `"off"`                         | Trace communication with the language server (`messages`, `verbose`)     |
 | `aws.cloudformation.telemetry.enabled`                     | `false`                         | Share anonymous usage telemetry with AWS                                 |
-| `aws.cloudformation.telemetry.logLevel`                    | `"info"`                        | Log level of the extension output channel                                |
+| `aws.cloudformation.telemetry.logLevel`                    | `"info"`                        | Log level of the extension output channel; applies after a window reload |
 
 ## Telemetry
 
@@ -88,11 +100,29 @@ you can change the choice at any time with `aws.cloudformation.telemetry.enabled
 [telemetry documentation](https://github.com/aws-cloudformation/cloudformation-languageserver/tree/main/src/telemetry)
 for what is collected.
 
+## Troubleshooting
+
+- The extension and the language server log to the **AWS CloudFormation** channel in the Output view. Set
+  `aws.cloudformation.telemetry.logLevel` to `debug` for more detail, and `aws.cloudformation.trace.server` to
+  `messages` or `verbose` to see the protocol traffic.
+- If the server stops responding, run `AWS CloudFormation: Restart LSP`. A restart re-resolves the server install and
+  repairs an incomplete one.
+- To force a fresh download, delete the `language-servers/cloudformation-languageserver` folder under the cache
+  directory listed in [Requirements](#requirements) and restart the server.
+- Bugs and feature requests: [GitHub issues](https://github.com/aws-cloudformation/cloudformation-vscode/issues).
+
 ## Installation
 
-Install **AWS CloudFormation** from the Visual Studio Code Marketplace or Open VSX, or install a `.vsix` package from
-the [releases page](https://github.com/aws-cloudformation/cloudformation-vscode/releases).
+Install **AWS CloudFormation** from the Visual Studio Code Marketplace or Open VSX, or download the `.vsix` package
+from the [releases page](https://github.com/aws-cloudformation/cloudformation-vscode/releases) and install it with
+`code --install-extension aws-iac-vscode.vsix` or **Extensions: Install from VSIX...** in VS Code.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report issues and submit pull requests, including how to report
+security issues. This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
-Licensed under the Apache License 2.0.
+Licensed under the Apache License 2.0. Third-party licenses are listed in
+[THIRD-PARTY-LICENSES.txt](THIRD-PARTY-LICENSES.txt).

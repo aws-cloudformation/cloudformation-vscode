@@ -54,7 +54,7 @@ function getCacheDir(): string {
 }
 
 /**
- * Root shared with the AWS Toolkits, so every IDE reuses one server download under
+ * Root shared by every IDE client of the language server, so they reuse one server download under
  * `<platform-cache>/aws/language-servers/<server name>`.
  */
 export function getLspBaseDir(): string {
