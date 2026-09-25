@@ -1,4 +1,4 @@
-# AWS CloudFormation Extension for Visual Studio Code
+# AWS CloudFormation VSCode
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Main CI](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml)
