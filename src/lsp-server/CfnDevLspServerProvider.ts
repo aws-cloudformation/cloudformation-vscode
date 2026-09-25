@@ -142,7 +142,7 @@ export class CfnDevLspServerProvider implements LspServerProviderI {
  */
 function isAlphaOrDev(): boolean {
     const awsEnv = process.env.AWS_ENV?.toLowerCase();
-    const cfnEnv = process.env.CFN_LSP_ENVIRONMENT?.toLowerCase();
+    const cfnEnv = process.env.CFN_LSP_ENVIRONMENT?.trim().toLowerCase();
     const nodeEnv = process.env.NODE_ENV?.toLowerCase();
 
     // Explicit alpha channel

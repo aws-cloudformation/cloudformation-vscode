@@ -1,7 +1,7 @@
 import nodeFs from 'fs';
 import { dirname, join } from 'path';
 import axios from 'axios';
-import { defaultManifestAdapter, ManifestAdapter, NormalizedManifest, Version } from '../manifest/ManifestTypes';
+import { ManifestAdapter, NormalizedManifest, Version } from '../manifest/ManifestTypes';
 import {
     BaseLspInstaller,
     FetchBuffer,
@@ -76,10 +76,10 @@ async function fetchBuffer(url: string, timeoutMs: number): Promise<Buffer> {
 export function createCfnManifestAdapter(channel: string): ManifestAdapter {
     return (raw: unknown): NormalizedManifest => {
         const channelVersions = (raw as Record<string, unknown> | null)?.[channel];
-        if (Array.isArray(channelVersions)) {
-            return { versions: channelVersions as Version[] };
+        if (!Array.isArray(channelVersions)) {
+            throw new TypeError(`Manifest contains no versions for environment '${channel}'`);
         }
-        return defaultManifestAdapter(raw);
+        return { versions: channelVersions as Version[] };
     };
 }
 
@@ -106,8 +106,8 @@ export class CfnLspInstaller extends BaseLspInstaller {
 }
 
 /**
- * Post-install: restore executable bit on the bundled `cfn-init` CLI
- * (zip extraction does not preserve Unix permissions).
+ * Post-install: mark the bundled `cfn-init` CLI executable for owner, group, and others while keeping its
+ * existing read/write bits (zip extraction does not preserve Unix permissions).
  */
 function cfnPostInstall(resolution: LspResolution, fs: FileSystem): void {
     if (process.platform === 'win32') {
@@ -116,9 +116,14 @@ function cfnPostInstall(resolution: LspResolution, fs: FileSystem): void {
     const cfnInitPath = join(dirname(resolution.serverPath), 'bin', 'cfn-init');
     if (fs.exists(cfnInitPath)) {
         try {
-            fs.chmod(cfnInitPath, 0o755);
+            fs.chmod(cfnInitPath, withExecutableBits(fs.stat(cfnInitPath).mode));
         } catch {
             // Best effort
         }
     }
+}
+
+export function withExecutableBits(mode: number): number {
+    // stat().mode includes file-type bits; chmod only takes permission bits.
+    return (mode & 0o7777) | 0o111;
 }

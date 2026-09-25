@@ -44,7 +44,12 @@ function defaultDeps(): LinuxDetectorDeps {
 export function detectPlatformTarget(deps?: LinuxDetectorDeps): PlatformTarget {
     const d = deps ?? defaultDeps();
     const platform = d.platform === 'linux' ? detectLinuxPlatform(d) : d.platform;
-    return { platform, arch: d.arch };
+    return { platform, arch: targetArch(d.arch) };
+}
+
+/** Release artifacts are only built for `arm64` and `x64`. */
+export function targetArch(nodeArch: string): string {
+    return nodeArch === 'arm' || nodeArch === 'arm64' ? 'arm64' : 'x64';
 }
 
 const LegacyLinuxPlatform = 'linuxglib2.28';

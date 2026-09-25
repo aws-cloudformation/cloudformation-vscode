@@ -3,6 +3,7 @@ import nodeFs from 'fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'path';
 import { coerce, rcompare, satisfies, valid } from 'semver';
 import { LoggerFactory } from '../../utils/Logger';
+import { extractErrorMessage } from '../../utils/Utils';
 import {
     defaultManifestAdapter,
     ManifestAdapter,
@@ -59,6 +60,11 @@ export type InstalledFallback = {
     serverPath: string;
 };
 
+export type FetchedManifest = NormalizedManifest & { location: 'remote' | 'cache' };
+
+/** A downloaded artifact that fails integrity checks is never replaced by an installed fallback. */
+class HashVerificationError extends Error {}
+
 const FetchMaxAttempts = 3;
 const FetchInitialDelayMs = 500;
 const DownloadTimeoutMs = 5 * 60 * 1000;
@@ -82,15 +88,15 @@ function defaultBaseRoot(): string {
     switch (process.platform) {
         case 'darwin': {
             const home = process.env.HOME ?? process.env.USERPROFILE ?? '';
-            return join(home, 'Library', 'Caches', 'aws', 'toolkits');
+            return join(home, 'Library', 'Caches', 'aws');
         }
         case 'win32': {
             const localAppData = process.env.LOCALAPPDATA ?? '';
-            return join(localAppData, 'aws', 'toolkits');
+            return join(localAppData, 'aws');
         }
         default: {
             const home = process.env.HOME ?? process.env.USERPROFILE ?? '';
-            return join(home, '.cache', 'aws', 'toolkits');
+            return join(home, '.cache', 'aws');
         }
     }
 }
@@ -109,6 +115,14 @@ function isContainedWithin(child: string, parent: string): boolean {
 
     const rel = relative(resolvedParent, resolvedChild);
     return !rel.startsWith('..') && !isAbsolute(rel);
+}
+
+function parseHashEntry(entry: string): { algorithm: string; digest: string } | undefined {
+    const separator = entry.indexOf(':');
+    if (separator <= 0 || separator === entry.length - 1) {
+        return undefined;
+    }
+    return { algorithm: entry.slice(0, separator).toLowerCase(), digest: entry.slice(separator + 1) };
 }
 
 /**
@@ -183,18 +197,27 @@ export class BaseLspInstaller {
     }
 
     async resolve(): Promise<LspResolution> {
-        const manifest = await this.fetchManifest();
-        const versions = manifest.versions;
-
-        if (versions.length === 0) {
-            throw new Error('Manifest contains no versions');
+        let manifest: FetchedManifest;
+        try {
+            manifest = await this.fetchManifest();
+        } catch (manifestErr) {
+            return this.resolveInstalledFallback(manifestErr);
         }
 
         this.fs.mkdirRecursive(this.downloadRoot);
         this.log.info(`Resolving ${this.config.name} (target: ${this.target.platform}/${this.target.arch})`);
 
-        const latest = this.selectVersion(versions);
-        const targetContents = this.getTargetContents(latest);
+        let latest: Version;
+        try {
+            latest = this.selectVersion(manifest.versions);
+        } catch (selectionErr) {
+            // A stale cached manifest is treated as being offline: an installed server beats failing until the
+            // network returns. A fresh manifest without a compatible version is a real failure.
+            if (manifest.location !== 'cache') {
+                throw selectionErr;
+            }
+            return this.resolveInstalledFallback(selectionErr);
+        }
         const versionDir = this.versionDir(latest.serverVersion);
 
         const cachedServer = this.findServerFile(versionDir);
@@ -209,7 +232,7 @@ export class BaseLspInstaller {
         }
 
         try {
-            const serverPath = await this.downloadVersion(latest.serverVersion, targetContents);
+            const serverPath = await this.downloadVersion(latest.serverVersion, this.getTargetContents(latest));
             this.log.info(`Downloaded: ${latest.serverVersion}`);
             return this.finalize({
                 location: 'remote',
@@ -218,6 +241,9 @@ export class BaseLspInstaller {
                 serverPath,
             });
         } catch (err) {
+            if (err instanceof HashVerificationError) {
+                throw err;
+            }
             this.log.error(err, 'Download failed');
         }
 
@@ -235,7 +261,7 @@ export class BaseLspInstaller {
         throw new Error('No server available — check network connectivity and try again');
     }
 
-    async fetchManifest(): Promise<NormalizedManifest> {
+    async fetchManifest(): Promise<FetchedManifest> {
         this.fs.mkdirRecursive(this.downloadRoot);
 
         try {
@@ -243,13 +269,13 @@ export class BaseLspInstaller {
             const rawText = rawBuffer.toString('utf8');
             const parsed = this.adapter(JSON.parse(rawText));
             this.writeManifestCache(rawText);
-            return parsed;
+            return { ...parsed, location: 'remote' };
         } catch (fetchErr) {
             this.log.warn(fetchErr, 'Manifest fetch failed, trying cache');
             const cached = this.readManifestCache();
             if (cached) {
                 this.log.info('Using cached manifest');
-                return cached;
+                return { ...cached, location: 'cache' };
             }
             throw fetchErr;
         }
@@ -343,6 +369,15 @@ export class BaseLspInstaller {
         }
     }
 
+    private resolveInstalledFallback(cause: unknown): LspResolution {
+        const fallback = this.findInstalledFallback();
+        if (!fallback) {
+            throw cause;
+        }
+        this.log.warn(`Using installed ${this.config.name} ${fallback.version}: ${extractErrorMessage(cause)}`);
+        return this.finalize({ location: 'fallback', ...fallback });
+    }
+
     private writeManifestCache(rawText: string): void {
         try {
             const cachePath = this.manifestCachePath;
@@ -377,6 +412,10 @@ export class BaseLspInstaller {
     }
 
     private selectVersion(versions: Version[]): Version {
+        if (versions.length === 0) {
+            throw new Error('Manifest contains no versions');
+        }
+
         const range = this.config.supportedVersions;
         const compatible = versions
             .filter((v) => !v.isDelisted && valid(coerce(v.serverVersion)))
@@ -417,8 +456,13 @@ export class BaseLspInstaller {
                     `Download '${content.filename}'`,
                 );
 
+                if (content.bytes > 0 && data.length !== content.bytes) {
+                    throw new Error(
+                        `Downloaded size mismatch for ${content.filename}: expected ${content.bytes} bytes, got ${data.length}`,
+                    );
+                }
                 if (!this.verifyHashes(data, content.hashes, content.filename)) {
-                    throw new Error(`Hash verification failed for ${content.filename}`);
+                    throw new HashVerificationError(`Hash verification failed for ${content.filename}`);
                 }
 
                 this.fs.writeFile(join(tmpDir, content.filename), data);
@@ -474,27 +518,25 @@ export class BaseLspInstaller {
     }
 
     private verifyHashes(data: Buffer, expectedHashes: string[], filename: string): boolean {
-        const parseable = (expectedHashes ?? []).filter((h) => h.includes(':'));
-        if (parseable.length === 0) {
+        const declared = expectedHashes ?? [];
+        if (declared.length === 0) {
             return true;
         }
 
-        for (const expected of parseable) {
-            const sep = expected.indexOf(':');
-            const algorithm = expected.slice(0, sep);
-            const digest = expected.slice(sep + 1);
-            try {
-                const computed = createHash(algorithm).update(data).digest('hex');
-                if (computed.toLowerCase() === digest.toLowerCase()) {
-                    return true;
-                }
-                this.log.warn(`Hash mismatch for ${algorithm} on '${filename}'`);
-            } catch (err) {
-                this.log.warn(err, `Unsupported hash algorithm '${algorithm}'`);
+        return declared.some((entry) => {
+            const expected = parseHashEntry(entry);
+            if (!expected) {
+                this.log.warn(`Ignoring malformed hash '${entry}' for '${filename}'`);
+                return false;
             }
-        }
-
-        return false;
+            try {
+                const computed = createHash(expected.algorithm).update(data).digest('hex');
+                return computed.toLowerCase() === expected.digest.toLowerCase();
+            } catch (err) {
+                this.log.warn(err, `Unsupported hash algorithm '${expected.algorithm}' for '${filename}'`);
+                return false;
+            }
+        });
     }
 
     private validateRequiredFiles(dir: string): boolean {

@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import nodeFs from 'fs';
 import { dirname, join } from 'path';
 import { describe, beforeEach, it, expect, vi } from 'vitest';
@@ -249,7 +250,7 @@ function createInstaller(
 }
 
 describe('BaseLspInstaller', () => {
-    const baseDir = '/test/cache/aws/toolkits';
+    const baseDir = '/test/cache/aws';
     let memFs: MemoryFs;
     let fetcher: MockFetcher;
     let installer: BaseLspInstaller;
@@ -264,15 +265,13 @@ describe('BaseLspInstaller', () => {
 
     describe('downloadRoot', () => {
         it('returns baseDir/language-servers/<name>', () => {
-            expect(installer.downloadRoot).toBe('/test/cache/aws/toolkits/language-servers/test-server');
+            expect(installer.downloadRoot).toBe('/test/cache/aws/language-servers/test-server');
         });
     });
 
     describe('manifestCachePath', () => {
         it('returns downloadRoot/manifest.json', () => {
-            expect(installer.manifestCachePath).toBe(
-                '/test/cache/aws/toolkits/language-servers/test-server/manifest.json',
-            );
+            expect(installer.manifestCachePath).toBe('/test/cache/aws/language-servers/test-server/manifest.json');
         });
     });
 
@@ -412,6 +411,95 @@ describe('BaseLspInstaller', () => {
             fetcher.setResponse('https://example.com/server-1.9.0.zip', new Error('Network failure'));
 
             await expect(installer.resolve()).rejects.toThrow('No server available');
+        });
+
+        function setupDownload(hashes: string[], payload = Buffer.from('payload'), bytes = payload.length) {
+            const version = makeVersion('1.9.0', true);
+            const content = { ...version.targets[0].contents[0], hashes, bytes };
+            setupManifestFetch([{ ...version, targets: [{ ...version.targets[0], contents: [content] }] }]);
+            fetcher.setResponse(content.url, payload);
+        }
+
+        it('propagates a hash mismatch instead of falling back to an installed server', async () => {
+            setupDownload(['sha256:0000']);
+            memFs.plantServer(baseDir, 'test-server', '1.5.0');
+
+            await expect(installer.resolve()).rejects.toThrow('Hash verification failed for server-1.9.0.zip');
+        });
+
+        it.each([
+            ['a raw digest without an algorithm prefix', ['0123abcd']],
+            ['an unsupported algorithm', ['nosuchalgorithm:0123abcd']],
+            ['an empty digest', ['sha256:']],
+        ])('fails closed on %s', async (_description, hashes) => {
+            setupDownload(hashes);
+
+            await expect(installer.resolve()).rejects.toThrow('Hash verification failed for server-1.9.0.zip');
+        });
+
+        it('accepts any matching declared hash, compared case-insensitively', async () => {
+            const payload = Buffer.from('payload');
+            const digest = createHash('sha384').update(payload).digest('hex').toUpperCase();
+            setupDownload(['sha256:0000', `SHA384:${digest}`], payload);
+
+            await expect(installer.resolve()).rejects.toThrow('No server available');
+            expect(fetcher.calls.filter((call) => call.url.includes('server-1.9.0'))).toHaveLength(1);
+        });
+
+        it('treats a size mismatch as a download failure that can fall back', async () => {
+            setupDownload([], Buffer.from('payload'), 1024);
+            memFs.plantServer(baseDir, 'test-server', '1.5.0');
+
+            const result = await installer.resolve();
+
+            expect(result.location).toBe('fallback');
+            expect(result.version).toBe('1.5.0');
+        });
+
+        it('uses the highest installed server when no manifest is available', async () => {
+            fetcher.setResponse('https://example.com/manifest.json', new Error('offline'));
+            memFs.plantServer(baseDir, 'test-server', '1.2.0');
+            memFs.plantServer(baseDir, 'test-server', '1.5.0');
+
+            const result = await installer.resolve();
+
+            expect(result.location).toBe('fallback');
+            expect(result.version).toBe('1.5.0');
+        });
+
+        it('rethrows the manifest error when offline with no installed server', async () => {
+            fetcher.setResponse('https://example.com/manifest.json', new Error('offline'));
+
+            await expect(installer.resolve()).rejects.toThrow('offline');
+        });
+
+        it('uses an installed server when a cached manifest has no compatible version', async () => {
+            memFs.files.set(installer.manifestCachePath, Buffer.from(JSON.stringify({ versions: [] })));
+            fetcher.setResponse('https://example.com/manifest.json', new Error('offline'));
+            memFs.plantServer(baseDir, 'test-server', '1.5.0');
+
+            const result = await installer.resolve();
+
+            expect(result.location).toBe('fallback');
+            expect(result.version).toBe('1.5.0');
+        });
+
+        it('does not use an installed server when a fresh manifest has no compatible version', async () => {
+            setupManifestFetch([makeVersion('2.5.0', true)]);
+            memFs.plantServer(baseDir, 'test-server', '1.5.0');
+
+            await expect(installer.resolve()).rejects.toThrow('No compatible version');
+        });
+
+        it('falls back to an installed server when the selected target has no contents', async () => {
+            const version = makeVersion('1.9.0', true);
+            setupManifestFetch([{ ...version, targets: [{ ...version.targets[0], contents: [] }] }]);
+            memFs.plantServer(baseDir, 'test-server', '1.5.0');
+
+            const result = await installer.resolve();
+
+            expect(result.location).toBe('fallback');
+            expect(result.version).toBe('1.5.0');
         });
 
         it('throws when the flat manifest has no versions', async () => {

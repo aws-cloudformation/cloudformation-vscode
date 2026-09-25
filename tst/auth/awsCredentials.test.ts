@@ -8,6 +8,8 @@ vi.mock('vscode');
 vi.mock('vscode-languageclient/node');
 vi.mock('vscode-languageclient');
 
+const SuffixedUpdateRegionCommand = '/command/region/update.cloudformation-vscode';
+
 describe('AwsCredentialsService', () => {
     let service: AwsCredentialsService;
     let mockContext: ExtensionContext;
@@ -41,6 +43,9 @@ describe('AwsCredentialsService', () => {
 
         mockLanguageClient = {
             sendRequest: vi.fn().mockResolvedValue(undefined),
+            initializeResult: {
+                capabilities: { executeCommandProvider: { commands: [SuffixedUpdateRegionCommand] } },
+            },
         } as any;
 
         (window.createStatusBarItem as ReturnType<typeof vi.fn>).mockReturnValue(mockStatusBarItem);
@@ -70,7 +75,7 @@ describe('AwsCredentialsService', () => {
             await svc.initialize(mockLanguageClient);
 
             expect(mockLanguageClient.sendRequest).toHaveBeenCalledWith('workspace/executeCommand', {
-                command: '/command/region/update',
+                command: SuffixedUpdateRegionCommand,
                 arguments: ['us-west-2'],
             });
         });
@@ -81,7 +86,7 @@ describe('AwsCredentialsService', () => {
             await svc.initialize(mockLanguageClient);
 
             expect(mockLanguageClient.sendRequest).toHaveBeenCalledWith('workspace/executeCommand', {
-                command: '/command/region/update',
+                command: SuffixedUpdateRegionCommand,
                 arguments: ['us-east-1'],
             });
         });
@@ -115,7 +120,7 @@ describe('AwsCredentialsService', () => {
             await service.promptForRegionSelection();
 
             expect(mockLanguageClient.sendRequest).toHaveBeenCalledWith('workspace/executeCommand', {
-                command: '/command/region/update',
+                command: SuffixedUpdateRegionCommand,
                 arguments: ['ap-southeast-1'],
             });
             expect(mockStatusBarItem.text).toBe('AWS Region: ap-southeast-1');

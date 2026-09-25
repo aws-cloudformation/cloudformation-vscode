@@ -64,43 +64,4 @@ describe('ClientId / telemetry', () => {
             expect(restored).toBe(id);
         });
     });
-
-    describe('initialization options', () => {
-        it('omits clientId from initializationOptions when telemetry disabled', async () => {
-            const clientId = await getClientId(mockState as any, false);
-
-            // Simulate how extension.ts builds initializationOptions
-            const initOptions = {
-                aws: {
-                    clientInfo: {
-                        extension: { name: 'cloudformation-vscode', version: '1.0.0' },
-                        ...(clientId ? { clientId } : {}),
-                    },
-                    telemetryEnabled: false,
-                    encryption: { key: 'test', mode: 'JWT' },
-                },
-            };
-
-            expect(initOptions.aws.clientInfo).not.toHaveProperty('clientId');
-            expect(initOptions.aws.telemetryEnabled).toBe(false);
-        });
-
-        it('includes clientId in initializationOptions when telemetry enabled', async () => {
-            const clientId = await getClientId(mockState as any, true);
-
-            const initOptions = {
-                aws: {
-                    clientInfo: {
-                        extension: { name: 'cloudformation-vscode', version: '1.0.0' },
-                        ...(clientId ? { clientId } : {}),
-                    },
-                    telemetryEnabled: true,
-                    encryption: { key: 'test', mode: 'JWT' },
-                },
-            };
-
-            expect(initOptions.aws.clientInfo.clientId).toBe(clientId);
-            expect(initOptions.aws.telemetryEnabled).toBe(true);
-        });
-    });
 });

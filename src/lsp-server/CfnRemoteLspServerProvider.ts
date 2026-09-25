@@ -1,12 +1,9 @@
 import { dirname } from 'path';
 import { getLspBaseDir } from '../utils/FileSystem';
-import { LoggerFactory } from '../utils/Logger';
-import { LspResolution } from './installer/BaseLspInstaller';
 import { CfnLspInstaller } from './installer/CfnLspInstaller';
 import { LspServerProviderI } from './LspServerProvider';
 
 export class CfnRemoteLspServerProvider implements LspServerProviderI {
-    private readonly log = LoggerFactory.getLogger('RemoteLspServerProvider');
     private readonly installer: CfnLspInstaller;
     private serverPath?: string;
     private rootDir?: string;
@@ -28,31 +25,12 @@ export class CfnRemoteLspServerProvider implements LspServerProviderI {
             return this.serverPath;
         }
 
-        const result = await this.resolveServer();
+        const result = await this.installer.resolve();
         this.installer.cleanup(result.version);
 
         this.serverPath = result.serverPath;
         this.rootDir = dirname(result.serverPath);
         return this.serverPath;
-    }
-
-    private async resolveServer(): Promise<LspResolution> {
-        try {
-            return await this.installer.resolve();
-        } catch (err) {
-            this.log.warn(err, 'Standard resolve failed, searching for installed LSP');
-            const fallback = this.installer.findInstalledFallback();
-            if (!fallback) {
-                throw err;
-            }
-            this.log.info(`Using locally installed fallback: ${fallback.versionDir}`);
-            return {
-                location: 'fallback',
-                version: fallback.version,
-                versionDir: fallback.versionDir,
-                serverPath: fallback.serverPath,
-            };
-        }
     }
 
     async serverRootDir(): Promise<string> {

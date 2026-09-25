@@ -54,11 +54,11 @@ function getCacheDir(): string {
 }
 
 /**
- * Base directory for the shared language-server installation layout.
- * Default: `<platform-cache>/aws/toolkits`
+ * Root shared with the AWS Toolkits, so every IDE reuses one server download under
+ * `<platform-cache>/aws/language-servers/<server name>`.
  */
 export function getLspBaseDir(): string {
-    return join(getCacheDir(), 'aws', 'toolkits');
+    return join(getCacheDir(), 'aws');
 }
 
 export function fsExists(path: string): boolean {

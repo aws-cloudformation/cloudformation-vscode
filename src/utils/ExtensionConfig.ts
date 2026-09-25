@@ -19,7 +19,7 @@ const validEnvironments = new Set<string>(['alpha', 'beta', 'prod']);
  * Priority: CFN_LSP_ENVIRONMENT override > AWS_ENV > default 'prod'.
  */
 export function environment(): BuildEnvironment {
-    const override = process.env.CFN_LSP_ENVIRONMENT?.toLowerCase();
+    const override = process.env.CFN_LSP_ENVIRONMENT?.trim().toLowerCase();
     if (override && validEnvironments.has(override)) {
         return override as BuildEnvironment;
     }

@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { window } from 'vscode';
-import { detectPlatformTarget, LinuxDetectorDeps, parseMaxGlibcxx } from '../../../src/lsp-server/installer/platform';
+import {
+    detectPlatformTarget,
+    LinuxDetectorDeps,
+    parseMaxGlibcxx,
+    targetArch,
+} from '../../../src/lsp-server/installer/platform';
 import { LoggerFactory } from '../../../src/utils/Logger';
 
 vi.mock('vscode');
@@ -20,7 +25,7 @@ describe('platform detection', () => {
             } else {
                 expect(target.platform).toBe(process.platform);
             }
-            expect(target.arch).toBe(process.arch);
+            expect(target.arch).toBe(targetArch(process.arch));
         });
     });
 
@@ -140,10 +145,24 @@ describe('platform detection', () => {
             expect(execCalled).toBeGreaterThan(0);
         });
 
+        it('applies the mapping when detecting the platform target', () => {
+            expect(detectPlatformTarget(makeDeps({ platform: 'darwin', arch: 'arm' })).arch).toBe('arm64');
+        });
+
         it('preserves arch from deps', () => {
             const deps = makeDeps({ platform: 'linux', arch: 'arm64' });
             const target = detectPlatformTarget(deps);
             expect(target.arch).toBe('arm64');
+        });
+    });
+
+    describe('targetArch', () => {
+        it.each(['arm', 'arm64'])('maps %s to the arm64 release target', (nodeArch) => {
+            expect(targetArch(nodeArch)).toBe('arm64');
+        });
+
+        it.each(['x64', 'ia32', 'ppc64', 's390x'])('maps %s to the x64 release target', (nodeArch) => {
+            expect(targetArch(nodeArch)).toBe('x64');
         });
     });
 

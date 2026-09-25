@@ -1,304 +1,257 @@
-import { describe, beforeEach, it, expect, vi } from 'vitest';
+import { describe, beforeEach, it, expect, Mock, vi } from 'vitest';
 import { window } from 'vscode';
-import { LspLauncher, LspResolver } from '../../src/lsp-server/LspLauncher';
+import { CloseAction, ErrorAction, ErrorHandler, LanguageClient } from 'vscode-languageclient/node';
+import { ClientFactory, LspLauncher, LspResolver } from '../../src/lsp-server/LspLauncher';
+import { LspServerLifecycleHooks } from '../../src/lsp-server/LspServerLifecycle';
 import { LoggerFactory } from '../../src/utils/Logger';
 
 vi.mock('vscode');
 vi.mock('vscode-languageclient/node');
 
+type FakeClient = {
+    start: ReturnType<typeof vi.fn>;
+    stop: ReturnType<typeof vi.fn>;
+    dispose: ReturnType<typeof vi.fn>;
+};
+
+function fakeClient(start: () => Promise<void> = () => Promise.resolve()): FakeClient {
+    return {
+        start: vi.fn(start),
+        stop: vi.fn().mockResolvedValue(undefined),
+        dispose: vi.fn().mockResolvedValue(undefined),
+    };
+}
+
 describe('LspLauncher', () => {
-    let resolver: LspResolver;
-    let startFn: ReturnType<typeof vi.fn>;
-    let stopFn: ReturnType<typeof vi.fn>;
-    let disposeFn: ReturnType<typeof vi.fn>;
+    let resolver: { resolve: Mock<LspResolver['resolve']>; invalidate: Mock<LspResolver['invalidate']> };
+    let hooks: {
+        onError: Mock<NonNullable<LspServerLifecycleHooks['onError']>>;
+        onServerStopped: Mock<NonNullable<LspServerLifecycleHooks['onServerStopped']>>;
+    };
+    let clients: FakeClient[];
+    let factory: Mock<ClientFactory>;
+
+    function launcherStartingClients(...starts: Array<() => Promise<void>>): LspLauncher {
+        clients = starts.map((start) => fakeClient(start));
+        let next = 0;
+        factory = vi.fn<ClientFactory>(() => clients[next++] as unknown as LanguageClient);
+        return new LspLauncher(resolver, factory, hooks);
+    }
+
+    function errorHandlerOf(call = 0): ErrorHandler {
+        return factory.mock.calls[call][1];
+    }
+
+    const succeed = () => Promise.resolve();
+    const fail = (message: string) => () => Promise.reject(new Error(message));
 
     beforeEach(() => {
         LoggerFactory.reset();
         LoggerFactory.initialize(window.createOutputChannel('test'));
 
-        startFn = vi.fn().mockResolvedValue(undefined);
-        stopFn = vi.fn().mockResolvedValue(undefined);
-        disposeFn = vi.fn();
-
+        let resolveCount = 0;
         resolver = {
-            resolve: vi.fn(async () => {
-                return await Promise.resolve('/path/to/server.js');
-            }),
+            resolve: vi.fn(() => Promise.resolve(`/servers/attempt-${++resolveCount}/server.js`)),
             invalidate: vi.fn(),
         };
+        hooks = { onError: vi.fn(), onServerStopped: vi.fn() };
     });
 
-    function makeClientFactory() {
-        return vi.fn().mockImplementation(() => ({
-            start: startFn,
-            stop: stopFn,
-            dispose: disposeFn,
-            isRunning: vi.fn().mockReturnValue(true),
-        }));
-    }
-
     describe('start', () => {
-        it('resolves and starts the client on first call', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
+        it('creates the client for the resolved server with the launcher-owned error handler', async () => {
+            const launcher = launcherStartingClients(succeed);
 
             const client = await launcher.start();
 
-            expect(resolver.resolve).toHaveBeenCalledTimes(1);
-            expect(factory).toHaveBeenCalledWith('/path/to/server.js');
-            expect(startFn).toHaveBeenCalledTimes(1);
-            expect(client).toBeDefined();
+            expect(client).toBe(clients[0]);
+            expect(factory).toHaveBeenCalledWith('/servers/attempt-1/server.js', expect.any(Object));
+            expect(clients[0].start).toHaveBeenCalledTimes(1);
+            expect(resolver.invalidate).not.toHaveBeenCalled();
         });
 
-        it('returns cached client on subsequent calls', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
+        it('returns the running client on later calls without resolving again', async () => {
+            const launcher = launcherStartingClients(succeed);
 
             const first = await launcher.start();
             const second = await launcher.start();
 
-            expect(first).toBe(second);
+            expect(second).toBe(first);
             expect(resolver.resolve).toHaveBeenCalledTimes(1);
-            expect(startFn).toHaveBeenCalledTimes(1);
         });
 
-        it('deduplicates concurrent start attempts', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
+        it('deduplicates concurrent start calls', async () => {
+            const launcher = launcherStartingClients(succeed);
 
             const [first, second, third] = await Promise.all([launcher.start(), launcher.start(), launcher.start()]);
 
             expect(first).toBe(second);
             expect(second).toBe(third);
-            expect(resolver.resolve).toHaveBeenCalledTimes(1);
-            expect(startFn).toHaveBeenCalledTimes(1);
-        });
-
-        it('retries exactly once on start failure (invalidate + re-resolve)', async () => {
-            let attempt = 0;
-            startFn = vi.fn().mockImplementation(() => {
-                attempt++;
-                if (attempt === 1) {
-                    return Promise.reject(new Error('Start failed'));
-                }
-                return Promise.resolve(undefined);
-            });
-
-            const factory = vi.fn().mockImplementation(() => ({
-                start: startFn,
-                stop: stopFn,
-                dispose: disposeFn,
-                isRunning: vi.fn().mockReturnValue(true),
-            }));
-            const launcher = new LspLauncher(resolver, factory);
-
-            const client = await launcher.start();
-
-            expect(client).toBeDefined();
-            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
-            expect(resolver.resolve).toHaveBeenCalledTimes(2);
-            expect(startFn).toHaveBeenCalledTimes(2);
-        });
-
-        it('throws after retry also fails', async () => {
-            startFn.mockRejectedValue(new Error('Permanent failure'));
-
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
-
-            await expect(launcher.start()).rejects.toThrow('Permanent failure');
-            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
-            expect(resolver.resolve).toHaveBeenCalledTimes(2);
-        });
-
-        it('throws when disposed', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
-            launcher.dispose();
-
-            await expect(launcher.start()).rejects.toThrow('disposed');
-        });
-
-        it('stops/disposes the local candidate on first start failure', async () => {
-            const firstStopFn = vi.fn().mockResolvedValue(undefined);
-            const firstDisposeFn = vi.fn();
-            let attempt = 0;
-
-            const factory = vi.fn().mockImplementation(() => {
-                attempt++;
-                if (attempt === 1) {
-                    return {
-                        start: vi.fn().mockRejectedValue(new Error('first fail')),
-                        stop: firstStopFn,
-                        dispose: firstDisposeFn,
-                    };
-                }
-                return {
-                    start: vi.fn().mockResolvedValue(undefined),
-                    stop: vi.fn().mockResolvedValue(undefined),
-                    dispose: vi.fn(),
-                };
-            });
-
-            const launcher = new LspLauncher(resolver, factory);
-            const client = await launcher.start();
-
-            expect(client).toBeDefined();
-            // The first candidate should have been stopped and disposed
-            expect(firstStopFn).toHaveBeenCalledTimes(1);
-            expect(firstDisposeFn).toHaveBeenCalledTimes(1);
-        });
-
-        it('stops/disposes the local candidate on second (retry) failure', async () => {
-            const firstStopFn = vi.fn().mockResolvedValue(undefined);
-            const firstDisposeFn = vi.fn();
-            const secondStopFn = vi.fn().mockResolvedValue(undefined);
-            const secondDisposeFn = vi.fn();
-            let attempt = 0;
-
-            const factory = vi.fn().mockImplementation(() => {
-                attempt++;
-                if (attempt === 1) {
-                    return {
-                        start: vi.fn().mockRejectedValue(new Error('first fail')),
-                        stop: firstStopFn,
-                        dispose: firstDisposeFn,
-                    };
-                }
-                return {
-                    start: vi.fn().mockRejectedValue(new Error('second fail')),
-                    stop: secondStopFn,
-                    dispose: secondDisposeFn,
-                };
-            });
-
-            const launcher = new LspLauncher(resolver, factory);
-            await expect(launcher.start()).rejects.toThrow();
-
-            // Both candidates should have been stopped and disposed
-            expect(firstStopFn).toHaveBeenCalledTimes(1);
-            expect(firstDisposeFn).toHaveBeenCalledTimes(1);
-            expect(secondStopFn).toHaveBeenCalledTimes(1);
-            expect(secondDisposeFn).toHaveBeenCalledTimes(1);
+            expect(factory).toHaveBeenCalledTimes(1);
         });
     });
 
-    describe('stop', () => {
-        it('stops and disposes the running client', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
+    describe('startup repair', () => {
+        it('invalidates the installation and retries exactly once after a process start failure', async () => {
+            const launcher = launcherStartingClients(fail('spawn failed'), succeed);
+
+            const client = await launcher.start();
+
+            expect(client).toBe(clients[1]);
+            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
+            expect(factory).toHaveBeenNthCalledWith(2, '/servers/attempt-2/server.js', expect.any(Object));
+        });
+
+        it('stops and disposes a candidate whose start failed', async () => {
+            const launcher = launcherStartingClients(fail('spawn failed'), succeed);
+
+            await launcher.start();
+
+            expect(clients[0].stop).toHaveBeenCalledTimes(1);
+            expect(clients[0].dispose).toHaveBeenCalledTimes(1);
+        });
+
+        it('reports a second start failure with the underlying error as its cause', async () => {
+            const launcher = launcherStartingClients(fail('first'), fail('second'));
+
+            const error: unknown = await launcher.start().catch((err: unknown) => err);
+
+            expect(error).toBeInstanceOf(Error);
+            expect((error as Error).message).toBe(
+                'CloudFormation language server failed to start after reinstalling: second',
+            );
+            expect(((error as Error).cause as Error).message).toBe('second');
+            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
+            expect(clients[1].dispose).toHaveBeenCalledTimes(1);
+        });
+
+        it('never repairs a resolution failure', async () => {
+            const launcher = launcherStartingClients(succeed);
+            resolver.resolve.mockRejectedValueOnce(new Error('manifest fetch failed'));
+
+            await expect(launcher.start()).rejects.toThrow('manifest fetch failed');
+            expect(resolver.invalidate).not.toHaveBeenCalled();
+            expect(factory).not.toHaveBeenCalled();
+        });
+
+        it('propagates a resolution failure on the retry without wrapping it', async () => {
+            const launcher = launcherStartingClients(fail('spawn failed'));
+            resolver.resolve
+                .mockResolvedValueOnce('/servers/broken/server.js')
+                .mockRejectedValueOnce(new Error('download failed'));
+
+            await expect(launcher.start()).rejects.toThrow(/^download failed$/);
+            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('error handler', () => {
+        it('forwards errors to onError and keeps the client running', async () => {
+            const launcher = launcherStartingClients(succeed);
+            await launcher.start();
+            const error = new Error('write failed');
+
+            const result = await errorHandlerOf().error(error, undefined, 1);
+
+            expect(result).toEqual({ action: ErrorAction.Continue });
+            expect(hooks.onError).toHaveBeenCalledWith(error, undefined, 1);
+        });
+
+        it('reports an unexpected close after initialize once and does not auto-restart', async () => {
+            const launcher = launcherStartingClients(succeed);
+            await launcher.start();
+
+            const result = await errorHandlerOf().closed();
+            await errorHandlerOf().closed();
+
+            expect(result).toEqual({ action: CloseAction.DoNotRestart });
+            expect(hooks.onServerStopped).toHaveBeenCalledTimes(1);
+            expect(resolver.invalidate).not.toHaveBeenCalled();
+        });
+
+        it('leaves a close before initialize to the pending launch', async () => {
+            let failStart: (err: Error) => void = () => {};
+            const launcher = launcherStartingClients(
+                () => new Promise<void>((_resolve, reject) => (failStart = reject)),
+                succeed,
+            );
+            const pending = launcher.start();
+            await vi.waitFor(() => expect(clients[0].start).toHaveBeenCalled());
+
+            await errorHandlerOf().closed();
+            failStart(new Error('died during initialize'));
+
+            expect(await pending).toBe(clients[1]);
+            expect(hooks.onServerStopped).not.toHaveBeenCalled();
+            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not report a stop that the launcher requested', async () => {
+            const launcher = launcherStartingClients(succeed);
             await launcher.start();
 
             await launcher.stop();
+            await errorHandlerOf().closed();
 
-            expect(stopFn).toHaveBeenCalled();
-            expect(disposeFn).toHaveBeenCalled();
-            expect(launcher.getClient()).toBeUndefined();
+            expect(hooks.onServerStopped).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('stop and dispose', () => {
+        it('stops and disposes the running client, allowing a fresh start', async () => {
+            const launcher = launcherStartingClients(succeed, succeed);
+            await launcher.start();
+
+            await launcher.stop();
+            const restarted = await launcher.start();
+
+            expect(clients[0].stop).toHaveBeenCalledTimes(1);
+            expect(clients[0].dispose).toHaveBeenCalledTimes(1);
+            expect(restarted).toBe(clients[1]);
         });
 
-        it('is safe to call when no client is running', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
+        it('is safe to stop when no client is running', async () => {
+            const launcher = launcherStartingClients();
 
             await expect(launcher.stop()).resolves.toBeUndefined();
         });
-    });
 
-    describe('restart', () => {
-        it('stops current client, invalidates, and starts fresh', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
-            await launcher.start();
-
-            await launcher.restart();
-
-            expect(stopFn).toHaveBeenCalled();
-            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
-            expect(resolver.resolve).toHaveBeenCalledTimes(2); // initial + restart
-            expect(startFn).toHaveBeenCalledTimes(2);
-        });
-    });
-
-    describe('invalidation forces fresh resolve', () => {
-        it('first start failure triggers invalidate so retry gets a fresh path', async () => {
-            // Track what paths were resolved
-            const resolvedPaths: string[] = [];
-            let callCount = 0;
-            resolver = {
-                resolve: vi.fn().mockImplementation(() => {
-                    callCount++;
-                    const path = `/path/to/server-attempt-${callCount}.js`;
-                    resolvedPaths.push(path);
-                    return Promise.resolve(path);
-                }),
-                invalidate: vi.fn(),
-            };
-
-            let attempt = 0;
-            const factory = vi.fn().mockImplementation(() => {
-                attempt++;
-                if (attempt === 1) {
-                    return {
-                        start: vi.fn().mockRejectedValue(new Error('first fail')),
-                        stop: vi.fn().mockResolvedValue(undefined),
-                        dispose: vi.fn(),
-                    };
-                }
-                return {
-                    start: vi.fn().mockResolvedValue(undefined),
-                    stop: vi.fn().mockResolvedValue(undefined),
-                    dispose: vi.fn(),
-                };
-            });
-
-            const launcher = new LspLauncher(resolver, factory);
-            await launcher.start();
-
-            // invalidate was called between attempts
-            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
-            // Two different paths were resolved (invalidation forced fresh resolve)
-            expect(resolvedPaths).toHaveLength(2);
-            expect(resolvedPaths[0]).not.toBe(resolvedPaths[1]);
-        });
-
-        it('restart invalidates before re-resolving so cached path is not reused', async () => {
-            const resolvedPaths: string[] = [];
-            let callCount = 0;
-            resolver = {
-                resolve: vi.fn().mockImplementation(() => {
-                    callCount++;
-                    const path = `/path/to/server-v${callCount}.js`;
-                    resolvedPaths.push(path);
-                    return Promise.resolve(path);
-                }),
-                invalidate: vi.fn(),
-            };
-
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
-            await launcher.start();
-
-            expect(resolvedPaths).toHaveLength(1);
-
-            await launcher.restart();
-
-            expect(resolver.invalidate).toHaveBeenCalledTimes(1);
-            expect(resolvedPaths).toHaveLength(2);
-            // The second resolve produced a different path (simulating fresh resolution)
-            expect(resolvedPaths[0]).not.toBe(resolvedPaths[1]);
-        });
-    });
-
-    describe('dispose', () => {
-        it('marks launcher as disposed and cleans up client', async () => {
-            const factory = makeClientFactory();
-            const launcher = new LspLauncher(resolver, factory);
+        it('rejects starts after disposal', async () => {
+            const launcher = launcherStartingClients(succeed);
             await launcher.start();
 
             launcher.dispose();
 
-            expect(launcher.getClient()).toBeUndefined();
-            await expect(launcher.start()).rejects.toThrow('disposed');
+            expect(clients[0].stop).toHaveBeenCalledTimes(1);
+            await expect(launcher.start()).rejects.toThrow('Launcher has been disposed');
+        });
+
+        it('stops a client whose start completes after disposal', async () => {
+            let finishStart: () => void = () => {};
+            const launcher = launcherStartingClients(() => new Promise<void>((resolve) => (finishStart = resolve)));
+            const pending = launcher.start();
+            await vi.waitFor(() => expect(clients[0].start).toHaveBeenCalled());
+
+            launcher.dispose();
+            finishStart();
+
+            await expect(pending).rejects.toThrow('Launcher has been disposed');
+            expect(clients[0].stop).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not re-resolve the server when disposed during the repair', async () => {
+            let failStart: (err: Error) => void = () => {};
+            const launcher = launcherStartingClients(
+                () => new Promise<void>((_resolve, reject) => (failStart = reject)),
+                succeed,
+            );
+            const pending = launcher.start();
+            await vi.waitFor(() => expect(clients[0].start).toHaveBeenCalled());
+
+            launcher.dispose();
+            failStart(new Error('spawn failed'));
+
+            await expect(pending).rejects.toThrow('Launcher has been disposed');
+            expect(resolver.resolve).toHaveBeenCalledTimes(1);
         });
     });
 });

@@ -83,6 +83,7 @@
         "webpack-cli": "7.0.2"
     },
     "activationEvents": [
+        "onStartupFinished",
         "onLanguage:plaintext",
         "onLanguage:cloudformation",
         "onLanguage:json",

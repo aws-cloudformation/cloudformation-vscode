@@ -8,6 +8,7 @@ import {
     CfnLspInstaller,
     createCfnManifestAdapter,
     NodeFileSystem,
+    withExecutableBits,
 } from '../../../src/lsp-server/installer/CfnLspInstaller';
 import { LoggerFactory } from '../../../src/utils/Logger';
 
@@ -68,6 +69,20 @@ describe('CfnLspInstaller', () => {
             });
 
             expect(manifest.versions.map((item) => item.serverVersion)).toEqual(['1.5.0']);
+        });
+
+        it('requires the requested channel array instead of falling back to top-level versions', () => {
+            const adapter = createCfnManifestAdapter('beta');
+
+            expect(() => adapter({ versions: [], prod: [] })).toThrow(
+                "Manifest contains no versions for environment 'beta'",
+            );
+        });
+
+        it('rejects a manifest that is not an object', () => {
+            expect(() => createCfnManifestAdapter('prod')(null)).toThrow(
+                "Manifest contains no versions for environment 'prod'",
+            );
         });
     });
 
@@ -157,6 +172,22 @@ describe('CfnLspInstaller', () => {
 
             const stats = nodeFs.statSync(join(binDir, 'cfn-init'));
             expect(stats.mode & 0o755).toBe(0o755);
+        });
+    });
+
+    describe('withExecutableBits', () => {
+        it('adds execute for owner, group, and others while keeping read/write bits', () => {
+            expect(withExecutableBits(0o600)).toBe(0o711);
+            expect(withExecutableBits(0o644)).toBe(0o755);
+        });
+
+        it('is idempotent when execute bits are already set', () => {
+            expect(withExecutableBits(0o755)).toBe(0o755);
+        });
+
+        it('drops the file-type bits reported by stat() so only permission bits reach chmod', () => {
+            const regularFile = 0o100_000;
+            expect(withExecutableBits(regularFile | 0o640)).toBe(0o751);
         });
     });
 
