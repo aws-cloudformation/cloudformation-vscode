@@ -106,6 +106,10 @@ export default tseslint.config([
             'unicorn/prefer-ternary': 'off',
             'unicorn/catch-error-name': 'off',
             'unicorn/prefer-string-raw': 'off',
+            'unicorn/prefer-split-limit': 'off',
+            'unicorn/better-dom-traversing': 'off',
+            'unicorn/consistent-compound-words': 'off',
+            'unicorn/prefer-includes-over-repeated-comparisons': 'off',
             'unicorn/import-style': [
                 'error',
                 {

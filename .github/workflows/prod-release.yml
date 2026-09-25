@@ -20,7 +20,7 @@ jobs:
     outputs:
       tag: ${{ steps.version-and-tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: 'main'
           fetch-depth: 0
@@ -35,8 +35,8 @@ jobs:
         id: version-and-tag
         run: |
           INPUT_VERSION="${{ inputs.version }}"
-          BETA_TAG="v$INPUT_VERSION-beta"
-          PROD_TAG="v$INPUT_VERSION"
+          BETA_TAG="$INPUT_VERSION-beta"
+          PROD_TAG="$INPUT_VERSION"
           
           # Check if beta tag exists
           if ! git tag -l | grep -q "^$BETA_TAG$"; then
@@ -57,7 +57,11 @@ jobs:
   call-release:
     needs: [promote-beta-to-prod]
     uses: ./.github/workflows/release.yml
+    secrets: inherit
     permissions:
       contents: write
+      pull-requests: write
+      id-token: write
+      code-quality: write
     with:
       tag: ${{ needs.promote-beta-to-prod.outputs.tag }}

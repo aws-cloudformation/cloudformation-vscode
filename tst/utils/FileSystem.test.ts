@@ -19,7 +19,7 @@ describe('getLspBaseDir', () => {
         vi.unstubAllEnvs();
     });
 
-    it('resolves to the aws cache root shared with the AWS Toolkits', () => {
+    it('resolves to the aws cache root shared by IDE clients of the language server', () => {
         vi.stubEnv('HOME', home);
         vi.stubEnv('LOCALAPPDATA', localAppData);
         initFileSystem({ extensionUri: { scheme: 'file' } } as ExtensionContext);

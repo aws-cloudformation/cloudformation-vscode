@@ -15,7 +15,7 @@ import { initFileSystem } from './utils/FileSystem';
 import { LoggerFactory } from './utils/Logger';
 import { extractErrorMessage, formatMessage } from './utils/Utils';
 
-const outputChannel = window.createOutputChannel(ExtensionName);
+const outputChannel = window.createOutputChannel(ExtensionName, { log: true });
 LoggerFactory.initialize(outputChannel);
 const log = LoggerFactory.getLogger('Extension');
 

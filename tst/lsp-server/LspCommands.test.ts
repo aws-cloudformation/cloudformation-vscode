@@ -13,11 +13,11 @@ function clientAdvertising(commands: string[] | undefined): LanguageClient {
 describe('advertisedCommand', () => {
     it('resolves the suffixed id when the server honours the command suffix', () => {
         const client = clientAdvertising([
-            '/command/template/clear-diagnostic.cloudformation-vscode',
-            '/command/region/update.cloudformation-vscode',
+            '/command/template/clear-diagnostic.iac-vscode',
+            '/command/region/update.iac-vscode',
         ]);
 
-        expect(advertisedCommand(client, UpdateRegionCommand)).toBe('/command/region/update.cloudformation-vscode');
+        expect(advertisedCommand(client, UpdateRegionCommand)).toBe('/command/region/update.iac-vscode');
     });
 
     it('resolves the unsuffixed id from a server that predates the command suffix', () => {
@@ -30,13 +30,13 @@ describe('advertisedCommand', () => {
         const client = clientAdvertising(['/command/region/update.toolkit-vscode']);
 
         expect(() => advertisedCommand(client, UpdateRegionCommand)).toThrow(
-            'Language server does not advertise /command/region/update.cloudformation-vscode',
+            'Language server does not advertise /command/region/update.iac-vscode',
         );
     });
 
     it('throws when the server advertises no commands', () => {
         expect(() => advertisedCommand(clientAdvertising(undefined), UpdateRegionCommand)).toThrow(
-            'Language server does not advertise /command/region/update.cloudformation-vscode',
+            'Language server does not advertise /command/region/update.iac-vscode',
         );
     });
 

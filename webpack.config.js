@@ -1,5 +1,6 @@
 const { resolve } = require('path');
 const webpack = require('webpack');
+const { name: packageName } = require('./package.json');
 
 const standaloneConfig = {
     mode: 'production',
@@ -9,7 +10,7 @@ const standaloneConfig = {
     output: {
         clean: true,
         path: resolve(__dirname, 'bundle'),
-        filename: 'cloudformation-vscode.js',
+        filename: `${packageName}.js`,
         library: {
             type: 'commonjs2',
         },

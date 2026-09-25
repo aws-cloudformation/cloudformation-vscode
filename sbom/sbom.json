@@ -3,11 +3,11 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "cloudformation-vscode@1.0.0",
-  "documentNamespace": "http://spdx.org/spdxdocs/cloudformation-vscode-1.0.0-842f5120-51e5-44a4-a830-b1c9af52d4b7",
+  "documentNamespace": "http://spdx.org/spdxdocs/cloudformation-vscode-1.0.0-7250563e-7e30-49cc-910f-624932411e67",
   "creationInfo": {
-    "created": "2026-03-19T19:18:32.217Z",
+    "created": "2026-09-25T15:33:59.586Z",
     "creators": [
-      "Tool: npm/cli-10.9.2"
+      "Tool: npm/cli-11.17.0"
     ]
   },
   "documentDescribes": [
@@ -41,7 +41,7 @@
       "description": "Convert an object or array into a formatted string",
       "downloadLocation": "https://registry.npmjs.org/@base2/pretty-print-object/-/pretty-print-object-1.0.2.tgz",
       "filesAnalyzed": false,
-      "homepage": "https://github.com/Chris-Baker/pretty-print-object#readme",
+      "homepage": "NOASSERTION",
       "licenseDeclared": "BSD-2-Clause",
       "externalRefs": [
         {
@@ -58,12 +58,36 @@
       ]
     },
     {
+      "name": "asynckit",
+      "SPDXID": "SPDXRef-Package-asynckit-0.4.0",
+      "versionInfo": "0.4.0",
+      "packageFileName": "node_modules/asynckit",
+      "description": "Minimal async jobs utility library, with streams support",
+      "downloadLocation": "https://registry.npmjs.org/asynckit/-/asynckit-0.4.0.tgz",
+      "filesAnalyzed": false,
+      "homepage": "https://github.com/alexindigo/asynckit#readme",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/asynckit@0.4.0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "39e8bd387e2d461d18a94dc6c615fbf5d33f9b0560bdb64969235a464f9bb21923d12e5c7c772061a92b7818eb1f06ad5ca6f3f88a087582f1aca8a6d8c8d6d1"
+        }
+      ]
+    },
+    {
       "name": "axios",
-      "SPDXID": "SPDXRef-Package-axios-1.13.6",
-      "versionInfo": "1.13.6",
+      "SPDXID": "SPDXRef-Package-axios-1.20.0",
+      "versionInfo": "1.20.0",
       "packageFileName": "node_modules/axios",
       "description": "Promise based HTTP client for the browser and node.js",
-      "downloadLocation": "https://registry.npmjs.org/axios/-/axios-1.13.6.tgz",
+      "downloadLocation": "https://registry.npmjs.org/axios/-/axios-1.20.0.tgz",
       "filesAnalyzed": false,
       "homepage": "https://axios-http.com",
       "licenseDeclared": "MIT",
@@ -71,23 +95,119 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/axios@1.13.6"
+          "referenceLocator": "pkg:npm/axios@1.20.0"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "0a14c21cca2e11eda49fbd775876d019cb98aebe9f5d3062bb8eb4393c16ad6a1bd7a8356d79f8bedcf4ecea5eedec0ca332409c4aae2e4e655905ad06283d0d"
+          "checksumValue": "afc68e87c8fd7062a981002aa73ad41e748873a6b9f58dd77ff72ff2ccb50eb1c29191f340612ea2ad6d01193aa92c8376d4064838296fd90596bbb33efae0c2"
+        }
+      ]
+    },
+    {
+      "name": "agent-base",
+      "SPDXID": "SPDXRef-Package-agent-base-6.0.2",
+      "versionInfo": "6.0.2",
+      "packageFileName": "node_modules/axios/node_modules/agent-base",
+      "description": "Turn a function into an `http.Agent` instance",
+      "downloadLocation": "https://registry.npmjs.org/agent-base/-/agent-base-6.0.2.tgz",
+      "filesAnalyzed": false,
+      "homepage": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/agent-base@6.0.2"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "45937035c945efe312ffc6c383bd1a9a0df6772799199c620ee42667128b025423af78c6c8bc7ee0a924e7c50eec3d90760148402a2fb92b991129dee911ba5d"
+        }
+      ]
+    },
+    {
+      "name": "https-proxy-agent",
+      "SPDXID": "SPDXRef-Package-https-proxy-agent-5.0.1",
+      "versionInfo": "5.0.1",
+      "packageFileName": "node_modules/axios/node_modules/https-proxy-agent",
+      "description": "An HTTP(s) proxy `http.Agent` implementation for HTTPS",
+      "downloadLocation": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-5.0.1.tgz",
+      "filesAnalyzed": false,
+      "homepage": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/https-proxy-agent@5.0.1"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "7457008e94d0160a0b3330b657053e0bf09b4bbb912f49569b10c84e6aa6ec2fbb17439d9a3eacf65e9a95973a0042d786b9e080cd827964971c639d5f662dc0"
+        }
+      ]
+    },
+    {
+      "name": "combined-stream",
+      "SPDXID": "SPDXRef-Package-combined-stream-1.0.8",
+      "versionInfo": "1.0.8",
+      "packageFileName": "node_modules/combined-stream",
+      "description": "A stream that emits multiple other streams one after another.",
+      "downloadLocation": "https://registry.npmjs.org/combined-stream/-/combined-stream-1.0.8.tgz",
+      "filesAnalyzed": false,
+      "homepage": "https://github.com/felixge/node-combined-stream",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/combined-stream@1.0.8"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "1503783117ee25e1dfedc05b04c2455e12920eafb690002b06599106f72f144e410751d9297b5214048385d973f73398c3187c943767be630e7bffb971da0476"
+        }
+      ]
+    },
+    {
+      "name": "delayed-stream",
+      "SPDXID": "SPDXRef-Package-delayed-stream-1.0.0",
+      "versionInfo": "1.0.0",
+      "packageFileName": "node_modules/delayed-stream",
+      "description": "Buffers events from a stream until you are ready to handle them.",
+      "downloadLocation": "https://registry.npmjs.org/delayed-stream/-/delayed-stream-1.0.0.tgz",
+      "filesAnalyzed": false,
+      "homepage": "https://github.com/felixge/node-delayed-stream",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/delayed-stream@1.0.0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "672483ecd7fdd5a2c1d11c4be0a1ab28705797b11db350c098475ca156b05e72c3ed20e1a4d82db88236680920edaed04b8d63c4f499d7ba7855d1a730793731"
         }
       ]
     },
     {
       "name": "follow-redirects",
-      "SPDXID": "SPDXRef-Package-follow-redirects-1.15.11",
-      "versionInfo": "1.15.11",
+      "SPDXID": "SPDXRef-Package-follow-redirects-1.16.0",
+      "versionInfo": "1.16.0",
       "packageFileName": "node_modules/follow-redirects",
       "description": "HTTP and HTTPS modules that follow redirects.",
-      "downloadLocation": "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.11.tgz",
+      "downloadLocation": "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.0.tgz",
       "filesAnalyzed": false,
       "homepage": "https://github.com/follow-redirects/follow-redirects",
       "licenseDeclared": "MIT",
@@ -95,23 +215,95 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/follow-redirects@1.15.11"
+          "referenceLocator": "pkg:npm/follow-redirects@1.16.0"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "75e1b63f425f8eb4f1979d171820f27c8f7b646542c48a5f29899fcab439e27e453bfd207c8112f02fcfb25ea45950e8962cdc69ac592674d2d1048cc6f9ec05"
+          "checksumValue": "cb9acdfee3ac69d153fc97d8c21c514b947b41c7be837cc6f7bf89aed159942f64957fd6e610fb8a22f349c2389d9a944bb0cd51d84f830e3123c5b62ee5e553"
+        }
+      ]
+    },
+    {
+      "name": "form-data",
+      "SPDXID": "SPDXRef-Package-form-data-4.0.6",
+      "versionInfo": "4.0.6",
+      "packageFileName": "node_modules/form-data",
+      "description": "A library to create readable \"multipart/form-data\" streams. Can be used to submit forms and file uploads to other web applications.",
+      "downloadLocation": "https://registry.npmjs.org/form-data/-/form-data-4.0.6.tgz",
+      "filesAnalyzed": false,
+      "homepage": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/form-data@4.0.6"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "bca6ad021e129557e06eff98b66862463844309b18a6c1b5636acc42d47e49549bcadb120f5606cc321cac026674579cf3cbbff95a069b19e5fbcd202f5b5109"
+        }
+      ]
+    },
+    {
+      "name": "mime-db",
+      "SPDXID": "SPDXRef-Package-mime-db-1.52.0",
+      "versionInfo": "1.52.0",
+      "packageFileName": "node_modules/mime-db",
+      "description": "Media Type Database",
+      "downloadLocation": "https://registry.npmjs.org/mime-db/-/mime-db-1.52.0.tgz",
+      "filesAnalyzed": false,
+      "homepage": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/mime-db@1.52.0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "b0f538b95edd625bed589c70c311c3d0fba285536213b4f201b439496c43081f66518bce82ba103b061040e28f27c0886c4fb51135653a82b5502da7537818be"
+        }
+      ]
+    },
+    {
+      "name": "mime-types",
+      "SPDXID": "SPDXRef-Package-mime-types-2.1.35",
+      "versionInfo": "2.1.35",
+      "packageFileName": "node_modules/mime-types",
+      "description": "The ultimate javascript content-type utility.",
+      "downloadLocation": "https://registry.npmjs.org/mime-types/-/mime-types-2.1.35.tgz",
+      "filesAnalyzed": false,
+      "homepage": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/mime-types@2.1.35"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "64363e6cf9b9cd34c5f98a42ac053d9cad148080983d3d10b53d4d65616fe2cfbe4cd91c815693d20ebee11dae238323423cf2b07075cf1b962f9d21cda7978b"
         }
       ]
     },
     {
       "name": "proxy-from-env",
-      "SPDXID": "SPDXRef-Package-proxy-from-env-1.1.0",
-      "versionInfo": "1.1.0",
+      "SPDXID": "SPDXRef-Package-proxy-from-env-2.1.0",
+      "versionInfo": "2.1.0",
       "packageFileName": "node_modules/proxy-from-env",
       "description": "Offers getProxyForUrl to get the proxy URL for a URL, respecting the *_PROXY (e.g. HTTP_PROXY) and NO_PROXY environment variables.",
-      "downloadLocation": "https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-1.1.0.tgz",
+      "downloadLocation": "https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-2.1.0.tgz",
       "filesAnalyzed": false,
       "homepage": "https://github.com/Rob--W/proxy-from-env#readme",
       "licenseDeclared": "MIT",
@@ -119,23 +311,23 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/proxy-from-env@1.1.0"
+          "referenceLocator": "pkg:npm/proxy-from-env@2.1.0"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "0fece439109b03d7f5b5d5912b445a091dc63efe7470cc5caf3e17f24e4b4d2503d43930e3b98a24465036e9c8b514e45b082d6944a8d515454481bd65788562"
+          "checksumValue": "709fa81d35b554011af1c26c96099466b73eb2344a8002a5dd9cac7baf8f577f2165efd5e99d784db0ae5dc6a7f45f60865cf842b16bd9cf764cd17cd949181c"
         }
       ]
     },
     {
       "name": "ts-essentials",
-      "SPDXID": "SPDXRef-Package-ts-essentials-10.1.1",
-      "versionInfo": "10.1.1",
+      "SPDXID": "SPDXRef-Package-ts-essentials-10.2.1",
+      "versionInfo": "10.2.1",
       "packageFileName": "node_modules/ts-essentials",
       "description": "All essential TypeScript types in one place",
-      "downloadLocation": "https://registry.npmjs.org/ts-essentials/-/ts-essentials-10.1.1.tgz",
+      "downloadLocation": "https://registry.npmjs.org/ts-essentials/-/ts-essentials-10.2.1.tgz",
       "filesAnalyzed": false,
       "homepage": "https://github.com/ts-essentials/ts-essentials#readme",
       "licenseDeclared": "MIT",
@@ -143,229 +335,133 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/ts-essentials@10.1.1"
+          "referenceLocator": "pkg:npm/ts-essentials@10.2.1"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "e1a4c1eca2c72a652f923363f15f847679ae5538840b39f72becc86d1b61ba6bc7bbe8f8e31df0eb7c697ecd092f7346233197aa843b015e7dd711cef97ace4f"
-        }
-      ]
-    },
-    {
-      "name": "uuid",
-      "SPDXID": "SPDXRef-Package-uuid-13.0.0",
-      "versionInfo": "13.0.0",
-      "packageFileName": "node_modules/uuid",
-      "description": "RFC9562 UUIDs",
-      "downloadLocation": "https://registry.npmjs.org/uuid/-/uuid-13.0.0.tgz",
-      "filesAnalyzed": false,
-      "homepage": "https://github.com/uuidjs/uuid#readme",
-      "licenseDeclared": "MIT",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceType": "purl",
-          "referenceLocator": "pkg:npm/uuid@13.0.0"
-        }
-      ],
-      "checksums": [
-        {
-          "algorithm": "SHA512",
-          "checksumValue": "5d07a021a0535548d21e588aa9c9c5a98ca901de12f96098b79348791b3ac3f500af2ef3f18f63e59c1144be24ceaf54dec0fabfef397abf45be411a0698e2db"
+          "checksumValue": "f887757d192e8abf82b202b6c74e3f89c4b66f85758509aaece6f322b0e384dd28cdf4588af9cfeda68a31525f2c0a509b4b6b8d1dfd03a348315721881f44af"
         }
       ]
     },
     {
       "name": "vscode-jsonrpc",
-      "SPDXID": "SPDXRef-Package-vscode-jsonrpc-8.2.0",
-      "versionInfo": "8.2.0",
+      "SPDXID": "SPDXRef-Package-vscode-jsonrpc-9.0.3",
+      "versionInfo": "9.0.3",
       "packageFileName": "node_modules/vscode-jsonrpc",
       "description": "A json rpc implementation over streams",
-      "downloadLocation": "https://registry.npmjs.org/vscode-jsonrpc/-/vscode-jsonrpc-8.2.0.tgz",
+      "downloadLocation": "https://registry.npmjs.org/vscode-jsonrpc/-/vscode-jsonrpc-9.0.3.tgz",
       "filesAnalyzed": false,
-      "homepage": "https://github.com/Microsoft/vscode-languageserver-node#readme",
+      "homepage": "NOASSERTION",
       "licenseDeclared": "MIT",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/vscode-jsonrpc@8.2.0"
+          "referenceLocator": "pkg:npm/vscode-jsonrpc@9.0.3"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "0beaf478a25421f88321fc0986b89adf4f936163edb872571ed23b2746253a6280a3ba20c4fdb44f4cf107b1d9408161232be804fc16b248f1aef02d7e3c997c"
+          "checksumValue": "a844d87fd3c29759557f047ea0198c7dce2f3f69ea2cd037e40071a2bc378f4ebec652918035716cb80a9b863fc4f2f461675e0e32e8238226202213de7074cd"
         }
       ]
     },
     {
       "name": "vscode-languageclient",
-      "SPDXID": "SPDXRef-Package-vscode-languageclient-9.0.1",
-      "versionInfo": "9.0.1",
+      "SPDXID": "SPDXRef-Package-vscode-languageclient-10.1.2",
+      "versionInfo": "10.1.2",
       "packageFileName": "node_modules/vscode-languageclient",
       "description": "VSCode Language client implementation",
-      "downloadLocation": "https://registry.npmjs.org/vscode-languageclient/-/vscode-languageclient-9.0.1.tgz",
+      "downloadLocation": "https://registry.npmjs.org/vscode-languageclient/-/vscode-languageclient-10.1.2.tgz",
       "filesAnalyzed": false,
-      "homepage": "https://github.com/Microsoft/vscode-languageserver-node#readme",
+      "homepage": "NOASSERTION",
       "licenseDeclared": "MIT",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/vscode-languageclient@9.0.1"
+          "referenceLocator": "pkg:npm/vscode-languageclient@10.1.2"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "2598a299576f8a612e1e1e68971871921b74f66dc9cd41b08206f9791524cf32616762a308dd27879e557e2103f687b3f43c85f3f7f3d60d62055de1fb467610"
-        }
-      ]
-    },
-    {
-      "name": "balanced-match",
-      "SPDXID": "SPDXRef-Package-balanced-match-1.0.2",
-      "versionInfo": "1.0.2",
-      "packageFileName": "node_modules/vscode-languageclient/node_modules/balanced-match",
-      "description": "Match balanced character pairs, like \"{\" and \"}\"",
-      "downloadLocation": "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz",
-      "filesAnalyzed": false,
-      "homepage": "https://github.com/juliangruber/balanced-match",
-      "licenseDeclared": "MIT",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceType": "purl",
-          "referenceLocator": "pkg:npm/balanced-match@1.0.2"
-        }
-      ],
-      "checksums": [
-        {
-          "algorithm": "SHA512",
-          "checksumValue": "de849e50ed13315ebb84dd4099b5ec2b8c9aa94eed8e21e56f144364ea47d0a5bdf82797e1b440697d009f1b74b71d8cae94695b041a3f02252121098585393f"
-        }
-      ]
-    },
-    {
-      "name": "brace-expansion",
-      "SPDXID": "SPDXRef-Package-brace-expansion-2.0.2",
-      "versionInfo": "2.0.2",
-      "packageFileName": "node_modules/vscode-languageclient/node_modules/brace-expansion",
-      "description": "Brace expansion as known from sh/bash",
-      "downloadLocation": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-2.0.2.tgz",
-      "filesAnalyzed": false,
-      "homepage": "https://github.com/juliangruber/brace-expansion",
-      "licenseDeclared": "MIT",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceType": "purl",
-          "referenceLocator": "pkg:npm/brace-expansion@2.0.2"
-        }
-      ],
-      "checksums": [
-        {
-          "algorithm": "SHA512",
-          "checksumValue": "26dd2f1f233e8e6501aa88c1ec4d4d21869db74bc8d10c63c5dd9312b5bde300f3f84d8b026e6f28c5d7c20e996414c73ee5250e0407297be318175f705d590d"
-        }
-      ]
-    },
-    {
-      "name": "minimatch",
-      "SPDXID": "SPDXRef-Package-minimatch-5.1.9",
-      "versionInfo": "5.1.9",
-      "packageFileName": "node_modules/vscode-languageclient/node_modules/minimatch",
-      "description": "a glob matcher in javascript",
-      "downloadLocation": "https://registry.npmjs.org/minimatch/-/minimatch-5.1.9.tgz",
-      "filesAnalyzed": false,
-      "homepage": "https://github.com/isaacs/minimatch#readme",
-      "licenseDeclared": "ISC",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceType": "purl",
-          "referenceLocator": "pkg:npm/minimatch@5.1.9"
-        }
-      ],
-      "checksums": [
-        {
-          "algorithm": "SHA512",
-          "checksumValue": "ee8d70100d91c8c3fb22eec635b6bdbdcd11596180089382641257d862568a9d22915fb070eb2056e63db84f023e2c908641854a586e4a464f6af37bbb573617"
+          "checksumValue": "70ebf948cbed0217d57a8e66dabf4bdab547003d09e4214eb26bc7d5680d98f688eb55588c935cdd75032ce29e1520ed5a8017204a0ae8a7adb8110bff7844ae"
         }
       ]
     },
     {
       "name": "vscode-languageserver-protocol",
-      "SPDXID": "SPDXRef-Package-vscode-languageserver-protocol-3.17.5",
-      "versionInfo": "3.17.5",
+      "SPDXID": "SPDXRef-Package-vscode-languageserver-protocol-3.18.4",
+      "versionInfo": "3.18.4",
       "packageFileName": "node_modules/vscode-languageserver-protocol",
       "description": "VSCode Language Server Protocol implementation",
-      "downloadLocation": "https://registry.npmjs.org/vscode-languageserver-protocol/-/vscode-languageserver-protocol-3.17.5.tgz",
+      "downloadLocation": "https://registry.npmjs.org/vscode-languageserver-protocol/-/vscode-languageserver-protocol-3.18.4.tgz",
       "filesAnalyzed": false,
-      "homepage": "https://github.com/Microsoft/vscode-languageserver-node#readme",
+      "homepage": "NOASSERTION",
       "licenseDeclared": "MIT",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/vscode-languageserver-protocol@3.17.5"
+          "referenceLocator": "pkg:npm/vscode-languageserver-protocol@3.18.4"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "99bd5bbd124df125739c00d219633dbbf6f4ec7ec4720d08dce8170ee2dd9f7d3bae5fc9dc0f580fafde60eb2caa179c2f6ee12b520f640b1aaa1d348bf2658e"
+          "checksumValue": "0825dbcabf7d75a7d1273247ff447293b972e53f173e6491d3ffceb85db0e26fbd2623a29fbcdc013e62113f06444ed9f6d68505e8dbdc66ccd1ad266e375bae"
+        }
+      ]
+    },
+    {
+      "name": "vscode-languageserver-textdocument",
+      "SPDXID": "SPDXRef-Package-vscode-languageserver-textdocument-1.0.15",
+      "versionInfo": "1.0.15",
+      "packageFileName": "node_modules/vscode-languageserver-textdocument",
+      "description": "A simple text document implementation for Node LSP servers",
+      "downloadLocation": "https://registry.npmjs.org/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.15.tgz",
+      "filesAnalyzed": false,
+      "homepage": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/vscode-languageserver-textdocument@1.0.15"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "1ac7ebf52f0b5374baf3ce5c4be35a95e6ac2749f7579cbf48e4ea1c289f4225d6170dc6f70f7f608b437f01eb942cfe752656599f2295854c7097bb4b3ed2c7"
         }
       ]
     },
     {
       "name": "vscode-languageserver-types",
-      "SPDXID": "SPDXRef-Package-vscode-languageserver-types-3.17.5",
-      "versionInfo": "3.17.5",
+      "SPDXID": "SPDXRef-Package-vscode-languageserver-types-3.18.4",
+      "versionInfo": "3.18.4",
       "packageFileName": "node_modules/vscode-languageserver-types",
       "description": "Types used by the Language server for node",
-      "downloadLocation": "https://registry.npmjs.org/vscode-languageserver-types/-/vscode-languageserver-types-3.17.5.tgz",
+      "downloadLocation": "https://registry.npmjs.org/vscode-languageserver-types/-/vscode-languageserver-types-3.18.4.tgz",
       "filesAnalyzed": false,
-      "homepage": "https://github.com/Microsoft/vscode-languageserver-node#readme",
+      "homepage": "NOASSERTION",
       "licenseDeclared": "MIT",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/vscode-languageserver-types@3.17.5"
+          "referenceLocator": "pkg:npm/vscode-languageserver-types@3.18.4"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "2ddd557a536e5fda5d177f61d8781a79be611193366778d4aeb32059002ef368ccb59a7ba77bc94f70734e82ad648ecd810b2c6637b9a34cebc8eae142fcd002"
-        }
-      ]
-    },
-    {
-      "name": "yauzl",
-      "SPDXID": "SPDXRef-Package-yauzl-3.2.1",
-      "versionInfo": "3.2.1",
-      "packageFileName": "node_modules/yauzl",
-      "description": "yet another unzip library for node",
-      "downloadLocation": "https://registry.npmjs.org/yauzl/-/yauzl-3.2.1.tgz",
-      "filesAnalyzed": false,
-      "homepage": "https://github.com/thejoshwolfe/yauzl",
-      "licenseDeclared": "MIT",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceType": "purl",
-          "referenceLocator": "pkg:npm/yauzl@3.2.1"
-        }
-      ],
-      "checksums": [
-        {
-          "algorithm": "SHA512",
-          "checksumValue": "9358ac89f75ba4d485107149d596386037b0bf4207f4547ad650deb5a44c0f78f669eddb217195fbb73e2c70aab501a87d277c3c8c95e17ebe7473009d2afad0"
+          "checksumValue": "9d0b1a7288a28ef9747d17f6ab6f2e143ac05704617426b742f7a217bfc25f4af5f262d1e4553fd56b244ac08a3a39846edb5e2949d8f31f18cf1a29fa4d33c2"
         }
       ]
     }
@@ -382,68 +478,88 @@
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-axios-1.13.6",
+      "spdxElementId": "SPDXRef-Package-axios-1.20.0",
       "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-ts-essentials-10.1.1",
+      "spdxElementId": "SPDXRef-Package-ts-essentials-10.2.1",
       "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-uuid-13.0.0",
+      "spdxElementId": "SPDXRef-Package-vscode-languageclient-10.1.2",
       "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-vscode-languageclient-9.0.1",
-      "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "spdxElementId": "SPDXRef-Package-follow-redirects-1.16.0",
+      "relatedSpdxElement": "SPDXRef-Package-axios-1.20.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-yauzl-3.2.1",
-      "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "spdxElementId": "SPDXRef-Package-form-data-4.0.6",
+      "relatedSpdxElement": "SPDXRef-Package-axios-1.20.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-follow-redirects-1.15.11",
-      "relatedSpdxElement": "SPDXRef-Package-axios-1.13.6",
+      "spdxElementId": "SPDXRef-Package-https-proxy-agent-5.0.1",
+      "relatedSpdxElement": "SPDXRef-Package-axios-1.20.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-proxy-from-env-1.1.0",
-      "relatedSpdxElement": "SPDXRef-Package-axios-1.13.6",
+      "spdxElementId": "SPDXRef-Package-proxy-from-env-2.1.0",
+      "relatedSpdxElement": "SPDXRef-Package-axios-1.20.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-minimatch-5.1.9",
-      "relatedSpdxElement": "SPDXRef-Package-vscode-languageclient-9.0.1",
+      "spdxElementId": "SPDXRef-Package-agent-base-6.0.2",
+      "relatedSpdxElement": "SPDXRef-Package-https-proxy-agent-5.0.1",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-vscode-languageserver-protocol-3.17.5",
-      "relatedSpdxElement": "SPDXRef-Package-vscode-languageclient-9.0.1",
+      "spdxElementId": "SPDXRef-Package-delayed-stream-1.0.0",
+      "relatedSpdxElement": "SPDXRef-Package-combined-stream-1.0.8",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-balanced-match-1.0.2",
-      "relatedSpdxElement": "SPDXRef-Package-brace-expansion-2.0.2",
+      "spdxElementId": "SPDXRef-Package-asynckit-0.4.0",
+      "relatedSpdxElement": "SPDXRef-Package-form-data-4.0.6",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-brace-expansion-2.0.2",
-      "relatedSpdxElement": "SPDXRef-Package-minimatch-5.1.9",
+      "spdxElementId": "SPDXRef-Package-combined-stream-1.0.8",
+      "relatedSpdxElement": "SPDXRef-Package-form-data-4.0.6",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-vscode-jsonrpc-8.2.0",
-      "relatedSpdxElement": "SPDXRef-Package-vscode-languageserver-protocol-3.17.5",
+      "spdxElementId": "SPDXRef-Package-mime-types-2.1.35",
+      "relatedSpdxElement": "SPDXRef-Package-form-data-4.0.6",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
-      "spdxElementId": "SPDXRef-Package-vscode-languageserver-types-3.17.5",
-      "relatedSpdxElement": "SPDXRef-Package-vscode-languageserver-protocol-3.17.5",
+      "spdxElementId": "SPDXRef-Package-mime-db-1.52.0",
+      "relatedSpdxElement": "SPDXRef-Package-mime-types-2.1.35",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-vscode-languageserver-textdocument-1.0.15",
+      "relatedSpdxElement": "SPDXRef-Package-vscode-languageclient-10.1.2",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-vscode-languageserver-protocol-3.18.4",
+      "relatedSpdxElement": "SPDXRef-Package-vscode-languageclient-10.1.2",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-vscode-jsonrpc-9.0.3",
+      "relatedSpdxElement": "SPDXRef-Package-vscode-languageserver-protocol-3.18.4",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-vscode-languageserver-types-3.18.4",
+      "relatedSpdxElement": "SPDXRef-Package-vscode-languageserver-protocol-3.18.4",
       "relationshipType": "DEPENDENCY_OF"
     }
   ]
