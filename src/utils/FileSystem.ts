@@ -53,8 +53,12 @@ function getCacheDir(): string {
     }
 }
 
-export function getLspDownloadDir(): string {
-    return join(getCacheDir(), 'aws', 'toolkits', 'language-servers', 'cloudformation-languageserver');
+/**
+ * Root shared with the AWS Toolkits, so every IDE reuses one server download under
+ * `<platform-cache>/aws/language-servers/<server name>`.
+ */
+export function getLspBaseDir(): string {
+    return join(getCacheDir(), 'aws');
 }
 
 export function fsExists(path: string): boolean {

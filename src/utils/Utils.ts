@@ -12,10 +12,6 @@ export function toString(value: unknown, indent = '\t'.repeat(1)) {
     });
 }
 
-export function isDevelopment() {
-    return process.env.NODE_ENV !== 'production';
-}
-
 export function formatMessage(message: string): string {
     return `${ExtensionName}: ${message}`;
 }

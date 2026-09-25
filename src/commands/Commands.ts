@@ -3,8 +3,10 @@ import { AwsCredentialsService } from '../auth/AwsCredentials';
 import { commandKey } from '../utils/ExtensionConfig';
 import { extractErrorMessage, formatMessage } from '../utils/Utils';
 
+export const RestartServerCommand = commandKey('server.restart');
+
 export function restartCommand(call: () => Promise<void>) {
-    return commands.registerCommand(commandKey('server.restart'), async () => {
+    return commands.registerCommand(RestartServerCommand, async () => {
         try {
             await call();
         } catch (error) {

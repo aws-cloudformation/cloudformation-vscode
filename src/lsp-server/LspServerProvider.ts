@@ -39,6 +39,14 @@ export class LspServerResolver implements LspServerResolverI, Disposable {
         return result.rootDir;
     }
 
+    /**
+     * Resets the cached resolution so the next call to serverExecutable() will
+     * re-evaluate all providers. Used by LspLauncher after invalidation.
+     */
+    resetResolution(): void {
+        this.resolved = undefined;
+    }
+
     private async evaluateProviders(): Promise<{ executable: string; rootDir: string }> {
         if (this.resolved) {
             return this.resolved;

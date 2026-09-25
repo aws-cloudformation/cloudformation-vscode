@@ -1,13 +1,16 @@
 import { dirname } from 'path';
-import { LoggerFactory } from '../utils/Logger';
+import { getLspBaseDir } from '../utils/FileSystem';
+import { CfnLspInstaller } from './installer/CfnLspInstaller';
 import { LspServerProviderI } from './LspServerProvider';
-import { GitHubManifest } from './manifest/GitHubManifest';
-import { LspServerResolver } from './resolver/LspServerResolver';
 
 export class CfnRemoteLspServerProvider implements LspServerProviderI {
-    private readonly log = LoggerFactory.getLogger('RemoteLspServerProvider');
+    private readonly installer: CfnLspInstaller;
     private serverPath?: string;
     private rootDir?: string;
+
+    constructor(channel: string, installer?: CfnLspInstaller) {
+        this.installer = installer ?? new CfnLspInstaller(getLspBaseDir(), channel);
+    }
 
     name(): string {
         return 'RemoteCfnLspServerProvider';
@@ -22,11 +25,8 @@ export class CfnRemoteLspServerProvider implements LspServerProviderI {
             return this.serverPath;
         }
 
-        const manifest = await new GitHubManifest().getManifest();
-        const resolver = new LspServerResolver(manifest);
-        const result = await resolver.resolve();
-
-        resolver.cleanOldVersions(result.version);
+        const result = await this.installer.resolve();
+        this.installer.cleanup(result.version);
 
         this.serverPath = result.serverPath;
         this.rootDir = dirname(result.serverPath);
@@ -43,5 +43,13 @@ export class CfnRemoteLspServerProvider implements LspServerProviderI {
         return this.rootDir;
     }
 
-    close() {}
+    invalidate(): void {
+        this.installer.invalidateResolvedInstallation();
+        this.serverPath = undefined;
+        this.rootDir = undefined;
+    }
+
+    close() {
+        // No-op: cleanup is handled during resolve
+    }
 }

@@ -1,6 +1,7 @@
 import { Disposable, ExtensionContext, StatusBarAlignment, StatusBarItem, window } from 'vscode';
 import { ExecuteCommandRequest } from 'vscode-languageclient';
 import { LanguageClient } from 'vscode-languageclient/node';
+import { advertisedCommand, UpdateRegionCommand } from '../lsp-server/LspCommands';
 import { commandKey } from '../utils/ExtensionConfig';
 import { LoggerFactory } from '../utils/Logger';
 import { AwsRegion, Regions } from '../utils/Region';
@@ -57,7 +58,7 @@ export class AwsCredentialsService implements Disposable {
         try {
             window.setStatusBarMessage(formatMessage(`Updating AWS region to ${region}...`), 3000);
             await this.client.sendRequest(ExecuteCommandRequest.method, {
-                command: '/command/region/update',
+                command: advertisedCommand(this.client, UpdateRegionCommand),
                 arguments: [region],
             });
             await this.updateSelectedRegion(region);
