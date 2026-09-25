@@ -40,15 +40,20 @@ function makeVersion(serverVersion: string, latest = false, isDelisted = false):
     };
 }
 
+// Production code builds paths with path.join, which emits backslashes on Windows; keys are stored in POSIX form.
+const posix = (path: string): string => path.replaceAll('\\', '/');
+
 class MemoryFs extends FileSystem {
     readonly dirs = new Set<string>();
     readonly files = new Map<string, Buffer>();
 
     exists(path: string): boolean {
+        path = posix(path);
         return this.dirs.has(path) || this.files.has(path);
     }
 
     mkdirRecursive(path: string): void {
+        path = posix(path);
         this.dirs.add(path);
         const parts = path.split('/');
         for (let i = 1; i < parts.length; i++) {
@@ -57,6 +62,7 @@ class MemoryFs extends FileSystem {
     }
 
     readdir(path: string): nodeFs.Dirent[] {
+        path = posix(path);
         const entries: nodeFs.Dirent[] = [];
         const prefix = path.endsWith('/') ? path : `${path}/`;
 
@@ -91,6 +97,7 @@ class MemoryFs extends FileSystem {
     }
 
     writeFile(path: string, data: Buffer): void {
+        path = posix(path);
         this.files.set(path, data);
         const parent = path.slice(0, path.lastIndexOf('/'));
         if (parent) {
@@ -99,7 +106,7 @@ class MemoryFs extends FileSystem {
     }
 
     readFileString(path: string, _encoding: BufferEncoding): string {
-        const buf = this.files.get(path);
+        const buf = this.files.get(posix(path));
         if (!buf) {
             throw new Error(`File not found: ${path}`);
         }
@@ -107,6 +114,7 @@ class MemoryFs extends FileSystem {
     }
 
     remove(path: string): void {
+        path = posix(path);
         this.files.delete(path);
         const prefix = path.endsWith('/') ? path : `${path}/`;
         for (const key of this.files.keys()) {
@@ -122,6 +130,8 @@ class MemoryFs extends FileSystem {
     }
 
     rename(oldPath: string, newPath: string): void {
+        oldPath = posix(oldPath);
+        newPath = posix(newPath);
         // Handle single file rename
         if (this.files.has(oldPath)) {
             const data = this.files.get(oldPath)!;
@@ -265,13 +275,13 @@ describe('BaseLspInstaller', () => {
 
     describe('downloadRoot', () => {
         it('returns baseDir/language-servers/<name>', () => {
-            expect(installer.downloadRoot).toBe('/test/cache/aws/language-servers/test-server');
+            expect(installer.downloadRoot).toBe(join(baseDir, 'language-servers', 'test-server'));
         });
     });
 
     describe('manifestCachePath', () => {
         it('returns downloadRoot/manifest.json', () => {
-            expect(installer.manifestCachePath).toBe('/test/cache/aws/language-servers/test-server/manifest.json');
+            expect(installer.manifestCachePath).toBe(join(baseDir, 'language-servers', 'test-server', 'manifest.json'));
         });
     });
 

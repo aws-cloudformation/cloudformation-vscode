@@ -1,12 +1,12 @@
-# AWS CloudFormation Extension for VS Code
+# AWS CloudFormation Extension for Visual Studio Code
 
-<div align="center">
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Main CI](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-languageserver/actions/workflows/github-code-scanning/codeql)
 
-[![build](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/ci.yml)
-&nbsp;
-[![CodeQL](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/aws-cloudformation/cloudformation-vscode/actions/workflows/github-code-scanning/codeql)
-
-</div>
+[![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faws-cloudformation%2Fcloudformation-languageserver%2Frefs%2Fheads%2Fmain%2Fpackage.json&query=%24.engines.node&label=Node.js&color=339933&logo=node.js&logoColor=white)](https://github.com/aws-cloudformation/cloudformation-vscode/blob/main/package.json)
+[![Latest Release](https://img.shields.io/github/v/release/aws-cloudformation/cloudformation-vscode?include_prereleases&sort=semver)](https://github.com/aws-cloudformation/cloudformation-vscode/releases)
+[![Downloads](https://img.shields.io/github/downloads/aws-cloudformation/cloudformation-vscode/total.svg)](https://github.com/aws-cloudformation/cloudformation-vscode/releases)
 
 ## Overview
 
