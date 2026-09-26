@@ -7,4 +7,5 @@ Amazon Web Services (https://aws.amazon.com/).
 This software includes components licensed under various open source licenses.
 You can find a full list of third-party licenses in the THIRD-PARTY-LICENSES.txt file included with this distribution.
 
-A complete Software Bill of Materials (SBOM) describing all components is available in sbom/spdx.json
+A complete Software Bill of Materials (SBOM) describing all components is available at sbom/sbom.json
+in the source repository (https://github.com/aws-cloudformation/cloudformation-vscode).
