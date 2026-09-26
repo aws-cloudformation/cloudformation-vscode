@@ -2,34 +2,34 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "cloudformation-vscode@1.0.0",
-  "documentNamespace": "http://spdx.org/spdxdocs/cloudformation-vscode-1.0.0-7250563e-7e30-49cc-910f-624932411e67",
+  "name": "aws-iac-vscode@1.0.0",
+  "documentNamespace": "http://spdx.org/spdxdocs/aws-iac-vscode-1.0.0-de34f6ef-0a9d-468d-8609-e85805779dfe",
   "creationInfo": {
-    "created": "2026-09-25T15:33:59.586Z",
+    "created": "2026-09-26T20:49:42.498Z",
     "creators": [
       "Tool: npm/cli-11.17.0"
     ]
   },
   "documentDescribes": [
-    "SPDXRef-Package-cloudformation-vscode-1.0.0"
+    "SPDXRef-Package-aws-iac-vscode-1.0.0"
   ],
   "packages": [
     {
-      "name": "cloudformation-vscode",
-      "SPDXID": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "name": "aws-iac-vscode",
+      "SPDXID": "SPDXRef-Package-aws-iac-vscode-1.0.0",
       "versionInfo": "1.0.0",
       "packageFileName": "",
-      "description": "AWS CloudFormation Language Server",
+      "description": "AWS CloudFormation language support: validation, completion, hover documentation, and cfn-lint diagnostics for JSON and YAML templates.",
       "primaryPackagePurpose": "LIBRARY",
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
-      "homepage": "NOASSERTION",
+      "homepage": "https://github.com/aws-cloudformation/cloudformation-vscode#readme",
       "licenseDeclared": "Apache-2.0",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/cloudformation-vscode@1.0.0"
+          "referenceLocator": "pkg:npm/aws-iac-vscode@1.0.0"
         }
       ]
     },
@@ -469,27 +469,27 @@
   "relationships": [
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
-      "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "relatedSpdxElement": "SPDXRef-Package-aws-iac-vscode-1.0.0",
       "relationshipType": "DESCRIBES"
     },
     {
       "spdxElementId": "SPDXRef-Package-base2.pretty-print-object-1.0.2",
-      "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "relatedSpdxElement": "SPDXRef-Package-aws-iac-vscode-1.0.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
       "spdxElementId": "SPDXRef-Package-axios-1.20.0",
-      "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "relatedSpdxElement": "SPDXRef-Package-aws-iac-vscode-1.0.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
       "spdxElementId": "SPDXRef-Package-ts-essentials-10.2.1",
-      "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "relatedSpdxElement": "SPDXRef-Package-aws-iac-vscode-1.0.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
       "spdxElementId": "SPDXRef-Package-vscode-languageclient-10.1.2",
-      "relatedSpdxElement": "SPDXRef-Package-cloudformation-vscode-1.0.0",
+      "relatedSpdxElement": "SPDXRef-Package-aws-iac-vscode-1.0.0",
       "relationshipType": "DEPENDENCY_OF"
     },
     {
