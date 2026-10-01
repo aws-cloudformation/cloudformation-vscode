@@ -27,7 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-version.outputs.version }}
-      publisher: ${{ steps.get-version.outputs.publisher }}
       tag: ${{ steps.validate-tag.outputs.tag }}
       is-prerelease: ${{ steps.validate-tag.outputs.is-prerelease }}
     steps:
@@ -36,13 +35,11 @@ jobs:
           ref: ${{ inputs.tag }}
           fetch-tags: true
 
-      - name: Get version and publisher from package.json
+      - name: Get version from package.json
         id: get-version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          PUBLISHER=$(node -p "require('./package.json').publisher")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "publisher=$PUBLISHER" >> "$GITHUB_OUTPUT"
 
       - name: Validate tag matches version
         id: validate-tag
@@ -136,41 +133,3 @@ jobs:
           files: artifacts/*.vsix
           generate_release_notes: true
           fail_on_unmatched_files: true
-
-  publish:
-    needs: [ version-and-tag, release ]
-    if: needs.version-and-tag.outputs.is-prerelease == 'false'
-    runs-on: ubuntu-latest
-    environment: release
-    permissions:
-      contents: read
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: vsix
-          path: artifacts
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.x
-
-      - name: Verify publish tokens
-        env:
-          PUBLISHER: ${{ needs.version-and-tag.outputs.publisher }}
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: |
-          npx --yes @vscode/vsce@4.0.0 verify-pat "$PUBLISHER"
-          npx --yes ovsx@1.2.0 verify-pat "$PUBLISHER"
-
-      - name: Publish to Visual Studio Marketplace
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx --yes @vscode/vsce@4.0.0 publish --packagePath artifacts/*.vsix --skip-duplicate
-
-      - name: Publish to Open VSX
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx --yes ovsx@1.2.0 publish --packagePath artifacts/*.vsix --skip-duplicate
