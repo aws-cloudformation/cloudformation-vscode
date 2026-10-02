@@ -21,7 +21,7 @@ describe('AwsCredentialsService', () => {
         vi.clearAllMocks();
 
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
 
         mockStatusBarItem = {
             show: vi.fn(),

@@ -128,10 +128,10 @@
                         "default": "off",
                         "description": "Traces the communication between VS Code and the language server"
                     },
-                    "aws.cloudformation.telemetry.enabled": {
+                    "aws.iac.telemetry.enabled": {
                         "type": "boolean",
                         "default": false,
-                        "description": "Configure anonymous telemetry collection (cannot disable unless it is a production release)"
+                        "description": "Share anonymous usage telemetry from the AWS CloudFormation extension with AWS"
                     },
                     "aws.cloudformation.telemetry.logLevel": {
                         "type": "string",

@@ -47,7 +47,7 @@ describe('LspLauncher', () => {
 
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
 
         let resolveCount = 0;
         resolver = {

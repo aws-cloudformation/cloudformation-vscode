@@ -24,7 +24,7 @@ describe('CfnRemoteLspServerProvider', () => {
 
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
         testDir = nodeFs.mkdtempSync(join(tmpdir(), 'cfn-remote-provider-test-'));
     });
 
@@ -125,7 +125,7 @@ describe('Installer → Provider → Launcher integration: failed managed path i
 
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
         testDir = nodeFs.mkdtempSync(join(tmpdir(), 'cfn-integration-test-'));
     });
 

@@ -1,5 +1,5 @@
-import { OutputChannel, workspace } from 'vscode';
-import { toString } from './Utils';
+import { LogOutputChannel, workspace } from 'vscode';
+import { extractErrorMessage, toString } from './Utils';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -10,15 +10,6 @@ const levelPriority: Record<LogLevel, number> = {
     error: 3,
 };
 
-function formatTime(): string {
-    return new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-    });
-}
-
 export class Logger {
     private readonly configuredLevel = workspace
         .getConfiguration('aws.cloudformation.telemetry')
@@ -26,7 +17,7 @@ export class Logger {
 
     constructor(
         private readonly name: string,
-        private readonly channel: OutputChannel,
+        private readonly channel: LogOutputChannel,
     ) {}
 
     private shouldLog(level: LogLevel): boolean {
@@ -38,15 +29,16 @@ export class Logger {
             return;
         }
 
-        let line = `[${formatTime()}] ${capitalize(level)}: [${this.name}]`;
+        // The channel stamps time and level itself; only the component name is added here.
+        let line = `[${this.name}]`;
         if (message) {
-            line += `${line} ${message}`;
+            line += ` ${message}`;
         }
 
         if (data) {
-            line += ` ${toString(data)}`;
+            line += ` ${data instanceof Error ? (data.stack ?? extractErrorMessage(data)) : toString(data)}`;
         }
-        this.channel.appendLine(line);
+        this.channel[level](line);
     }
 
     debug(data: unknown, message?: string): void {
@@ -67,10 +59,10 @@ export class Logger {
 }
 
 export class LoggerFactory {
-    private static channel: OutputChannel;
+    private static channel: LogOutputChannel;
     private static readonly loggers = new Map<string, Logger>();
 
-    static initialize(channel: OutputChannel) {
+    static initialize(channel: LogOutputChannel) {
         this.channel = channel;
     }
 
@@ -89,14 +81,7 @@ export class LoggerFactory {
 
     /** @internal For testing only */
     static reset(): void {
-        this.channel = undefined as unknown as OutputChannel;
+        this.channel = undefined as unknown as LogOutputChannel;
         this.loggers.clear();
     }
-}
-
-function capitalize(str: string) {
-    return str
-        .split(' ')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
 }

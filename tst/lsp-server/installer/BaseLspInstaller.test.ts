@@ -267,7 +267,7 @@ describe('BaseLspInstaller', () => {
 
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
         memFs = new MemoryFs();
         fetcher = new MockFetcher();
         installer = createInstaller(baseDir, memFs, fetcher);

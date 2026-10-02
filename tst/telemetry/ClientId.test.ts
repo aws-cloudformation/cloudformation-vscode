@@ -14,7 +14,7 @@ describe('ClientId / telemetry', () => {
 
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
         const data: Record<string, unknown> = {};
         mockState = {
             data,
