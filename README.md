@@ -6,7 +6,6 @@
 
 [![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faws-cloudformation%2Fcloudformation-vscode%2Frefs%2Fheads%2Fmain%2Fpackage.json&query=%24.engines.node&label=Node.js&color=339933&logo=node.js&logoColor=white)](https://github.com/aws-cloudformation/cloudformation-vscode/blob/main/package.json)
 [![Latest Release](https://img.shields.io/github/v/release/aws-cloudformation/cloudformation-vscode?include_prereleases&sort=semver)](https://github.com/aws-cloudformation/cloudformation-vscode/releases)
-[![Downloads](https://img.shields.io/github/downloads/aws-cloudformation/cloudformation-vscode/total.svg)](https://github.com/aws-cloudformation/cloudformation-vscode/releases)
 
 ## Overview
 
