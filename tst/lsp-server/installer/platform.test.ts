@@ -13,7 +13,7 @@ vi.mock('vscode');
 describe('platform detection', () => {
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
     });
 
     describe('detectPlatformTarget (default, no injection)', () => {

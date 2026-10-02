@@ -15,7 +15,10 @@ const stateKeys = {
     unpersistedResponse: `${ExtensionConfigKey}.telemetry.unpersistedResponse`,
 } as const;
 
-const telemetrySettingKey = 'aws.cloudformation.telemetry';
+// Kept outside the `aws.cloudformation.*` namespace: other IDE clients of the language server
+// contribute `aws.cloudformation.telemetry.enabled`, and consent given to one extension must not
+// switch telemetry on or off for another.
+const telemetrySettingKey = 'aws.iac.telemetry';
 const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 const promptTimeoutMs = 2500;
 const telemetryDocsUrl = 'https://github.com/aws-cloudformation/cloudformation-languageserver/tree/main/src/telemetry';
@@ -105,7 +108,7 @@ async function promptTelemetryOptIn(context: ExtensionContext): Promise<boolean>
     const { globalState } = context;
 
     const response = await window.showInformationMessage(
-        'Help us improve the AWS CloudFormation Language Server by sharing anonymous telemetry data with AWS. You can change this preference at any time in aws.cloudformation Settings.',
+        'Help us improve the AWS CloudFormation Language Server by sharing anonymous telemetry data with AWS. You can change this preference at any time with the aws.iac.telemetry.enabled setting.',
         TelemetryChoice.Allow,
         TelemetryChoice.Later,
         TelemetryChoice.Never,

@@ -30,7 +30,7 @@ describe('LspServerLifecycleController', () => {
 
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
 
         let resolveCount = 0;
         resolveServer = vi.fn(() => Promise.resolve(`server-${++resolveCount}`));

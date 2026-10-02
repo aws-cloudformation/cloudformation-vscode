@@ -90,13 +90,14 @@ template validation, and importing resource state, are not available in this ext
 | `aws.cloudformation.diagnostics.cfnGuard.enabledRulePacks` | `["cis-aws-benchmark-level-1"]` | Managed rule packs to validate against                                   |
 | `aws.cloudformation.diagnostics.cfnGuard.rulesFile`        | `""`                            | Path to a custom cfn-guard rules file; empty uses the enabled rule packs |
 | `aws.cloudformation.trace.server`                          | `"off"`                         | Trace communication with the language server (`messages`, `verbose`)     |
-| `aws.cloudformation.telemetry.enabled`                     | `false`                         | Share anonymous usage telemetry with AWS                                 |
+| `aws.iac.telemetry.enabled`                                | `false`                         | Share anonymous usage telemetry with AWS                                 |
 | `aws.cloudformation.telemetry.logLevel`                    | `"info"`                        | Log level of the extension output channel; applies after a window reload |
 
 ## Telemetry
 
 Telemetry is off by default. On first activation the extension asks whether to share anonymous usage data with AWS;
-you can change the choice at any time with `aws.cloudformation.telemetry.enabled`. See the language server's
+you can change the choice at any time with `aws.iac.telemetry.enabled`. The setting is specific to this extension;
+it does not read or change the telemetry preference of any other extension. See the language server's
 [telemetry documentation](https://github.com/aws-cloudformation/cloudformation-languageserver/tree/main/src/telemetry)
 for what is collected.
 

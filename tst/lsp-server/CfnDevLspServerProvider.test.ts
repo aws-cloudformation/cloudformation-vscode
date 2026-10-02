@@ -15,7 +15,7 @@ describe('CfnDevLspServerProvider', () => {
 
     beforeEach(() => {
         LoggerFactory.reset();
-        LoggerFactory.initialize(window.createOutputChannel('test'));
+        LoggerFactory.initialize(window.createOutputChannel('test', { log: true }));
         testDir = nodeFs.mkdtempSync(join(tmpdir(), 'cfn-dev-test-'));
     });
 
