@@ -15,9 +15,6 @@ const stateKeys = {
     unpersistedResponse: `${ExtensionConfigKey}.telemetry.unpersistedResponse`,
 } as const;
 
-// Kept outside the `aws.cloudformation.*` namespace: other IDE clients of the language server
-// contribute `aws.cloudformation.telemetry.enabled`, and consent given to one extension must not
-// switch telemetry on or off for another.
 const telemetrySettingKey = 'aws.iac.telemetry';
 const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 const promptTimeoutMs = 2500;
