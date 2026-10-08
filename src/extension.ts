@@ -4,6 +4,7 @@ import { AwsCredentialsService } from './auth/AwsCredentials';
 import { restartCommand, RestartServerCommand, updateRegion } from './commands/Commands';
 import { CfnInlineCompletionProvider } from './inlineCompletion/InlineCompletionProvider';
 import { CfnDevLspServerProvider } from './lsp-server/CfnDevLspServerProvider';
+import { CfnLanguageClient } from './lsp-server/CfnLanguageClient';
 import { CfnRemoteLspServerProvider } from './lsp-server/CfnRemoteLspServerProvider';
 import { CfnDocumentSelector, cfnInitializationOptions, cfnServerOptions } from './lsp-server/LspClientConfig';
 import { LspLauncher, LspResolver } from './lsp-server/LspLauncher';
@@ -129,7 +130,7 @@ async function initialize(context: ExtensionContext) {
                 errorHandler,
             };
 
-            return new LanguageClient(ExtensionId, ExtensionName, cfnServerOptions(serverFile), clientOptions);
+            return new CfnLanguageClient(ExtensionId, ExtensionName, cfnServerOptions(serverFile), clientOptions);
         };
 
         const launcher = new LspLauncher(resolver, clientFactory, {
