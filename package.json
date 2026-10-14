@@ -1,7 +1,7 @@
 {
     "name": "aws-iac-vscode",
     "displayName": "AWS CloudFormation",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "AWS CloudFormation language support: validation, completion, hover documentation, and cfn-lint diagnostics for JSON and YAML templates.",
     "publisher": "amazonwebservices",
     "author": "Amazon Web Services (AWS)",
