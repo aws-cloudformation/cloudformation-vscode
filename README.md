@@ -59,11 +59,15 @@ and adds an AWS region selector to the status bar.
   when a newer release cannot be downloaded. Regional resource schemas are downloaded on demand from the public
   CloudFormation schema endpoint of the selected region.
 
-### AWS account access
+### Online features and UI
 
 The extension does not currently pass AWS credentials to the language server. Everything above works without an AWS
 account. Server features that call AWS APIs on your behalf, such as deploying a template, listing stacks, server-side
 template validation, and importing resource state, are not available in this extension.
+
+When you need online features that call AWS APIs or UI features for managing CloudFormation stacks and resources, use
+the AWS Toolkit for your IDE: [install the AWS Toolkit extension for Visual Studio Code](https://marketplace.visualstudio.com/itemdetails?itemName=AmazonWebServices.aws-toolkit-vscode)
+or [install the AWS Toolkit plugin for IntelliJ IDEA](https://plugins.jetbrains.com/plugin/11349-aws-toolkit).
 
 ## Commands
 
